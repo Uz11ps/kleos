@@ -83,6 +83,27 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Diagnostics: check SMTP connectivity quickly (no email sent)
+router.get('/smtp/ping', async (_req, res) => {
+  try {
+    const host = process.env.SMTP_HOST;
+    if (!host) return res.status(400).json({ ok: false, error: 'smtp_not_configured' });
+    const transporter = nodemailer.createTransport({
+      host,
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
+      secure: (process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
+      connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '7000', 10),
+      greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
+      socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
+      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
+    });
+    await transporter.verify();
+    return res.json({ ok: true, host, port: process.env.SMTP_PORT || '587', secure: (process.env.SMTP_SECURE || 'false') });
+  } catch (e: any) {
+    return res.status(500).json({ ok: false, error: e?.message || 'smtp_error', code: e?.code });
+  }
+});
+
 export default router;
 
 async function sendVerificationEmail(to: string, name: string, webLink: string, appLink: string) {
