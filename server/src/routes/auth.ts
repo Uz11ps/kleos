@@ -58,7 +58,10 @@ router.post('/register', async (req, res) => {
     const appScheme = process.env.APP_DEEP_LINK_SCHEME || 'kleos';
     const appHost = process.env.APP_DEEP_LINK_HOST || 'verify';
     const appLink = `${appScheme}://${appHost}?token=${verifyToken}`;
-    await sendVerificationEmail(email, fullName, webLink, appLink);
+    // Send email in background to avoid client timeout if SMTP is slow
+    sendVerificationEmail(email, fullName, webLink, appLink)
+      .then(() => console.log(`Verification email queued to ${email}`))
+      .catch((e) => console.error('Send verification email failed', e));
     return res.json({ requiresVerification: true, verifyUrl: webLink, appLink });
   } catch (e: any) {
     return res.status(400).json({ error: e?.message || 'bad_request' });
@@ -93,6 +96,9 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
     host,
     port: parseInt(process.env.SMTP_PORT || '587', 10),
     secure: false,
+    connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '5000', 10),
+    greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '5000', 10),
+    socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '8000', 10),
     auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
   });
   const html = `<div style="font-family:Arial;">

@@ -36,6 +36,11 @@ router.put('/:id', auth('admin'), async (req, res) => {
   res.json({ ok: true });
 });
 
+router.delete('/:id', auth('admin'), async (req, res) => {
+  await User.deleteOne({ _id: req.params.id });
+  res.json({ ok: true });
+});
+
 export default router;
 
 

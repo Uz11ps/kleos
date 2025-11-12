@@ -94,6 +94,9 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
           </select>
           <button type="submit">Save</button>
         </form>
+        <form method="post" action="/admin/users/${u._id}/delete" onsubmit="return confirm('Delete this user?')">
+          <button type="submit" style="margin-top:6px;color:#a00">Delete</button>
+        </form>
       </td>
     </tr>
   `).join('');
@@ -127,6 +130,11 @@ router.post('/admin/users/:id', adminAuthMiddleware, async (req: any, res: any) 
   });
   const data = schema.parse(req.body);
   await User.updateOne({ _id: req.params.id }, data);
+  res.redirect('/admin/users');
+});
+
+router.post('/admin/users/:id/delete', adminAuthMiddleware, async (req, res) => {
+  await User.deleteOne({ _id: req.params.id });
   res.redirect('/admin/users');
 });
 
