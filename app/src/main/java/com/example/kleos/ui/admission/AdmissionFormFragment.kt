@@ -1,11 +1,15 @@
 package com.example.kleos.ui.admission
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.InputFilter
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.google.android.material.textfield.TextInputEditText
 import com.example.kleos.data.admissions.AdmissionsRepository
 import com.example.kleos.data.model.AdmissionApplication
 import com.example.kleos.databinding.FragmentAdmissionFormBinding
@@ -30,6 +34,10 @@ class AdmissionFormFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        applyDateMask(binding.dateOfBirthEditText)
+        applyDateMask(binding.passportExpiryEditText)
+
         binding.submitButton.setOnClickListener {
             val fullName = binding.fullNameEditText.text?.toString().orEmpty()
             val phone = binding.phoneEditText.text?.toString().orEmpty()
@@ -61,6 +69,35 @@ class AdmissionFormFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun applyDateMask(editText: TextInputEditText) {
+        editText.filters = arrayOf(InputFilter.LengthFilter(10))
+        editText.addTextChangedListener(object : TextWatcher {
+            private var isUpdating = false
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+
+            override fun afterTextChanged(s: Editable?) {
+                if (isUpdating) return
+                val raw = s?.toString()?.replace(Regex("[^\\d]"), "").orEmpty()
+                val sb = StringBuilder()
+                for (i in raw.indices) {
+                    if (i >= 8) break
+                    sb.append(raw[i])
+                    if ((i == 1 || i == 3) && i != raw.lastIndex) {
+                        sb.append('.')
+                    }
+                }
+                val formatted = sb.toString()
+                if (formatted == s?.toString()) return
+                isUpdating = true
+                editText.setText(formatted)
+                editText.setSelection(formatted.length.coerceAtMost(editText.text?.length ?: 0).coerceAtLeast(0))
+                isUpdating = false
+            }
+        })
     }
 }
 

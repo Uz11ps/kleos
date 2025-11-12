@@ -4,10 +4,17 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.kleos.data.auth.AuthRepository
 import com.example.kleos.databinding.ActivityAuthBinding
 import android.content.Intent
 import com.example.kleos.MainActivity
+import com.example.kleos.databinding.DialogInviteBinding
+import androidx.lifecycle.lifecycleScope
+import com.example.kleos.data.auth.SessionManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 class AuthActivity : AppCompatActivity() {
 
@@ -22,6 +29,17 @@ class AuthActivity : AppCompatActivity() {
 
         // Try HTTP repository first; fallback to Local if it fails later.
         authRepository = AuthRepository.Http(this)
+
+        binding.forgotPasswordText.setOnClickListener {
+            Toast.makeText(this, "Password reset is not implemented yet", Toast.LENGTH_SHORT).show()
+        }
+        binding.guestText.setOnClickListener {
+            // Вход как гость: создаём сессию с именем guest и техническим токеном
+            val session = SessionManager(this)
+            session.saveUser(fullName = "guest", email = "guest@local")
+            session.saveToken("guest_token")
+            proceedToMain()
+        }
 
         binding.toggleModeButton.setOnClickListener {
             isRegisterMode = !isRegisterMode
@@ -39,34 +57,55 @@ class AuthActivity : AppCompatActivity() {
         renderMode()
     }
 
-    private fun proceedToMain() {
+    private fun proceedToMain(showInviteFallback: Boolean = false) {
         val intent = Intent(this, MainActivity::class.java)
+        if (showInviteFallback) {
+            intent.putExtra("show_invite", true)
+        }
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
     }
 
     private fun renderMode() {
-        binding.fullNameInputLayout.visibility = if (isRegisterMode) View.VISIBLE else View.GONE
+        val showFullName = isRegisterMode
+        binding.fullNameInputLayout.visibility = if (showFullName) View.VISIBLE else View.GONE
+        val underline = binding.root.findViewById<View>(com.example.kleos.R.id.fullNameUnderline)
+        underline?.visibility = if (showFullName) View.VISIBLE else View.GONE
         binding.submitButton.text = if (isRegisterMode) {
             getString(com.example.kleos.R.string.action_register)
         } else {
             getString(com.example.kleos.R.string.action_login)
         }
+        // Кнопка переключения режима показывает короткий текст целевого режима
         binding.toggleModeButton.text = if (isRegisterMode) {
-            getString(com.example.kleos.R.string.switch_to_login)
+            getString(com.example.kleos.R.string.action_login) // "Войти"
         } else {
-            getString(com.example.kleos.R.string.switch_to_register)
+            getString(com.example.kleos.R.string.action_register) // "Зарегистрироваться"
         }
+        binding.titleText.text = if (isRegisterMode) "Sign Up" else "Sign In"
+        // По требованию: левую подсказку не показываем ни на Sign In, ни на Sign Up
+        binding.leftHintText.visibility = View.GONE
     }
 
     private fun performLogin() {
         val email = binding.emailEditText.text?.toString().orEmpty()
         val password = binding.passwordEditText.text?.toString().orEmpty()
-        val result = authRepository.login(email, password)
-        if (result.isSuccess) {
-            proceedToMain()
-        } else {
-            Toast.makeText(this, result.exceptionOrNull()?.message ?: "Ошибка входа", Toast.LENGTH_SHORT).show()
+        binding.submitButton.isEnabled = false
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) { authRepository.login(email, password) }
+            binding.submitButton.isEnabled = true
+            if (result.isSuccess) {
+                proceedToMain(true)
+            } else {
+                // Фоллбэк в оффлайн-режим (локальная авторизация)
+                val localRepo = AuthRepository.Local(this@AuthActivity)
+                val localResult = withContext(Dispatchers.IO) { localRepo.login(email, password) }
+                if (localResult.isSuccess) {
+                    proceedToMain(true)
+                } else {
+                    Toast.makeText(this@AuthActivity, result.exceptionOrNull()?.message ?: "Ошибка входа", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -74,12 +113,39 @@ class AuthActivity : AppCompatActivity() {
         val fullName = binding.fullNameEditText.text?.toString().orEmpty()
         val email = binding.emailEditText.text?.toString().orEmpty()
         val password = binding.passwordEditText.text?.toString().orEmpty()
-        val result = authRepository.register(fullName, email, password)
-        if (result.isSuccess) {
-            proceedToMain()
-        } else {
-            Toast.makeText(this, result.exceptionOrNull()?.message ?: "Ошибка регистрации", Toast.LENGTH_SHORT).show()
+        binding.submitButton.isEnabled = false
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) { authRepository.register(fullName, email, password) }
+            binding.submitButton.isEnabled = true
+            if (result.isSuccess) {
+                proceedToMain(false)
+            } else {
+                Toast.makeText(this@AuthActivity, result.exceptionOrNull()?.message ?: "Ошибка регистрации", Toast.LENGTH_SHORT).show()
+            }
         }
+    }
+
+    private fun showInviteDialog(onClose: () -> Unit) {
+        val dialogBinding = DialogInviteBinding.inflate(layoutInflater)
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogBinding.root)
+            .setCancelable(false)
+            .create()
+
+        dialogBinding.closeButton.setOnClickListener {
+            dialog.dismiss()
+            onClose()
+        }
+        dialogBinding.inviteButton.setOnClickListener {
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, getString(com.example.kleos.R.string.invite_share_text))
+            }
+            startActivity(Intent.createChooser(shareIntent, getString(com.example.kleos.R.string.invite_share_title)))
+            dialog.dismiss()
+            onClose()
+        }
+        dialog.show()
     }
 }
 

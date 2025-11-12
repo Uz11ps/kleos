@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.example.kleos.data.model.User
 import java.util.UUID
+import java.security.SecureRandom
 
 class SessionManager(context: Context) {
 
@@ -17,17 +18,28 @@ class SessionManager(context: Context) {
     fun getCurrentUser(): User? {
         val email = preferences.getString(KEY_USER_EMAIL, null) ?: return null
         val fullName = preferences.getString(KEY_USER_FULL_NAME, "") ?: ""
-        val id = preferences.getString(KEY_USER_ID, null) ?: UUID.randomUUID().toString()
+        var id = preferences.getString(KEY_USER_ID, null)
+        if (id.isNullOrBlank()) {
+            id = generateNumericId()
+            preferences.edit().putString(KEY_USER_ID, id).apply()
+        }
         return User(id = id, fullName = fullName, email = email)
     }
 
     fun saveUser(fullName: String, email: String) {
-        val id = preferences.getString(KEY_USER_ID, null) ?: UUID.randomUUID().toString()
+        val id = preferences.getString(KEY_USER_ID, null) ?: generateNumericId()
         preferences.edit()
             .putString(KEY_USER_ID, id)
             .putString(KEY_USER_FULL_NAME, fullName)
             .putString(KEY_USER_EMAIL, email)
             .apply()
+    }
+
+    private fun generateNumericId(length: Int = 6): String {
+        val random = SecureRandom()
+        val bound = Math.pow(10.0, length.toDouble()).toInt() // 10^length
+        val value = random.nextInt(bound)
+        return String.format("%0${length}d", value)
     }
 
     fun saveToken(token: String) {

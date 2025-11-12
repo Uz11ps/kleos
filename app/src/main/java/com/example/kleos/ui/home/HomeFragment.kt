@@ -1,13 +1,17 @@
 package com.example.kleos.ui.home
 
 import android.os.Bundle
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.kleos.data.model.NewsItem
 import com.example.kleos.databinding.FragmentHomeBinding
+import com.example.kleos.databinding.DialogInviteBinding
+import com.example.kleos.data.auth.SessionManager
 
 class HomeFragment : Fragment() {
 
@@ -38,6 +42,46 @@ class HomeFragment : Fragment() {
             NewsItem("3", "Summer Camp in Sochi", "June 20, 2023")
         )
         adapter.submitList(demo)
+
+        // Greeting and user card binding
+        val session = SessionManager(requireContext())
+        val user = session.getCurrentUser()
+        val name = (user?.fullName?.takeIf { it.isNotBlank() } ?: "guest").trim()
+        binding.helloText.text = "Hello $name"
+        val idNumeric = user?.id
+            ?.filter { it.isDigit() }
+            ?.padStart(6, '0')
+            ?.takeLast(6) ?: "000000"
+        binding.userIdText.text = "ID: $idNumeric"
+        binding.userNameText.text = name.ifBlank { "guest" }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val prefs = requireContext().getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+        val shown = prefs.getBoolean("invite_dialog_shown", false)
+        if (!shown && isAdded) {
+            val dialogBinding = DialogInviteBinding.inflate(layoutInflater)
+            val dialog = MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogBinding.root)
+                .setCancelable(false)
+                .create()
+
+            dialogBinding.closeButton.setOnClickListener {
+                dialog.dismiss()
+                prefs.edit().putBoolean("invite_dialog_shown", true).apply()
+            }
+            dialogBinding.inviteButton.setOnClickListener {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, getString(com.example.kleos.R.string.invite_share_text))
+                }
+                startActivity(Intent.createChooser(shareIntent, getString(com.example.kleos.R.string.invite_share_title)))
+                dialog.dismiss()
+                prefs.edit().putBoolean("invite_dialog_shown", true).apply()
+            }
+            dialog.show()
+        }
     }
 
     override fun onDestroyView() {

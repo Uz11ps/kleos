@@ -1,4 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="next">Next</string>
+    <string name="back">Back</string>
+    <string name="start">Start</string>
     <string name="app_name">Kleos</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -23,4 +27,12 @@
     <string name="menu_admission">Поступление</string>
     <string name="action_logout">Выйти</string>
     <string name="api_base_url">http://10.0.2.2:8080/</string>
+    <string name="forgot_password">Forgot Your Password?</string>
+    <string name="continue_as_guest">Continue as guest</string>
+    <string name="dont_have_account">Dont have account?</string>
+    <string name="invite_now">Invite Now</string>
+    <string name="invite_message">Help your friends now organize their university life by sharing the app</string>
+    <string name="invite_share_title">Share app</string>
+    <string name="invite_share_text">Try the StudyInRussia app! It helped me a lot. Download and check it out.</string>
+    <string name="close">Close</string>
 </resources>

@@ -3,6 +3,7 @@ package com.example.kleos
 import android.os.Bundle
 import android.view.Menu
 import android.content.Intent
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -15,6 +16,7 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.example.kleos.databinding.ActivityMainBinding
+import com.example.kleos.databinding.DialogInviteBinding
 import com.example.kleos.data.auth.SessionManager
 import com.example.kleos.ui.auth.AuthActivity
 import com.example.kleos.data.auth.AuthRepository
@@ -38,11 +40,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.appBarMain.toolbar)
-
-        binding.appBarMain.fab.setOnClickListener {
-            val navController = findNavController(R.id.nav_host_fragment_content_main)
-            navController.navigate(R.id.nav_chat)
-        }
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -78,6 +75,15 @@ class MainActivity : AppCompatActivity() {
 
         val bottomNav: BottomNavigationView = findViewById(R.id.bottom_nav)
         bottomNav.setupWithNavController(navController)
+
+        // Показ приглашения после входа (если передан флаг из AuthActivity)
+        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        val shouldShowInvite = intent.getBooleanExtra("show_invite", false)
+        if (shouldShowInvite) {
+            showInviteDialog {
+                prefs.edit().putBoolean("invite_dialog_shown", true).apply()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -89,5 +95,28 @@ class MainActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+    }
+
+    private fun showInviteDialog(onClose: () -> Unit) {
+        val dialogBinding = DialogInviteBinding.inflate(layoutInflater)
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogBinding.root)
+            .setCancelable(false)
+            .create()
+
+        dialogBinding.closeButton.setOnClickListener {
+            dialog.dismiss()
+            onClose()
+        }
+        dialogBinding.inviteButton.setOnClickListener {
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, getString(R.string.invite_share_text))
+            }
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.invite_share_title)))
+            dialog.dismiss()
+            onClose()
+        }
+        dialog.show()
     }
 }

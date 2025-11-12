@@ -50,9 +50,11 @@
             android:hint="Date of birth">
 
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/dateOfBirthEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="dd/mm/yyyy" />
+                android:inputType="number"
+                android:maxLength="10" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -163,9 +165,11 @@
             android:hint="Passport expiry date">
 
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/passportExpiryEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="dd/mm/yyyy" />
+                android:inputType="number"
+                android:maxLength="10" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout

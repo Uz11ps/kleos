@@ -14,11 +14,11 @@
         android:title="@string/menu_home" />
     <item
         android:id="@+id/nav_gallery"
-        android:icon="@android:drawable/ic_menu_agenda"
+        android:icon="@drawable/ic_menu_gallery"
         android:title="Universities" />
     <item
         android:id="@+id/nav_profile"
-        android:icon="@android:drawable/ic_menu_myplaces"
+        android:icon="@drawable/ic_profile_nav"
         android:title="@string/menu_profile" />
 </menu>
 
