@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import authRoutes from './routes/auth.js';
 import partnersRoutes from './routes/partners.js';
 import admissionsRoutes from './routes/admissions.js';
+import adminWeb from './routes/adminWeb.js';
 import usersRoutes from './routes/users.js';
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(cors({
 }));
 app.use(helmet());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 
 const mongoUri = process.env.MONGODB_URI;
@@ -41,22 +43,13 @@ mongoose.connect(mongoUri).then(() => {
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 app.get('/', (_req, res) => {
-  res.json({
-    ok: true,
-    service: 'Kleos API',
-    endpoints: [
-      '/health',
-      '/auth/login',
-      '/auth/register',
-      '/partners',
-      '/admissions'
-    ]
-  });
+  res.redirect('/admin');
 });
 app.use('/auth', authRoutes);
 app.use('/partners', partnersRoutes);
 app.use('/admissions', admissionsRoutes);
 app.use('/users', usersRoutes);
+app.use('/', adminWeb);
 
 const port = Number(process.env.PORT) || 8080;
 app.listen(port, () => {
