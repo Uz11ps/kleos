@@ -95,10 +95,10 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
   const transporter = nodemailer.createTransport({
     host,
     port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: false,
-    connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '5000', 10),
-    greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '5000', 10),
-    socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '8000', 10),
+    secure: (process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
+    connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '7000', 10),
+    greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
+    socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
     auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
   });
   const html = `<div style="font-family:Arial;">
