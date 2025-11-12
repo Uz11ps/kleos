@@ -81,6 +81,7 @@ class OnboardingPagerActivity : AppCompatActivity() {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun finishFlow() {
         startActivity(Intent(this, AuthActivity::class.java))
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)

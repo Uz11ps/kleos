@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
     const appHost = process.env.APP_DEEP_LINK_HOST || 'verify';
     const appLink = `${appScheme}://${appHost}?token=${verifyToken}`;
     await sendVerificationEmail(email, fullName, webLink, appLink);
-    return res.json({ requiresVerification: true });
+    return res.json({ requiresVerification: true, verifyUrl: webLink, appLink });
   } catch (e: any) {
     return res.status(400).json({ error: e?.message || 'bad_request' });
   }

@@ -60,9 +60,36 @@ interface AuthRepository {
 
         override suspend fun register(fullName: String, email: String, password: String): Result<User> = runCatching {
             val resp = api.register(com.example.kleos.data.network.RegisterRequest(fullName, email, password))
-            sessionManager.saveToken(resp.token)
-            sessionManager.saveUser(resp.user.fullName, resp.user.email)
-            sessionManager.getCurrentUser()!!
+            // If backend returned AuthResponse-like map, handle it; otherwise expect requiresVerification=true
+            val token = (resp["token"] as? String)
+            val userMap = resp["user"] as? Map<*, *>
+            return@runCatching if (token != null && userMap != null) {
+                val uFullName = userMap["fullName"] as? String ?: fullName
+                val uEmail = userMap["email"] as? String ?: email
+                sessionManager.saveToken(token)
+                sessionManager.saveUser(uFullName, uEmail)
+                sessionManager.getCurrentUser()!!
+            } else {
+                // Save minimal local info (without token) so we can show it in UI if needed
+                // isLoggedIn() will still be false until verification consumes token
+                sessionManager.saveUser(fullName, email)
+                // Try to open app deep link first, fallback to web verify URL
+                val appLink = resp["appLink"] as? String
+                val verifyUrl = resp["verifyUrl"] as? String
+                try {
+                    val uri = when {
+                        !appLink.isNullOrBlank() -> android.net.Uri.parse(appLink)
+                        !verifyUrl.isNullOrBlank() -> android.net.Uri.parse(verifyUrl)
+                        else -> null
+                    }
+                    if (uri != null) {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                    }
+                } catch (_: Exception) { /* ignore */ }
+                User(id = "pending", fullName = fullName, email = email)
+            }
         }
 
         override fun logout() {

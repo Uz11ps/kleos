@@ -22,6 +22,7 @@ class SplashActivity : AppCompatActivity() {
         }, 2000)
     }
 
+    @Suppress("DEPRECATION")
     private fun animateUpAndNavigate() {
         val targetTranslation = -binding.logoGroup.height.toFloat() - (binding.logoGroup.top.toFloat() / 2f)
         binding.logoGroup.animate()

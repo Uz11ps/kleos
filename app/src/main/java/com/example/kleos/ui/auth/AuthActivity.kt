@@ -113,6 +113,18 @@ class AuthActivity : AppCompatActivity() {
         val fullName = binding.fullNameEditText.text?.toString().orEmpty()
         val email = binding.emailEditText.text?.toString().orEmpty()
         val password = binding.passwordEditText.text?.toString().orEmpty()
+        if (fullName.isBlank()) {
+            Toast.makeText(this, "Введите ФИО", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!email.contains("@")) {
+            Toast.makeText(this, "Неверный email", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (password.length < 6) {
+            Toast.makeText(this, "Пароль должен быть не менее 6 символов", Toast.LENGTH_SHORT).show()
+            return
+        }
         binding.submitButton.isEnabled = false
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) { authRepository.register(fullName, email, password) }
@@ -120,7 +132,21 @@ class AuthActivity : AppCompatActivity() {
             if (result.isSuccess) {
                 Toast.makeText(this@AuthActivity, "Проверьте почту и подтвердите email", Toast.LENGTH_LONG).show()
             } else {
-                Toast.makeText(this@AuthActivity, result.exceptionOrNull()?.message ?: "Ошибка регистрации", Toast.LENGTH_SHORT).show()
+                val msg = result.exceptionOrNull()?.let { ex ->
+                    try {
+                        val http = ex as? retrofit2.HttpException
+                        val body = http?.response()?.errorBody()?.string()
+                        val obj = if (body.isNullOrEmpty()) null else org.json.JSONObject(body)
+                        when (obj?.optString("error")) {
+                            "email_taken" -> "Email уже зарегистрирован"
+                            "bad_request" -> "Некорректные данные"
+                            else -> obj?.optString("error") ?: ex.message ?: "Ошибка регистрации"
+                        }
+                    } catch (_: Exception) {
+                        ex.message ?: "Ошибка регистрации"
+                    }
+                } ?: "Ошибка регистрации"
+                Toast.makeText(this@AuthActivity, msg, Toast.LENGTH_SHORT).show()
             }
         }
     }
