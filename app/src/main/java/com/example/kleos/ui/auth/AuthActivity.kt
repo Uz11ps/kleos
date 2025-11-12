@@ -12,6 +12,7 @@ import com.example.kleos.MainActivity
 import com.example.kleos.databinding.DialogInviteBinding
 import androidx.lifecycle.lifecycleScope
 import com.example.kleos.data.auth.SessionManager
+import android.util.Patterns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
@@ -117,8 +118,8 @@ class AuthActivity : AppCompatActivity() {
             Toast.makeText(this, "Введите ФИО", Toast.LENGTH_SHORT).show()
             return
         }
-        if (!email.contains("@")) {
-            Toast.makeText(this, "Неверный email", Toast.LENGTH_SHORT).show()
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Некорректный email", Toast.LENGTH_SHORT).show()
             return
         }
         if (password.length < 6) {
