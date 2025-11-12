@@ -118,7 +118,7 @@ class AuthActivity : AppCompatActivity() {
             val result = withContext(Dispatchers.IO) { authRepository.register(fullName, email, password) }
             binding.submitButton.isEnabled = true
             if (result.isSuccess) {
-                proceedToMain(false)
+                Toast.makeText(this@AuthActivity, "Проверьте почту и подтвердите email", Toast.LENGTH_LONG).show()
             } else {
                 Toast.makeText(this@AuthActivity, result.exceptionOrNull()?.message ?: "Ошибка регистрации", Toast.LENGTH_SHORT).show()
             }
