@@ -8,6 +8,37 @@ import nodemailer from 'nodemailer';
 
 const router = Router();
 
+// Helper: build proxy list and SMTP (port/secure) combinations for fallback
+function getRelayUrl(): string | undefined {
+  const url = process.env.EMAIL_RELAY_URL;
+  return url && url.trim().length > 0 ? url.trim() : undefined;
+}
+
+function getProxyList(): string[] {
+  const list = (process.env.SMTP_PROXIES || process.env.SMTP_PROXY || '')
+    .split(/[\s,]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  return list;
+}
+
+function getSmtpCombos(host: string): Array<{ port: number; secure: boolean }> {
+  const combos: Array<{ port: number; secure: boolean }> = [];
+  const envPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
+  const envSecure = (process.env.SMTP_SECURE || '').toLowerCase() === 'true';
+  if (envPort) {
+    combos.push({ port: envPort, secure: envSecure });
+  }
+  // Add common fallbacks if not already present
+  if (!combos.find(c => c.port === 587 && c.secure === false)) {
+    combos.push({ port: 587, secure: false });
+  }
+  if (!combos.find(c => c.port === 465 && c.secure === true)) {
+    combos.push({ port: 465, secure: true });
+  }
+  return combos;
+}
+
 const registerSchema = z.object({
   fullName: z.string().min(1),
   email: z.string().email(),
@@ -88,32 +119,53 @@ router.get('/smtp/ping', async (_req, res) => {
   try {
     const host = process.env.SMTP_HOST;
     if (!host) return res.status(400).json({ ok: false, error: 'smtp_not_configured' });
-    const baseOptions: any = {
-      host,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: (process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
-      connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '7000', 10),
-      greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
-      socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
-      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
-    };
-    // Optional HTTP/HTTPS/SOCKS proxy support (e.g. http://user:pass@host:port)
-    if (process.env.SMTP_PROXY) {
-      baseOptions.proxy = process.env.SMTP_PROXY;
+
+    const proxies = getProxyList();
+    const combos = getSmtpCombos(host);
+    const tlsInsecure = (process.env.SMTP_TLS_INSECURE || '').toLowerCase() === 'true';
+
+    const attemptOrder: Array<{ proxy?: string; port: number; secure: boolean }> = [];
+    // Try each proxy with each combo, then try direct without proxy as last resort
+    for (const proxy of proxies) {
+      for (const combo of combos) {
+        attemptOrder.push({ proxy, port: combo.port, secure: combo.secure });
+      }
     }
-    // Allow insecure TLS if explicitly requested
-    if ((process.env.SMTP_TLS_INSECURE || '').toLowerCase() === 'true') {
-      baseOptions.tls = { rejectUnauthorized: false };
+    for (const combo of combos) {
+      attemptOrder.push({ proxy: undefined, port: combo.port, secure: combo.secure });
     }
-    const transporter = nodemailer.createTransport(baseOptions);
-    await transporter.verify();
-    return res.json({
-      ok: true,
-      host,
-      port: process.env.SMTP_PORT || '587',
-      secure: (process.env.SMTP_SECURE || 'false'),
-      proxy: process.env.SMTP_PROXY ? 'enabled' : 'disabled'
-    });
+
+    let lastError: any = null;
+    for (const attempt of attemptOrder) {
+      try {
+        const options: any = {
+          host,
+          port: attempt.port,
+          secure: attempt.secure,
+          connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '7000', 10),
+          greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
+          socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
+          auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+          requireTLS: !attempt.secure,
+          tls: { servername: host }
+        };
+        if (attempt.proxy) options.proxy = attempt.proxy;
+        if (tlsInsecure) options.tls = { ...(options.tls || {}), rejectUnauthorized: false };
+        const transporter = nodemailer.createTransport(options);
+        await transporter.verify();
+        return res.json({
+          ok: true,
+          host,
+          portTried: attempt.port,
+          secureTried: attempt.secure,
+          proxyUsed: attempt.proxy ? 'enabled' : 'disabled'
+        });
+      } catch (e: any) {
+        lastError = e;
+        // Continue to next attempt
+      }
+    }
+    return res.status(500).json({ ok: false, error: lastError?.message || 'smtp_error', code: lastError?.code });
   } catch (e: any) {
     return res.status(500).json({ ok: false, error: e?.message || 'smtp_error', code: e?.code });
   }
@@ -122,28 +174,61 @@ router.get('/smtp/ping', async (_req, res) => {
 export default router;
 
 async function sendVerificationEmail(to: string, name: string, webLink: string, appLink: string) {
+  // 1) HTTP relay (if configured) — no SMTP needed
+  const relayUrl = getRelayUrl();
+  if (relayUrl) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), parseInt(process.env.RELAY_TIMEOUT_MS || '8000', 10));
+      const html = `<div style="font-family:Arial;">
+    <p>Здравствуйте, ${name}!</p>
+    <p>Пожалуйста, подтвердите ваш email:</p>
+    <p><a href="${webLink}">Подтвердить email</a></p>
+    <p>На Android можно открыть приложение напрямую: <a href="${appLink}">${appLink}</a></p>
+    <p>Ссылка действует 24 часа.</p>
+  </div>`;
+      const resp = await fetch(relayUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          to,
+          name,
+          subject: 'Kleos — подтверждение email',
+          html,
+          fromEmail: process.env.SMTP_FROM || 'no-reply@kleos-study.ru',
+          fromName: 'Kleos University'
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      if (resp.ok) return;
+      // if relay responded but not ok, fall through to SMTP
+    } catch (_e) {
+      // ignore and fall back to SMTP
+    }
+  }
+
   const host = process.env.SMTP_HOST;
   const from = process.env.SMTP_FROM || 'no-reply@kleos';
   if (!host) {
     console.log(`Verify email for ${to}: ${webLink} (app: ${appLink})`);
     return;
   }
-  const options: any = {
-    host,
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: (process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
-    connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '7000', 10),
-    greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
-    socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
-    auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
-  };
-  if (process.env.SMTP_PROXY) {
-    options.proxy = process.env.SMTP_PROXY;
+
+  const proxies = getProxyList();
+  const combos = getSmtpCombos(host);
+  const tlsInsecure = (process.env.SMTP_TLS_INSECURE || '').toLowerCase() === 'true';
+
+  const attempts: Array<{ proxy?: string; port: number; secure: boolean }> = [];
+  for (const proxy of proxies) {
+    for (const combo of combos) {
+      attempts.push({ proxy, port: combo.port, secure: combo.secure });
+    }
   }
-  if ((process.env.SMTP_TLS_INSECURE || '').toLowerCase() === 'true') {
-    options.tls = { rejectUnauthorized: false };
+  for (const combo of combos) {
+    attempts.push({ proxy: undefined, port: combo.port, secure: combo.secure });
   }
-  const transporter = nodemailer.createTransport(options);
+
   const html = `<div style="font-family:Arial;">
     <p>Здравствуйте, ${name}!</p>
     <p>Пожалуйста, подтвердите ваш email:</p>
@@ -151,6 +236,30 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
     <p>На Android можно открыть приложение напрямую: <a href="${appLink}">${appLink}</a></p>
     <p>Ссылка действует 24 часа.</p>
   </div>`;
-  await transporter.sendMail({ from, to, subject: 'Kleos — подтверждение email', html });
+
+  let lastError: any = null;
+  for (const attempt of attempts) {
+    try {
+      const options: any = {
+        host,
+        port: attempt.port,
+        secure: attempt.secure,
+        connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '7000', 10),
+        greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
+        socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
+        auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+        requireTLS: !attempt.secure,
+        tls: { servername: host }
+      };
+      if (attempt.proxy) options.proxy = attempt.proxy;
+      if (tlsInsecure) options.tls = { ...(options.tls || {}), rejectUnauthorized: false };
+      const transporter = nodemailer.createTransport(options);
+      await transporter.sendMail({ from, to, subject: 'Kleos — подтверждение email', html });
+      return; // success
+    } catch (e: any) {
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('SMTP send failed');
 }
 
