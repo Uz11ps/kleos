@@ -13,6 +13,7 @@ import com.example.kleos.data.network.PartnersApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.kleos.ui.language.t
 
 class PartnersFragment : Fragment() {
 
@@ -47,7 +48,7 @@ class PartnersFragment : Fragment() {
 
     private fun loadPartners() {
         binding.partnersContainer.removeAllViews()
-        addRow("Loading…")
+        addRow(getString(com.example.kleos.R.string.loading))
         lifecycleScope.launch(Dispatchers.IO) {
             runCatching {
                 val api = ApiClient.retrofit.create(PartnersApi::class.java)
@@ -56,7 +57,7 @@ class PartnersFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     binding.partnersContainer.removeAllViews()
                     if (list.isEmpty()) {
-                        addRow("No partners yet")
+                        addRow(requireContext().t(com.example.kleos.R.string.no_partners_yet))
                     } else {
                         list.forEach { p ->
                             addRow("${p.name}${if (!p.description.isNullOrBlank()) " — ${p.description}" else ""}")
@@ -66,7 +67,7 @@ class PartnersFragment : Fragment() {
             }.onFailure {
                 withContext(Dispatchers.Main) {
                     binding.partnersContainer.removeAllViews()
-                    addRow("Failed to load")
+                    addRow(requireContext().t(com.example.kleos.R.string.failed_to_load))
                 }
             }
         }

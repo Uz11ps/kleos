@@ -32,27 +32,18 @@
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:contentDescription="@string/app_name"
-            android:src="@mipmap/ic_launcher" />
+            android:src="@drawable/logo_kleos_fon" />
 
-        <TextView
-            android:id="@+id/brandTitle"
+        <ImageView
+            android:id="@+id/logoWordmark"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="SIMATEX"
-            android:textColor="@android:color/white"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:layout_height="28dp"
+            android:layout_marginTop="12dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/kleos_fon" />
 
-        <TextView
-            android:id="@+id/brandSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="STUDY IN RUSSIA"
-            android:textAllCaps="true"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:letterSpacing="0.12" />
+
 
     </LinearLayout>
 

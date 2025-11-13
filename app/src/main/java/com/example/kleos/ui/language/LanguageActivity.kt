@@ -9,6 +9,7 @@ import com.example.kleos.databinding.ActivityLanguageBinding
 class LanguageActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLanguageBinding
     override fun onCreate(savedInstanceState: Bundle?) {
+        com.example.kleos.ui.language.LocaleManager.applySavedLocale(this)
         super.onCreate(savedInstanceState)
         binding = ActivityLanguageBinding.inflate(layoutInflater)
         setContentView(binding.root)

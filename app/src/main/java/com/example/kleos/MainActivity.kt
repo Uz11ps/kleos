@@ -19,7 +19,9 @@ import com.example.kleos.databinding.ActivityMainBinding
 import com.example.kleos.databinding.DialogInviteBinding
 import com.example.kleos.data.auth.SessionManager
 import com.example.kleos.ui.auth.AuthActivity
+import com.example.kleos.ui.language.LocaleManager
 import com.example.kleos.data.auth.AuthRepository
+import com.example.kleos.ui.language.t
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,6 +30,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Применяем сохранённую локаль перед инициализацией UI
+        LocaleManager.applySavedLocale(this)
 
         val sessionManager = SessionManager(this)
         if (!sessionManager.isLoggedIn()) {
@@ -40,6 +45,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.appBarMain.toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        supportActionBar?.setDisplayUseLogoEnabled(true)
+        supportActionBar?.setLogo(R.drawable.kleos_fon)
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -58,18 +66,47 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+        // Заполним шапку бургера логином
+        runCatching {
+            val header = navView.getHeaderView(0)
+            val greetTv = header.findViewById<android.widget.TextView>(R.id.headerGreetingText)
+            val emailTv = header.findViewById<android.widget.TextView>(R.id.headerEmailText)
+            val userNow = sessionManager.getCurrentUser()
+            val nameNow = (userNow?.fullName?.takeIf { it.isNotBlank() } ?: getString(R.string.guest)).trim()
+            val greetTmpl = this@MainActivity.t(R.string.hi_name)
+            greetTv?.text = String.format(greetTmpl, nameNow)
+            emailTv?.text = userNow?.email ?: ""
+        }.onFailure { /* ignore */ }
         navView.setNavigationItemSelectedListener { item ->
-            if (item.itemId == R.id.menu_sign_out) {
-                AuthRepository.Local(this).logout()
-                startActivity(Intent(this, AuthActivity::class.java))
-                finish()
-                true
-            } else {
-                val handled = item.onNavDestinationSelected(navController)
-                if (handled) {
-                    binding.drawerLayout.closeDrawers()
+            when (item.itemId) {
+                R.id.menu_sign_out -> {
+                    AuthRepository.Local(this).logout()
+                    startActivity(Intent(this, AuthActivity::class.java))
+                    finish()
+                    true
                 }
-                handled
+                R.id.menu_lang_ru -> {
+                    LocaleManager.setLocale(this, "ru")
+                    restartToMain()
+                    true
+                }
+                R.id.menu_lang_en -> {
+                    LocaleManager.setLocale(this, "en")
+                    restartToMain()
+                    true
+                }
+                R.id.menu_lang_zh -> {
+                    LocaleManager.setLocale(this, "zh")
+                    restartToMain()
+                    true
+                }
+                else -> {
+                    val handled = item.onNavDestinationSelected(navController)
+                    if (handled) {
+                        binding.drawerLayout.closeDrawers()
+                    }
+                    handled
+                }
             }
         }
 
@@ -118,5 +155,12 @@ class MainActivity : AppCompatActivity() {
             onClose()
         }
         dialog.show()
+    }
+
+    private fun restartToMain() {
+        binding.drawerLayout.closeDrawers()
+        val intent = Intent(this, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
     }
 }

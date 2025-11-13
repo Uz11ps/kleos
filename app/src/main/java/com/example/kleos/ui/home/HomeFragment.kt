@@ -12,6 +12,7 @@ import com.example.kleos.data.model.NewsItem
 import com.example.kleos.databinding.FragmentHomeBinding
 import com.example.kleos.databinding.DialogInviteBinding
 import com.example.kleos.data.auth.SessionManager
+import com.example.kleos.ui.language.t
 
 class HomeFragment : Fragment() {
 
@@ -46,14 +47,15 @@ class HomeFragment : Fragment() {
         // Greeting and user card binding
         val session = SessionManager(requireContext())
         val user = session.getCurrentUser()
-        val name = (user?.fullName?.takeIf { it.isNotBlank() } ?: "guest").trim()
-        binding.helloText.text = "Hello $name"
+        val name = (user?.fullName?.takeIf { it.isNotBlank() } ?: getString(com.example.kleos.R.string.guest)).trim()
+        binding.helloText.text = getString(com.example.kleos.R.string.hello_name, name)
         val idNumeric = user?.id
             ?.filter { it.isDigit() }
             ?.padStart(6, '0')
             ?.takeLast(6) ?: "000000"
-        binding.userIdText.text = "ID: $idNumeric"
-        binding.userNameText.text = name.ifBlank { "guest" }
+        val idTemplate = requireContext().t(com.example.kleos.R.string.id_prefix)
+        binding.userIdText.text = String.format(idTemplate, idNumeric)
+        binding.userNameText.text = name.ifBlank { requireContext().t(com.example.kleos.R.string.guest) }
     }
 
     override fun onResume() {

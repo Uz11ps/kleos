@@ -8,6 +8,7 @@ import com.example.kleos.ui.auth.AuthActivity
 import com.example.kleos.R
 import com.example.kleos.databinding.ActivityOnboardingPagerBinding
 import com.google.android.material.tabs.TabLayoutMediator
+import com.example.kleos.ui.language.t
 
 data class OnboardingPage(
     val imageRes: Int,
@@ -19,25 +20,28 @@ class OnboardingPagerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityOnboardingPagerBinding
     private lateinit var adapter: OnboardingPagerAdapter
 
-    private val pages = listOf(
-        OnboardingPage(
-            R.drawable.ic_menu_gallery,
-            "Discover and explore famed Russian universities",
-            "Through our mobile application, you will be able to discover first‑rate & notable Russian universities and all their programs"
-        ),
-        OnboardingPage(
-            R.drawable.ic_menu_slideshow,
-            "StudyInRussia Awesome\nTalk Show and Broadcast",
-            "The distinctive feature of our mobile application which enables you to watch live talk show & broadcast with leading Russian universities to discuss and obtain the latest"
-        ),
-        OnboardingPage(
-            R.drawable.ic_menu_camera,
-            "Forum, the excellent venue for study discussion and social interaction",
-            "Forum, the outstanding and designated space created with the intention for you to join, share and post the brilliant ideas in your mind to interact with each other"
+    private val pages by lazy {
+        listOf(
+            OnboardingPage(
+                R.drawable.ic_menu_gallery,
+                getString(R.string.ob_title_1),
+                getString(R.string.ob_sub_1)
+            ),
+            OnboardingPage(
+                R.drawable.ic_menu_slideshow,
+                getString(R.string.ob_title_2),
+                getString(R.string.ob_sub_2)
+            ),
+            OnboardingPage(
+                R.drawable.ic_menu_camera,
+                getString(R.string.ob_title_3),
+                getString(R.string.ob_sub_3)
+            )
         )
-    )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        com.example.kleos.ui.language.LocaleManager.applySavedLocale(this)
         super.onCreate(savedInstanceState)
         binding = ActivityOnboardingPagerBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -62,7 +66,7 @@ class OnboardingPagerActivity : AppCompatActivity() {
     private fun updateControls(position: Int) {
         binding.btnBack.isEnabled = position > 0
         binding.btnBack.alpha = if (binding.btnBack.isEnabled) 1f else 0.5f
-        binding.btnNext.text = if (position == pages.lastIndex) getString(R.string.start) else getString(R.string.next)
+        binding.btnNext.text = if (position == pages.lastIndex) this@OnboardingPagerActivity.t(R.string.start) else this@OnboardingPagerActivity.t(R.string.next)
     }
 
     private fun goNext() {

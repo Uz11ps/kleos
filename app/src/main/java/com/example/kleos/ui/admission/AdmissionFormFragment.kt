@@ -14,6 +14,7 @@ import com.example.kleos.data.admissions.AdmissionsRepository
 import com.example.kleos.data.model.AdmissionApplication
 import com.example.kleos.databinding.FragmentAdmissionFormBinding
 import java.util.UUID
+import com.example.kleos.ui.language.t
 
 class AdmissionFormFragment : Fragment() {
 
@@ -37,6 +38,15 @@ class AdmissionFormFragment : Fragment() {
 
         applyDateMask(binding.dateOfBirthEditText)
         applyDateMask(binding.passportExpiryEditText)
+
+        // Phone mask per language
+        val lang = resources.configuration.locales[0]?.language ?: "en"
+        binding.phoneEditText.addTextChangedListener(
+            com.example.kleos.ui.common.PhoneMaskTextWatcher(binding.phoneEditText, lang)
+        )
+        // Apply dynamic i18n overrides to hints (if provided from admin)
+        binding.fullNameEditText.hint = requireContext().t(com.example.kleos.R.string.label_full_name)
+        binding.emailEditText.hint = requireContext().t(com.example.kleos.R.string.label_email)
 
         binding.submitButton.setOnClickListener {
             val fullName = binding.fullNameEditText.text?.toString().orEmpty()

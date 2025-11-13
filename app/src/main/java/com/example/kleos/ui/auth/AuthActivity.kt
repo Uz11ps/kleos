@@ -16,6 +16,7 @@ import android.util.Patterns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import com.example.kleos.ui.language.t
 
 class AuthActivity : AppCompatActivity() {
 
@@ -24,6 +25,8 @@ class AuthActivity : AppCompatActivity() {
     private var isRegisterMode: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Применяем сохранённую локаль до инициализации UI
+        com.example.kleos.ui.language.LocaleManager.applySavedLocale(this)
         super.onCreate(savedInstanceState)
         binding = ActivityAuthBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -32,7 +35,7 @@ class AuthActivity : AppCompatActivity() {
         authRepository = AuthRepository.Http(this)
 
         binding.forgotPasswordText.setOnClickListener {
-            Toast.makeText(this, "Password reset is not implemented yet", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(com.example.kleos.R.string.forgot_password_not_impl), Toast.LENGTH_SHORT).show()
         }
         binding.guestText.setOnClickListener {
             // Вход как гость: создаём сессию с именем guest и техническим токеном
@@ -83,7 +86,7 @@ class AuthActivity : AppCompatActivity() {
         } else {
             getString(com.example.kleos.R.string.action_register) // "Зарегистрироваться"
         }
-        binding.titleText.text = if (isRegisterMode) "Sign Up" else "Sign In"
+        binding.titleText.text = if (isRegisterMode) this@AuthActivity.t(com.example.kleos.R.string.title_sign_up) else this@AuthActivity.t(com.example.kleos.R.string.title_sign_in)
         // По требованию: левую подсказку не показываем ни на Sign In, ни на Sign Up
         binding.leftHintText.visibility = View.GONE
     }
