@@ -88,7 +88,7 @@ router.get('/smtp/ping', async (_req, res) => {
   try {
     const host = process.env.SMTP_HOST;
     if (!host) return res.status(400).json({ ok: false, error: 'smtp_not_configured' });
-    const transporter = nodemailer.createTransport({
+    const baseOptions: any = {
       host,
       port: parseInt(process.env.SMTP_PORT || '587', 10),
       secure: (process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
@@ -96,9 +96,24 @@ router.get('/smtp/ping', async (_req, res) => {
       greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
       socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
       auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
-    });
+    };
+    // Optional HTTP/HTTPS/SOCKS proxy support (e.g. http://user:pass@host:port)
+    if (process.env.SMTP_PROXY) {
+      baseOptions.proxy = process.env.SMTP_PROXY;
+    }
+    // Allow insecure TLS if explicitly requested
+    if ((process.env.SMTP_TLS_INSECURE || '').toLowerCase() === 'true') {
+      baseOptions.tls = { rejectUnauthorized: false };
+    }
+    const transporter = nodemailer.createTransport(baseOptions);
     await transporter.verify();
-    return res.json({ ok: true, host, port: process.env.SMTP_PORT || '587', secure: (process.env.SMTP_SECURE || 'false') });
+    return res.json({
+      ok: true,
+      host,
+      port: process.env.SMTP_PORT || '587',
+      secure: (process.env.SMTP_SECURE || 'false'),
+      proxy: process.env.SMTP_PROXY ? 'enabled' : 'disabled'
+    });
   } catch (e: any) {
     return res.status(500).json({ ok: false, error: e?.message || 'smtp_error', code: e?.code });
   }
@@ -113,7 +128,7 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
     console.log(`Verify email for ${to}: ${webLink} (app: ${appLink})`);
     return;
   }
-  const transporter = nodemailer.createTransport({
+  const options: any = {
     host,
     port: parseInt(process.env.SMTP_PORT || '587', 10),
     secure: (process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
@@ -121,7 +136,14 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
     greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
     socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
     auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
-  });
+  };
+  if (process.env.SMTP_PROXY) {
+    options.proxy = process.env.SMTP_PROXY;
+  }
+  if ((process.env.SMTP_TLS_INSECURE || '').toLowerCase() === 'true') {
+    options.tls = { rejectUnauthorized: false };
+  }
+  const transporter = nodemailer.createTransport(options);
   const html = `<div style="font-family:Arial;">
     <p>Здравствуйте, ${name}!</p>
     <p>Пожалуйста, подтвердите ваш email:</p>
