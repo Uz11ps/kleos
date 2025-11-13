@@ -95,7 +95,10 @@ router.get('/smtp/ping', async (_req, res) => {
       connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '7000', 10),
       greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
       socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
-      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
+      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+      // Require STARTTLS if not using implicit TLS
+      requireTLS: (process.env.SMTP_SECURE || 'false').toLowerCase() !== 'true',
+      tls: { servername: host }
     };
     // Optional HTTP/HTTPS/SOCKS proxy support (e.g. http://user:pass@host:port)
     if (process.env.SMTP_PROXY) {
@@ -103,7 +106,7 @@ router.get('/smtp/ping', async (_req, res) => {
     }
     // Allow insecure TLS if explicitly requested
     if ((process.env.SMTP_TLS_INSECURE || '').toLowerCase() === 'true') {
-      baseOptions.tls = { rejectUnauthorized: false };
+      baseOptions.tls = { ...(baseOptions.tls || {}), rejectUnauthorized: false };
     }
     const transporter = nodemailer.createTransport(baseOptions);
     await transporter.verify();
@@ -135,13 +138,15 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
     connectionTimeout: parseInt(process.env.SMTP_CONN_TIMEOUT || '7000', 10),
     greetingTimeout: parseInt(process.env.SMTP_GREET_TIMEOUT || '7000', 10),
     socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT || '12000', 10),
-    auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined
+    auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+    requireTLS: (process.env.SMTP_SECURE || 'false').toLowerCase() !== 'true',
+    tls: { servername: host }
   };
   if (process.env.SMTP_PROXY) {
     options.proxy = process.env.SMTP_PROXY;
   }
   if ((process.env.SMTP_TLS_INSECURE || '').toLowerCase() === 'true') {
-    options.tls = { rejectUnauthorized: false };
+    options.tls = { ...(options.tls || {}), rejectUnauthorized: false };
   }
   const transporter = nodemailer.createTransport(options);
   const html = `<div style="font-family:Arial;">
