@@ -75,6 +75,13 @@
     <string name="profile_university">Университет</string>
     <string name="profile_student_id">Студенческий ID</string>
 
+    <!-- Programs/Filters -->
+    <string name="filters_title">Фильтры</string>
+    <string name="filter_search_program">Поиск программы или подпрограммы</string>
+    <string name="filter_language">Язык</string>
+    <string name="filter_education_level">Уровень образования</string>
+    <string name="filter_university">Университет</string>
+
     <!-- FAQ arrays (RU) -->
     <string-array name="faq_questions">
         <item>Когда открыта подача документов на осенний набор?</item>

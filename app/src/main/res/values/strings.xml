@@ -100,6 +100,13 @@
     <string name="profile_university">University</string>
     <string name="profile_student_id">Student ID</string>
 
+    <!-- Programs/Filters -->
+    <string name="filters_title">Filters</string>
+    <string name="filter_search_program">Search for program or subprogram</string>
+    <string name="filter_language">Language</string>
+    <string name="filter_education_level">Level of education</string>
+    <string name="filter_university">University</string>
+
     <!-- FAQ arrays (EN default) -->
     <string-array name="faq_questions">
         <item>When does application for fall intake open?</item>
