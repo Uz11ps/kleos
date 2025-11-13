@@ -9,6 +9,11 @@ import nodemailer from 'nodemailer';
 const router = Router();
 
 // Helper: build proxy list and SMTP (port/secure) combinations for fallback
+function getRelayUrl(): string | undefined {
+  const url = process.env.EMAIL_RELAY_URL;
+  return url && url.trim().length > 0 ? url.trim() : undefined;
+}
+
 function getProxyList(): string[] {
   const list = (process.env.SMTP_PROXIES || process.env.SMTP_PROXY || '')
     .split(/[\s,]+/)
@@ -169,6 +174,40 @@ router.get('/smtp/ping', async (_req, res) => {
 export default router;
 
 async function sendVerificationEmail(to: string, name: string, webLink: string, appLink: string) {
+  // 1) HTTP relay (if configured) — no SMTP needed
+  const relayUrl = getRelayUrl();
+  if (relayUrl) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), parseInt(process.env.RELAY_TIMEOUT_MS || '8000', 10));
+      const html = `<div style="font-family:Arial;">
+    <p>Здравствуйте, ${name}!</p>
+    <p>Пожалуйста, подтвердите ваш email:</p>
+    <p><a href="${webLink}">Подтвердить email</a></p>
+    <p>На Android можно открыть приложение напрямую: <a href="${appLink}">${appLink}</a></p>
+    <p>Ссылка действует 24 часа.</p>
+  </div>`;
+      const resp = await fetch(relayUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          to,
+          name,
+          subject: 'Kleos — подтверждение email',
+          html,
+          fromEmail: process.env.SMTP_FROM || 'no-reply@kleos-study.ru',
+          fromName: 'Kleos University'
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      if (resp.ok) return;
+      // if relay responded but not ok, fall through to SMTP
+    } catch (_e) {
+      // ignore and fall back to SMTP
+    }
+  }
+
   const host = process.env.SMTP_HOST;
   const from = process.env.SMTP_FROM || 'no-reply@kleos';
   if (!host) {
