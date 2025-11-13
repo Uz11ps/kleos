@@ -32,6 +32,12 @@ class ProfileFragment : Fragment() {
         binding.nameEditText.setText(user?.fullName ?: "")
         binding.notesEditText.setText("")
 
+        // Phone mask per language
+        val lang = resources.configuration.locales[0]?.language ?: "en"
+        binding.phoneEditText.addTextChangedListener(
+            com.example.kleos.ui.common.PhoneMaskTextWatcher(binding.phoneEditText, lang)
+        )
+
         binding.logoutButton.setOnClickListener {
             AuthRepository.Local(requireContext()).logout()
             startActivity(Intent(requireContext(), AuthActivity::class.java))

@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 
 class VerifyDeepLinkActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        com.example.kleos.ui.language.LocaleManager.applySavedLocale(this)
         super.onCreate(savedInstanceState)
         val data: Uri? = intent?.data
         val token = data?.getQueryParameter("token")

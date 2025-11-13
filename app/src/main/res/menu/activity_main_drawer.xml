@@ -37,4 +37,20 @@
         android:id="@+id/menu_sign_out"
         android:icon="@drawable/ic_logout"
         android:title="@string/action_logout" />
+
+    <item
+        android:id="@+id/menu_language_root"
+        android:title="@string/choose_language">
+        <menu>
+            <item
+                android:id="@+id/menu_lang_ru"
+                android:title="@string/lang_russian" />
+            <item
+                android:id="@+id/menu_lang_en"
+                android:title="@string/lang_english" />
+            <item
+                android:id="@+id/menu_lang_zh"
+                android:title="@string/lang_chinese" />
+        </menu>
+    </item>
 </menu>

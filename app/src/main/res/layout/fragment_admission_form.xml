@@ -13,7 +13,7 @@
         <com.google.android.material.textview.MaterialTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Apply Now"
+            android:text="@string/admission_apply_now"
             android:textStyle="bold"
             android:textSize="20sp"
             android:paddingBottom="12dp"/>
@@ -35,7 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Surname">
+            android:hint="@string/label_surname">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
@@ -47,7 +47,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Date of birth">
+            android:hint="@string/label_date_of_birth">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/dateOfBirthEditText"
@@ -62,7 +62,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Place of birth">
+            android:hint="@string/label_place_of_birth">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
@@ -74,7 +74,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Nationality">
+            android:hint="@string/label_nationality">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
@@ -84,7 +84,7 @@
         <com.google.android.material.textview.MaterialTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sex"
+            android:text="@string/label_sex"
             android:paddingTop="12dp"
             android:paddingBottom="4dp" />
 
@@ -96,13 +96,13 @@
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Male" />
+                android:text="@string/sex_male" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
-                android:text="Female" />
+                android:text="@string/sex_female" />
         </RadioGroup>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -110,7 +110,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Телефон">
+            android:hint="@string/label_phone">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/phoneEditText"
@@ -138,7 +138,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Passport number">
+            android:hint="@string/label_passport_number">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
@@ -150,7 +150,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Date and place of passport issue">
+            android:hint="@string/label_passport_issue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
@@ -162,7 +162,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Passport expiry date">
+            android:hint="@string/label_passport_expiry">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/passportExpiryEditText"
@@ -177,7 +177,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="City of Russian visa obtaining in your country">
+            android:hint="@string/label_visa_city">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
@@ -189,7 +189,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Программа">
+            android:hint="@string/label_program">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/programEditText"
@@ -202,7 +202,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Комментарий (необязательно)">
+            android:hint="@string/label_comment_optional">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/commentEditText"
@@ -217,7 +217,7 @@
             android:id="@+id/submitButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Отправить заявку"
+            android:text="@string/action_submit_application"
             android:layout_marginTop="16dp" />
     </LinearLayout>
 </ScrollView>

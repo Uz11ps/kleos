@@ -27,6 +27,8 @@ class SplashActivity : AppCompatActivity() {
             return
         } else {
             LocaleManager.applySavedLocale(this)
+            // preload server-side translations overrides
+            com.example.kleos.ui.language.TranslationManager.initAsync(this, saved)
         }
 
         // Стартовая задержка 2 секунды, затем плавный подъём и переход

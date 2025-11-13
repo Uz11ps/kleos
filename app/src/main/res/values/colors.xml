@@ -10,4 +10,6 @@
     <color name="kleos_blue">#0D47A1</color>
     <color name="kleos_blue_variant">#0B3C8C</color>
     <color name="kleos_yellow">#FFD600</color>
+    <color name="faq_card_bg">#FFF8E1</color>
+    <color name="faq_chip_bg">#E3F2FD</color>
 </resources>

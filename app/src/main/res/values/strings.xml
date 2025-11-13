@@ -14,20 +14,20 @@
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Programs</string>
-    <string name="label_full_name">ФИО</string>
+    <string name="label_full_name">Full name</string>
     <string name="label_email">Email</string>
-    <string name="label_password">Пароль</string>
-    <string name="action_login">Войти</string>
-    <string name="action_register">Зарегистрироваться</string>
-    <string name="switch_to_register">Нет аккаунта? Регистрация</string>
-    <string name="switch_to_login">Уже есть аккаунт? Войти</string>
-    <string name="menu_profile">Профиль</string>
-    <string name="menu_partners">Партнеры</string>
-    <string name="menu_chat">Поддержка</string>
-    <string name="menu_admission">Поступление</string>
-    <string name="action_logout">Выйти</string>
+    <string name="label_password">Password</string>
+    <string name="action_login">Sign In</string>
+    <string name="action_register">Sign Up</string>
+    <string name="switch_to_register">Do not have an account? Register</string>
+    <string name="switch_to_login">Already have an account? Sign in</string>
+    <string name="menu_profile">Profile</string>
+    <string name="menu_partners">Partners</string>
+    <string name="menu_chat">Support</string>
+    <string name="menu_admission">Admission</string>
+    <string name="action_logout">Logout</string>
     <string name="api_base_url">http://10.0.2.2:8080/</string>
-    <string name="choose_language">Выберите язык</string>
+    <string name="choose_language">Choose language</string>
     <string name="forgot_password">Forgot Your Password?</string>
     <string name="continue_as_guest">Continue as guest</string>
     <string name="dont_have_account">Dont have account?</string>
@@ -36,4 +36,133 @@
     <string name="invite_share_title">Share app</string>
     <string name="invite_share_text">Try the StudyInRussia app! It helped me a lot. Download and check it out.</string>
     <string name="close">Close</string>
+
+    <string name="lang_russian">Русский</string>
+    <string name="lang_english">English</string>
+    <string name="lang_chinese">中文（简体）</string>
+    <string name="no_suitable_question">No suitable question? Submit a request</string>
+
+    <!-- Chat -->
+    <string name="hint_message">Message</string>
+    <string name="action_send">Send</string>
+
+    <!-- Partners -->
+    <string name="loading">Loading…</string>
+    <string name="no_partners_yet">No partners yet</string>
+    <string name="failed_to_load">Failed to load</string>
+
+    <!-- Home -->
+    <string name="guest">guest</string>
+    <string name="hello_name">Hello %1$s</string>
+    <string name="hi_name">Hi, %1$s</string>
+    <string name="id_prefix">ID: %1$s</string>
+
+    <!-- Auth -->
+    <string name="forgot_password_not_impl">Password reset is not implemented yet</string>
+    <string name="title_sign_up">Sign Up</string>
+    <string name="title_sign_in">Sign In</string>
+
+    <!-- Admission form -->
+    <string name="admission_apply_now">Apply Now</string>
+    <string name="label_surname">Surname</string>
+    <string name="label_date_of_birth">Date of birth</string>
+    <string name="label_place_of_birth">Place of birth</string>
+    <string name="label_nationality">Nationality</string>
+    <string name="label_sex">Sex</string>
+    <string name="sex_male">Male</string>
+    <string name="sex_female">Female</string>
+    <string name="label_phone">Phone</string>
+    <string name="label_passport_number">Passport number</string>
+    <string name="label_passport_issue">Date and place of passport issue</string>
+    <string name="label_passport_expiry">Passport expiry date</string>
+    <string name="label_visa_city">City of Russian visa obtaining in your country</string>
+    <string name="label_program">Program</string>
+    <string name="label_comment_optional">Comment (optional)</string>
+    <string name="action_submit_application">Submit application</string>
+
+    <!-- Onboarding -->
+    <string name="ob_title_1">Discover and explore famed Russian universities</string>
+    <string name="ob_sub_1">Through our mobile application, you will be able to discover first‑rate &amp; notable Russian universities and all their programs</string>
+    <string name="ob_title_2">StudyInRussia Awesome\nTalk Show and Broadcast</string>
+    <string name="ob_sub_2">The distinctive feature of our mobile application which enables you to watch live talk show &amp; broadcast with leading Russian universities to discuss and obtain the latest</string>
+    <string name="ob_title_3">Forum, the excellent venue for study discussion and social interaction</string>
+    <string name="ob_sub_3">Forum, the outstanding and designated space created with the intention for you to join, share and post the brilliant ideas in your mind to interact with each other</string>
+
+    <!-- Profile -->
+    <string name="profile_name">Name</string>
+    <string name="profile_notes">Notes</string>
+    <string name="profile_payment">Payment</string>
+    <string name="profile_penalties">Penalties</string>
+    <string name="profile_phone">Phone</string>
+    <string name="profile_course">Course</string>
+    <string name="profile_speciality">Speciality</string>
+    <string name="profile_status">Status</string>
+    <string name="profile_university">University</string>
+    <string name="profile_student_id">Student ID</string>
+
+    <!-- FAQ arrays (EN default) -->
+    <string-array name="faq_questions">
+        <item>When does application for fall intake open?</item>
+        <item>Is there a spring intake?</item>
+        <item>What documents are required to apply?</item>
+        <item>Is legalization or apostille required?</item>
+        <item>Is diploma recognition (nostrification) needed?</item>
+        <item>What Russian level is required?</item>
+        <item>Are there preparatory Russian courses?</item>
+        <item>Are there entrance exams or interviews?</item>
+        <item>How long does the visa invitation take?</item>
+        <item>What visa type is issued first?</item>
+        <item>How to pay tuition?</item>
+        <item>Is a prepayment required?</item>
+        <item>Refund if visa refused?</item>
+        <item>Is dormitory provided?</item>
+        <item>Dormitory cost?</item>
+        <item>Is medical insurance required?</item>
+        <item>Medical exam and fingerprints?</item>
+        <item>Do I need migration registration?</item>
+        <item>What is a migration card?</item>
+        <item>Can I open a bank account?</item>
+        <item>How to get a SIM card?</item>
+        <item>Can I work while studying?</item>
+        <item>Can I transfer from another university?</item>
+        <item>Are scholarships available?</item>
+        <item>Monthly living costs?</item>
+        <item>Age limits?</item>
+        <item>Is distance learning available?</item>
+        <item>Multiple-entry visa immediately?</item>
+        <item>Who translates documents into Russian?</item>
+        <item>Can I pay in parts?</item>
+    </string-array>
+    <string-array name="faq_answers">
+        <item>Usually opens in spring and lasts until July–August; check program dates.</item>
+        <item>Some programs have February/March intake; confirm per program.</item>
+        <item>Passport, diploma with transcript, notarized Russian translation, photo, motivation letter (if required).</item>
+        <item>Yes, depending on your country; apostille or consular legalization is required.</item>
+        <item>Sometimes; recognition may be required by the university or Rosobrnadzor (4–8 weeks).</item>
+        <item>Typically TRKI/TORFL B1–B2 for Russian-taught programs; preparatory year possible.</item>
+        <item>Yes, one-year preparatory program: Russian + profile subjects; internal exam at the end.</item>
+        <item>Depends on program: often online interview and/or subject test.</item>
+        <item>Usually 10–20 working days after payment and full documents.</item>
+        <item>Usually single-entry student visa for 90 days, then extension and multiple-entry.</item>
+        <item>Bank transfer by invoice; sometimes cards; bank fees paid by the student.</item>
+        <item>Yes, often prepayment for a semester or a year is required.</item>
+        <item>Usually partial refund minus admin fees; see contract terms.</item>
+        <item>Yes, if places available; priority to first-year international students.</item>
+        <item>On average 1,000–5,000 RUB per month depending on city and conditions.</item>
+        <item>Yes, VMI policy required for the whole study period.</item>
+        <item>Yes, within 90 days after entry: medical exam, photo and fingerprints.</item>
+        <item>Yes, registration at place of stay within 3 working days; usually arranged by dorm/landlord.</item>
+        <item>A form issued at the border; keep it until departure and for registration.</item>
+        <item>Yes; usually passport, migration card, and registration are required.</item>
+        <item>With passport at operator office; registration may be requested.</item>
+        <item>Full-time international students can work, typically up to 20 h/week during term.</item>
+        <item>Yes, with transcript and match to curriculum; admission office decides.</item>
+        <item>Yes: Rossotrudnichestvo quotas and university grants; competitive.</item>
+        <item>On average 20,000–40,000 RUB for food, transport, other expenses.</item>
+        <item>Usually no strict limits for bachelor; minors need consent and guardian.</item>
+        <item>For some programs yes; visa usually requires full-time.</item>
+        <item>No; first single-entry 90 days, then extension to multiple-entry.</item>
+        <item>Certified/Notarized translations accepted, in home country or in Russia.</item>
+        <item>Often per semester; schedule is in the contract.</item>
+    </string-array>
 </resources>

@@ -127,6 +127,7 @@ a{margin-right:12px;}
   <h2>Users</h2>
   <div><a href="/admin/logout">Logout</a></div>
   <div style="margin:8px 0;"><a href="/admin/partners">Partners</a> | <a href="/admin/admissions">Admissions</a> | <a href="/admin/chats">Chats</a></div>
+  <div style="margin:8px 0;"><a href="/admin/i18n">I18n</a></div>
   <table>
     <thead><tr><th>ID</th><th>Data</th></tr></thead>
     <tbody>${rows}</tbody>
@@ -316,6 +317,63 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
     load();
   </script>
   </body></html>`);
+});
+
+// I18n UI
+router.get('/admin/i18n', adminAuthMiddleware, async (req, res) => {
+  const lang = (req.query.lang as string) || 'en';
+  const langs = ['en', 'ru', 'zh'];
+  const items = await (await import('../models/Translation.js')).Translation.find({ lang }).sort({ key: 1 }).lean();
+  const rows = items.map(t => `
+    <tr>
+      <td>${t.key}</td>
+      <td>
+        <form method="post" action="/admin/i18n/save">
+          <input type="hidden" name="lang" value="${lang}" />
+          <input type="hidden" name="key" value="${t.key}" />
+          <textarea name="value" rows="2" style="width:100%">${(t.value || '').toString().replace(/</g,'&lt;')}</textarea>
+          <div style="margin-top:6px">
+            <button type="submit">Save</button>
+            <button formaction="/admin/i18n/delete" formmethod="post" style="color:#a00" onclick="return confirm('Delete?')">Delete</button>
+          </div>
+        </form>
+      </td>
+    </tr>
+  `).join('');
+  res.send(`<!doctype html><html><body style="font-family:Arial;max-width:1000px;margin:40px auto;padding:0 16px;">
+    <h2>I18n (Translations)</h2>
+    <div>
+      ${langs.map(l => `<a href="/admin/i18n?lang=${l}" ${l===lang?'style="font-weight:bold"':''}>${l}</a>`).join(' | ')}
+    </div>
+    <h3 style="margin-top:12px;">Add</h3>
+    <form method="post" action="/admin/i18n/save" style="display:flex; gap:8px; align-items:center;">
+      <select name="lang">${langs.map(l=>`<option ${l===lang?'selected':''} value="${l}">${l}</option>`).join('')}</select>
+      <input name="key" placeholder="key (e.g., no_suitable_question)" style="width:300px"/>
+      <input name="value" placeholder="value" style="width:420px"/>
+      <button type="submit">Create</button>
+    </form>
+    <h3 style="margin-top:12px;">All (${lang})</h3>
+    <table border="1" cellpadding="6" style="width:100%;border-collapse:collapse;">
+      <thead><tr><th style="width:30%">Key</th><th>Value</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`);
+});
+
+router.post('/admin/i18n/save', adminAuthMiddleware, async (req, res) => {
+  const schema = z.object({ lang: z.enum(['en','ru','zh']), key: z.string(), value: z.string().default('') });
+  const data = schema.parse(req.body);
+  const { Translation } = await import('../models/Translation.js');
+  await Translation.updateOne({ lang: data.lang, key: data.key }, { $set: { value: data.value } }, { upsert: true });
+  res.redirect(`/admin/i18n?lang=${data.lang}`);
+});
+
+router.post('/admin/i18n/delete', adminAuthMiddleware, async (req, res) => {
+  const schema = z.object({ lang: z.enum(['en','ru','zh']), key: z.string() });
+  const data = schema.parse(req.body);
+  const { Translation } = await import('../models/Translation.js');
+  await Translation.deleteOne({ lang: data.lang, key: data.key });
+  res.redirect(`/admin/i18n?lang=${data.lang}`);
 });
 
 export default router;
