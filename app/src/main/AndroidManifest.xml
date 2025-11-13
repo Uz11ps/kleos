@@ -40,6 +40,11 @@
             android:label="@string/app_name"
             android:theme="@style/Theme.Kleos.NoActionBar" />
         <activity
+            android:name=".ui.language.LanguageActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Kleos.NoActionBar" />
+        <activity
             android:name=".ui.verify.VerifyDeepLinkActivity"
             android:exported="true">
             <intent-filter>

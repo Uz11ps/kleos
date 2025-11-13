@@ -27,6 +27,7 @@
     <string name="menu_admission">Поступление</string>
     <string name="action_logout">Выйти</string>
     <string name="api_base_url">http://10.0.2.2:8080/</string>
+    <string name="choose_language">Выберите язык</string>
     <string name="forgot_password">Forgot Your Password?</string>
     <string name="continue_as_guest">Continue as guest</string>
     <string name="dont_have_account">Dont have account?</string>

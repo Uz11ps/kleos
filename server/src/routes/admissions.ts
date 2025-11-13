@@ -34,6 +34,17 @@ router.get('/', auth('admin'), async (_req, res) => {
   })));
 });
 
+const updateSchema = z.object({
+  status: z.enum(['new','processing','done']).optional(),
+  studentId: z.string().optional()
+});
+
+router.put('/:id', auth('admin'), async (req, res) => {
+  const data = updateSchema.parse(req.body);
+  await Admission.updateOne({ _id: req.params.id }, data);
+  res.json({ ok: true });
+});
+
 export default router;
 
 

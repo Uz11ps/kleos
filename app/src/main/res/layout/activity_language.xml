@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose language"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:paddingBottom="16dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Русский"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnEn"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="English"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnZh"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="中文"/>
+
+</LinearLayout>
+
+

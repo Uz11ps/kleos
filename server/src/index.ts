@@ -9,6 +9,7 @@ import partnersRoutes from './routes/partners.js';
 import admissionsRoutes from './routes/admissions.js';
 import adminWeb from './routes/adminWeb.js';
 import usersRoutes from './routes/users.js';
+import chatsRoutes from './routes/chats.js';
 
 const app = express();
 app.use(cors({
@@ -49,6 +50,7 @@ app.use('/auth', authRoutes);
 app.use('/partners', partnersRoutes);
 app.use('/admissions', admissionsRoutes);
 app.use('/users', usersRoutes);
+app.use('/chats', chatsRoutes);
 app.use('/', adminWeb);
 
 const port = Number(process.env.PORT) || 8080;

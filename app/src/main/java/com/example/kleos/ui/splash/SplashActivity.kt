@@ -7,6 +7,8 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import com.example.kleos.databinding.ActivitySplashBinding
 import com.example.kleos.ui.onboarding.OnboardingActivity
+import com.example.kleos.ui.language.LanguageActivity
+import com.example.kleos.ui.language.LocaleManager
 
 class SplashActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySplashBinding
@@ -15,6 +17,17 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Apply saved locale or ask user on first launch
+        val prefs = getSharedPreferences("kleos_prefs_lang", MODE_PRIVATE)
+        val saved = prefs.getString("app_locale", null)
+        if (saved.isNullOrEmpty()) {
+            startActivity(Intent(this, LanguageActivity::class.java))
+            finish()
+            return
+        } else {
+            LocaleManager.applySavedLocale(this)
+        }
 
         // Стартовая задержка 2 секунды, затем плавный подъём и переход
         binding.logoGroup.postDelayed({
