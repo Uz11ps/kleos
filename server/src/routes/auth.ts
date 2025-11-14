@@ -230,11 +230,34 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
   }
 
   const html = `<div style="font-family:Arial;">
-    <p>Здравствуйте, ${name}!</p>
-    <p>Пожалуйста, подтвердите ваш email:</p>
-    <p><a href="${webLink}">Подтвердить email</a></p>
-    <p>На Android можно открыть приложение напрямую: <a href="${appLink}">${appLink}</a></p>
-    <p>Ссылка действует 24 часа.</p>
+    <div style="max-width:560px;margin:0 auto;padding:24px 20px;background:#ffffff;border:1px solid #eee;border-radius:8px;">
+      <h2 style="margin:0 0 16px 0;color:#111;">Подтверждение email</h2>
+      <p style="margin:0 0 12px 0;color:#333;">Здравствуйте, ${name}!</p>
+      <p style="margin:0 0 18px 0;color:#333;">Чтобы завершить регистрацию в приложении Kleos, подтвердите ваш email.</p>
+
+      <!-- Основная кнопка: открыть приложение по deep link -->
+      <div style="text-align:center;margin:18px 0;">
+        <a href="${appLink}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600;">
+          Открыть приложение и подтвердить
+        </a>
+      </div>
+
+      <!-- Запасной вариант: веб‑кнопка -->
+      <p style="margin:16px 0 8px 0;color:#333;">Если приложение не открылось, подтвердите по ссылке на сайте:</p>
+      <div style="text-align:center;margin:10px 0 22px 0;">
+        <a href="${webLink}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:10px 16px;border-radius:6px;font-weight:600;">
+          Подтвердить на сайте
+        </a>
+      </div>
+
+      <!-- Прямая deep‑link и веб‑ссылка на случай устаревших клиентов -->
+      <div style="font-size:13px;color:#555;line-height:1.6;border-top:1px solid #f0f0f0;padding-top:12px;">
+        <p style="margin:0 0 8px 0;">Если кнопки выше не работают, скопируйте и откройте одну из ссылок вручную:</p>
+        <p style="margin:0 0 6px 0;word-break:break-all;"><strong>Приложение:</strong> <a href="${appLink}" style="color:#2563eb">${appLink}</a></p>
+        <p style="margin:0;word-break:break-all;"><strong>Сайт:</strong> <a href="${webLink}" style="color:#2563eb">${webLink}</a></p>
+        <p style="margin:12px 0 0 0;color:#777;">Ссылка действует 24 часа.</p>
+      </div>
+    </div>
   </div>`;
 
   let lastError: any = null;
