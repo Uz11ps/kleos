@@ -8,7 +8,7 @@ import { Admission } from '../models/Admission.js';
 import chatsRoutes from './chats.js';
 import multer from 'multer';
 import path from 'path';
-import { Schema, model, Types } from 'mongoose';
+import mongoose, { Schema, model, Types } from 'mongoose';
 
 const router = Router();
 
@@ -43,8 +43,8 @@ const MessageSchema = new Schema({
   senderRole: { type: String, enum: ['student', 'admin', 'system'] },
   text: String
 }, { timestamps: true });
-const Chat = model('Chat', ChatSchema);
-const Message = model('Message', MessageSchema);
+const Chat = (mongoose.models.Chat as any) || model('Chat', ChatSchema);
+const Message = (mongoose.models.Message as any) || model('Message', MessageSchema);
 
 function adminLayout(opts: {
   title: string;
