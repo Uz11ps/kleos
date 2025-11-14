@@ -367,6 +367,9 @@ router.get('/admin/admissions', adminAuthMiddleware, async (_req, res) => {
           ${a.comment ? `<div class="muted">Comment: ${(a.comment as string).toString().replace(/</g,'&lt;')}</div>` : ''}
           <div class="muted">Status: ${a.status || 'new'}${(a as any).userId ? ` | userId: ${(a as any).userId}` : ''}</div>
         </div>
+        <div style="margin:6px 0">
+          <a class="btn" href="/admin/admissions/${a._id}/view">Подробнее</a>
+        </div>
         <div class="form-row">
           <form method="post" action="/admin/admissions/${a._id}/accept" class="form-row">
             <input name="studentId" placeholder="Student ID" value="${(a as any).studentId || ''}" />
@@ -412,6 +415,51 @@ router.post('/admin/admissions/:id/reject', adminAuthMiddleware, async (req, res
   const id = req.params.id;
   await Admission.updateOne({ _id: id }, { status: 'rejected' });
   res.redirect('/admin/admissions');
+});
+
+// Admission details
+router.get('/admin/admissions/:id/view', adminAuthMiddleware, async (req, res) => {
+  const id = req.params.id;
+  const a: any = await Admission.findById(id).lean();
+  if (!a) {
+    return res.redirect('/admin/admissions');
+  }
+  const entries = Object.entries(a).map(([k, v]) => {
+    let val: string;
+    try {
+      if (v === null || v === undefined) val = '';
+      else if (typeof v === 'object') val = JSON.stringify(v, null, 2);
+      else val = String(v);
+    } catch { val = String(v); }
+    val = val.replace(/</g, '&lt;');
+    return `<tr><th style="width:220px">${k}</th><td><pre style="margin:0;white-space:pre-wrap">${val}</pre></td></tr>`;
+  }).join('');
+
+  const body = `
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <h2 style="margin:0">Admission details</h2>
+        <a class="btn" href="/admin/admissions">&larr; Назад</a>
+      </div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <tbody>
+            ${entries}
+          </tbody>
+        </table>
+      </div>
+      <div class="toolbar">
+        <form method="post" action="/admin/admissions/${id}/accept" class="form-row">
+          <input name="studentId" placeholder="Student ID" value="${a.studentId || ''}" />
+          <button class="btn primary" type="submit">Принять</button>
+        </form>
+        <form method="post" action="/admin/admissions/${id}/reject" onsubmit="return confirm('Отклонить заявку?')">
+          <button class="btn danger" type="submit">Отклонить</button>
+        </form>
+      </div>
+    </div>
+  `;
+  res.send(adminLayout({ title: `Kleos Admin - Admission ${id}`, active: 'admissions', body }));
 });
 
 router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
