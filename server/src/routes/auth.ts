@@ -89,11 +89,44 @@ router.get('/verify', async (req, res) => {
   </body>
 </html>`);
   }
-  user.emailVerified = true;
-  user.emailVerifyToken = undefined as any;
-  user.emailVerifyExpires = undefined as any;
-  await user.save();
-  res.send('<html><body style="font-family:Arial;padding:24px;"><h2>Email verified</h2><p>You can close this page and return to the app.</p></body></html>');
+
+  // Не завершаем верификацию по GET (многие почтовые клиенты "препросматривают" ссылку).
+  // Показываем страницу с кнопкой, которая отправит POST /auth/verify/consume.
+  const safeToken = token.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return res.send(`<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Подтверждение email</title>
+    <style>
+      body { font-family: Arial, sans-serif; background:#f6f7fb; margin:0; padding:0; }
+      .card {
+        max-width: 560px; margin: 40px auto; background:#fff; border:1px solid #eee;
+        border-radius: 10px; padding: 24px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      }
+      h2 { margin: 0 0 14px 0; color:#111; font-size: 20px; }
+      p { margin: 0 0 10px 0; color:#444; line-height: 1.55; }
+      .btn {
+        display:inline-block; padding: 10px 16px; background:#2563eb; color:#fff; text-decoration:none;
+        border-radius: 6px; font-weight: 600; margin-top: 12px; border:0; cursor:pointer;
+      }
+      .ok { color:#10b981; font-weight:600; }
+      .err { color:#ef4444; font-weight:600; }
+    </style>
+  </head>
+  <body>
+    <div class="card" id="step1">
+      <h2>Подтверждение email</h2>
+      <p>Нажмите кнопку ниже, чтобы подтвердить почту.</p>
+      <form method="post" action="/auth/verify/consume" style="margin-top:12px;">
+        <input type="hidden" name="token" value="${safeToken}" />
+        <button class="btn" type="submit">Подтвердить</button>
+      </form>
+      <p class="hint" style="margin-top:10px;color:#666;font-size:14px;">Если кнопка не сработала, возможно интернет‑сканер провайдера предварительно открыл ссылку. В этом случае запросите новое письмо в приложении.</p>
+    </div>
+  </body>
+</html>`);
 });
 
 router.post('/verify/consume', async (req, res) => {
