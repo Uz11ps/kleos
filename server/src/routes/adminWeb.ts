@@ -535,83 +535,85 @@ router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
 });
 
 // I18n UI
-router.get('/admin/i18n', adminAuthMiddleware, async (req, res) => {
-  const lang = (req.query.lang as string) || 'en';
-  const q = (req.query.q as string || '').trim();
-  const langs = ['en', 'ru', 'zh'];
-  const filter: any = { lang };
-  if (q) filter.key = { $regex: q, $options: 'i' };
-  const items = await (await import('../models/Translation.js')).Translation.find(filter).sort({ key: 1 }).lean();
-  const rows = items.map(t => `
-    <tr>
-      <td>${t.key}</td>
-      <td>
-        <form method="post" action="/admin/i18n/save">
-          <input type="hidden" name="lang" value="${lang}" />
-          <input type="hidden" name="key" value="${t.key}" />
-          <textarea name="value" rows="2" style="width:100%">${(t.value || '').toString().replace(/</g,'&lt;')}</textarea>
-          <div style="margin-top:6px">
-            <button class="btn primary" type="submit">Save</button>
-            <button class="btn danger" formaction="/admin/i18n/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
-          </div>
-        </form>
-      </td>
-    </tr>
-  `).join('');
+router.get('/admin/i18n', adminAuthMiddleware, async (_req, res) => {
+  const langs = ['ru','en','zh'];
+  const { Translation } = await import('../models/Translation.js');
+  const all = await Translation.find({}).lean();
+  const keySet = new Set<string>();
+  for (const t of all) keySet.add(t.key);
+  const keys = Array.from(keySet).sort((a,b)=>a.localeCompare(b));
+  const map: Record<string, Record<string,string>> = {};
+  for (const k of keys) map[k] = { ru:'', en:'', zh:'' };
+  for (const t of all) {
+    if (!map[t.key]) map[t.key] = { ru:'', en:'', zh:'' };
+    (map[t.key] as any)[t.lang] = t.value || '';
+  }
+  const rows = keys.map(k => {
+    const r = map[k];
+    return `
+      <tr>
+        <td><input name="keys[]" value="${k.replace(/"/g,'&quot;')}" /></td>
+        <td><input name="ru[]" value="${(r.ru||'').toString().replace(/"/g,'&quot;')}" /></td>
+        <td><input name="en[]" value="${(r.en||'').toString().replace(/"/g,'&quot;')}" /></td>
+        <td><input name="zh[]" value="${(r.zh||'').toString().replace(/"/g,'&quot;')}" /></td>
+      </tr>
+    `;
+  }).join('');
   const body = `
     <div class="card">
       <h2>I18n (Translations)</h2>
-      <div class="toolbar">
-        ${langs.map(l => `<a class="nav-link ${l===lang?'active':''}" href="/admin/i18n?lang=${l}${q?`&q=${encodeURIComponent(q)}`:''}">${l}</a>`).join('')}
-        <form method="get" action="/admin/i18n" style="display:inline-flex;gap:8px;align-items:center;margin-left:auto">
-          <input type="hidden" name="lang" value="${lang}" />
-          <input name="q" placeholder="Search key..." value="${q.replace(/"/g,'&quot;')}" />
-          <button class="btn" type="submit">Search</button>
-          <a class="btn" href="/admin/i18n?lang=${lang}">Reset</a>
-          <a class="btn" href="/admin/i18n/export?lang=${lang}">Export JSON</a>
-        </form>
-      </div>
-      <form method="post" action="/admin/i18n/save" class="form-row">
-        <select name="lang">${langs.map(l=>`<option ${l===lang?'selected':''} value="${l}">${l}</option>`).join('')}</select>
-        <input name="key" placeholder="key (e.g., no_suitable_question)" style="min-width:260px"/>
-        <input name="value" placeholder="value" style="min-width:300px;flex:1"/>
-        <button class="btn primary" type="submit">Create</button>
-      </form>
-      <div class="card" style="margin-top:12px">
-        <h3>Import JSON</h3>
-        <form method="post" action="/admin/i18n/import">
-          <div class="form-row" style="margin-bottom:8px">
-            <select name="lang">${langs.map(l=>`<option ${l===lang?'selected':''} value="${l}">${l}</option>`).join('')}</select>
-            <button class="btn" type="submit">Import & Upsert</button>
+      <form method="post" action="/admin/i18n/save-bulk">
+        <div class="toolbar">
+          <div class="form-row">
+            <input name="newKey" placeholder="new key" />
+            <input name="new_ru" placeholder="ru value" />
+            <input name="new_en" placeholder="en value" />
+            <input name="new_zh" placeholder="zh value" />
+            <button class="btn" type="submit">Add & Save</button>
+            <a class="btn" href="/admin/i18n/export?lang=ru">Export RU</a>
+            <a class="btn" href="/admin/i18n/export?lang=en">Export EN</a>
+            <a class="btn" href="/admin/i18n/export?lang=zh">Export ZH</a>
           </div>
-          <textarea name="json" rows="8" placeholder='{"key":"value"}' style="width:100%"></textarea>
-        </form>
-      </div>
-      <div class="table-wrap" style="margin-top:12px">
-        <table>
-          <thead><tr><th style="width:30%">Key</th><th>Value</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
+        </div>
+        <div class="table-wrap" style="margin-top:12px">
+          <table>
+            <thead><tr><th style="width:28%">Key</th><th>ru</th><th>en</th><th>zh</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <div class="toolbar" style="margin-top:12px">
+          <button class="btn primary" type="submit">Save All</button>
+        </div>
+      </form>
     </div>
   `;
-  res.send(adminLayout({ title: `Kleos Admin - I18n (${lang})`, active: 'i18n', body }));
+  res.send(adminLayout({ title: 'Kleos Admin - I18n', active: 'i18n', body }));
 });
 
-router.post('/admin/i18n/save', adminAuthMiddleware, async (req, res) => {
-  const schema = z.object({ lang: z.enum(['en','ru','zh']), key: z.string(), value: z.string().default('') });
-  const data = schema.parse(req.body);
+router.post('/admin/i18n/save-bulk', adminAuthMiddleware, async (req, res) => {
+  const { keys = [], ru = [], en = [], zh = [], newKey = '', new_ru = '', new_en = '', new_zh = '' } = req.body as any;
+  const normalizeArr = (v: any) => Array.isArray(v) ? v : (v ? [v] : []);
+  const keysArr = normalizeArr(keys);
+  const ruArr = normalizeArr(ru);
+  const enArr = normalizeArr(en);
+  const zhArr = normalizeArr(zh);
+  const ops: any[] = [];
+  for (let i = 0; i < keysArr.length; i++) {
+    const k = String(keysArr[i] || '').trim();
+    if (!k) continue;
+    ops.push({ updateOne: { filter: { lang: 'ru', key: k }, update: { $set: { value: String(ruArr[i] ?? '') } }, upsert: true } });
+    ops.push({ updateOne: { filter: { lang: 'en', key: k }, update: { $set: { value: String(enArr[i] ?? '') } }, upsert: true } });
+    ops.push({ updateOne: { filter: { lang: 'zh', key: k }, update: { $set: { value: String(zhArr[i] ?? '') } }, upsert: true } });
+  }
+  const nk = String(newKey || '').trim();
+  if (nk) {
+    ops.push({ updateOne: { filter: { lang: 'ru', key: nk }, update: { $set: { value: String(new_ru ?? '') } }, upsert: true } });
+    ops.push({ updateOne: { filter: { lang: 'en', key: nk }, update: { $set: { value: String(new_en ?? '') } }, upsert: true } });
+    ops.push({ updateOne: { filter: { lang: 'zh', key: nk }, update: { $set: { value: String(new_zh ?? '') } }, upsert: true } });
+  }
   const { Translation } = await import('../models/Translation.js');
-  await Translation.updateOne({ lang: data.lang, key: data.key }, { $set: { value: data.value } }, { upsert: true });
-  res.redirect(`/admin/i18n?lang=${data.lang}`);
-});
-
-router.post('/admin/i18n/delete', adminAuthMiddleware, async (req, res) => {
-  const schema = z.object({ lang: z.enum(['en','ru','zh']), key: z.string() });
-  const data = schema.parse(req.body);
-  const { Translation } = await import('../models/Translation.js');
-  await Translation.deleteOne({ lang: data.lang, key: data.key });
-  res.redirect(`/admin/i18n?lang=${data.lang}`);
+  if (ops.length) await Translation.bulkWrite(ops, { ordered: false });
+  res.redirect('/admin/i18n');
 });
 
 router.get('/admin/i18n/export', adminAuthMiddleware, async (req, res) => {
@@ -636,6 +638,96 @@ router.post('/admin/i18n/import', adminAuthMiddleware, async (req, res) => {
   }
   if (ops.length) await Translation.bulkWrite(ops, { ordered: false });
   res.redirect(`/admin/i18n?lang=${data.lang}`);
+});
+
+// News UI
+router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
+  const { News } = await import('../models/News.js');
+  const list = await News.find().sort({ order: 1, publishedAt: -1, createdAt: -1 }).lean();
+  const rows = list.map(n => `
+    <tr>
+      <td>${n._id}</td>
+      <td>
+        <form method="post" action="/admin/news/${n._id}">
+          <input name="title" value="${(n.title || '').toString().replace(/"/g,'&quot;')}" />
+          <input name="imageUrl" placeholder="Image URL" value="${(n.imageUrl || '').toString().replace(/"/g,'&quot;')}" />
+          <input name="publishedAt" type="datetime-local" value="${n.publishedAt ? new Date(n.publishedAt).toISOString().slice(0,16) : ''}" />
+          <input name="order" type="number" value="${n.order || 0}" />
+          <label><input type="checkbox" name="active" ${n.active ? 'checked' : ''}/> active</label>
+          <textarea name="content" rows="3" placeholder="Content" style="width:100%">${(n.content || '').toString().replace(/</g,'&lt;')}</textarea>
+          <div style="margin-top:6px">
+            <button class="btn primary" type="submit">Save</button>
+            <button class="btn danger" formaction="/admin/news/${n._id}/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
+          </div>
+        </form>
+      </td>
+    </tr>
+  `).join('');
+  const body = `
+    <div class="card">
+      <h2>News</h2>
+      <form method="post" action="/admin/news/create" class="form-row">
+        <input name="title" placeholder="Title" style="min-width:260px"/>
+        <input name="imageUrl" placeholder="Image URL"/>
+        <input name="publishedAt" type="datetime-local"/>
+        <input name="order" type="number" placeholder="Order" value="0"/>
+        <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" checked/> active</label>
+        <button class="btn primary" type="submit">Create</button>
+      </form>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  res.send(adminLayout({ title: 'Kleos Admin - News', active: '', body }));
+});
+
+router.post('/admin/news/create', adminAuthMiddleware, async (req, res) => {
+  const { News } = await import('../models/News.js');
+  const schema = z.object({
+    title: z.string().min(1),
+    imageUrl: z.string().optional().default(''),
+    publishedAt: z.string().optional().default(''),
+    order: z.coerce.number().optional().default(0),
+    active: z.string().optional()
+  });
+  const data = schema.parse(req.body);
+  await News.create({
+    title: data.title,
+    imageUrl: data.imageUrl,
+    publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
+    order: data.order,
+    active: data.active === 'on',
+    content: ''
+  });
+  res.redirect('/admin/news');
+});
+
+router.post('/admin/news/:id', adminAuthMiddleware, async (req, res) => {
+  const { News } = await import('../models/News.js');
+  const schema = z.object({
+    title: z.string().optional(),
+    imageUrl: z.string().optional(),
+    content: z.string().optional(),
+    publishedAt: z.string().optional(),
+    order: z.coerce.number().optional(),
+    active: z.string().optional()
+  });
+  const data = schema.parse(req.body);
+  const update: any = { ...data };
+  if ('active' in data) update.active = data.active === 'on';
+  if (data.publishedAt) update.publishedAt = new Date(data.publishedAt);
+  await News.updateOne({ _id: req.params.id }, update);
+  res.redirect('/admin/news');
+});
+
+router.post('/admin/news/:id/delete', adminAuthMiddleware, async (req, res) => {
+  const { News } = await import('../models/News.js');
+  await News.deleteOne({ _id: req.params.id });
+  res.redirect('/admin/news');
 });
 export default router;
 
