@@ -360,16 +360,22 @@ router.get('/admin/admissions', adminAuthMiddleware, async (_req, res) => {
     <tr>
       <td>${a._id}</td>
       <td>
-        <div><b>${a.fullName}</b> (${a.email}, ${a.phone}) — ${a.program}</div>
-        <form method="post" action="/admin/admissions/${a._id}">
-          <select name="status">
-            <option value="new"${a.status==='new'?' selected':''}>new</option>
-            <option value="processing"${a.status==='processing'?' selected':''}>processing</option>
-            <option value="done"${a.status==='done'?' selected':''}>done</option>
-          </select>
-          <input name="studentId" placeholder="Student ID" value="${(a as any).studentId || ''}" />
-          <button type="submit">Save</button>
-        </form>
+        <div style="margin-bottom:8px">
+          <div><b>${a.fullName}</b></div>
+          <div>Email: ${a.email} | Phone: ${a.phone}</div>
+          <div>Program: ${a.program}</div>
+          ${a.comment ? `<div class="muted">Comment: ${(a.comment as string).toString().replace(/</g,'&lt;')}</div>` : ''}
+          <div class="muted">Status: ${a.status || 'new'}${(a as any).userId ? ` | userId: ${(a as any).userId}` : ''}</div>
+        </div>
+        <div class="form-row">
+          <form method="post" action="/admin/admissions/${a._id}/accept" class="form-row">
+            <input name="studentId" placeholder="Student ID" value="${(a as any).studentId || ''}" />
+            <button class="btn primary" type="submit">Принять</button>
+          </form>
+          <form method="post" action="/admin/admissions/${a._id}/reject" onsubmit="return confirm('Отклонить заявку?')" style="margin-left:8px">
+            <button class="btn danger" type="submit">Отклонить</button>
+          </form>
+        </div>
       </td>
     </tr>`).join('');
   const body = `
@@ -384,6 +390,28 @@ router.get('/admin/admissions', adminAuthMiddleware, async (_req, res) => {
     </div>
   `;
   res.send(adminLayout({ title: 'Kleos Admin - Admissions', active: 'admissions', body }));
+});
+
+// Accept admission: set status=done, optionally assign studentId; if linked userId exists — make role=student
+router.post('/admin/admissions/:id/accept', adminAuthMiddleware, async (req: any, res) => {
+  const id = req.params.id;
+  const studentId = (req.body?.studentId as string | undefined) || undefined;
+  const adm = await Admission.findById(id).lean();
+  if (adm) {
+    await Admission.updateOne({ _id: id }, { status: 'done', ...(studentId ? { studentId } : {}) });
+    const uid = (adm as any).userId;
+    if (uid) {
+      await User.updateOne({ _id: uid }, { role: 'student', ...(studentId ? { studentId } : {}) });
+    }
+  }
+  res.redirect('/admin/admissions');
+});
+
+// Reject admission: mark status=rejected (не меняем пользователя)
+router.post('/admin/admissions/:id/reject', adminAuthMiddleware, async (req, res) => {
+  const id = req.params.id;
+  await Admission.updateOne({ _id: id }, { status: 'rejected' });
+  res.redirect('/admin/admissions');
 });
 
 router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
