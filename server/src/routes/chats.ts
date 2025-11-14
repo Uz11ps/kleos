@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { auth } from '../middleware/auth.js';
-import { Schema, model, Types } from 'mongoose';
+import mongoose, { Schema, model, Types } from 'mongoose';
 
 // Define models here to avoid extra files if not present
 const ChatSchema = new Schema({
@@ -14,8 +14,8 @@ const MessageSchema = new Schema({
   senderRole: { type: String, enum: ['student', 'admin', 'system'] },
   text: String
 }, { timestamps: true });
-const Chat = model('Chat', ChatSchema);
-const Message = model('Message', MessageSchema);
+const Chat = (mongoose.models.Chat as any) || model('Chat', ChatSchema);
+const Message = (mongoose.models.Message as any) || model('Message', MessageSchema);
 
 const router = Router();
 
