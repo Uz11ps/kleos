@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { Partner } from '../models/Partner.js';
 import { Admission } from '../models/Admission.js';
 import chatsRoutes from './chats.js';
+import multer from 'multer';
+import path from 'path';
 
 const router = Router();
 
@@ -16,6 +18,18 @@ function getAdminCreds() {
     password: process.env.ADMIN_PASSWORD || '123'
   };
 }
+
+// File uploads (logos)
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, path.join(process.cwd(), 'uploads', 'logos')),
+    filename: (_req, file, cb) => {
+      const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname || '')}`;
+      cb(null, name);
+    }
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
 
 function adminLayout(opts: {
   title: string;
