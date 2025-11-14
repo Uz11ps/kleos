@@ -73,21 +73,6 @@ interface AuthRepository {
                 // Save minimal local info (without token) so we can show it in UI if needed
                 // isLoggedIn() will still be false until verification consumes token
                 sessionManager.saveUser(fullName, email)
-                // Try to open app deep link first, fallback to web verify URL
-                val appLink = resp["appLink"] as? String
-                val verifyUrl = resp["verifyUrl"] as? String
-                try {
-                    val uri = when {
-                        !appLink.isNullOrBlank() -> android.net.Uri.parse(appLink)
-                        !verifyUrl.isNullOrBlank() -> android.net.Uri.parse(verifyUrl)
-                        else -> null
-                    }
-                    if (uri != null) {
-                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
-                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(intent)
-                    }
-                } catch (_: Exception) { /* ignore */ }
                 User(id = "pending", fullName = fullName, email = email)
             }
         }
