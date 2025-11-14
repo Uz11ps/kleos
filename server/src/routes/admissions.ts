@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Admission } from '../models/Admission.js';
 import jwt from 'jsonwebtoken';
+import { auth } from '../middleware/auth.js';
 
 const router = Router();
 

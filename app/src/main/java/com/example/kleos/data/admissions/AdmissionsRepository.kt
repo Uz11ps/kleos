@@ -6,6 +6,9 @@ import com.example.kleos.data.model.AdmissionApplication
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 interface AdmissionsRepository {
     fun submit(application: AdmissionApplication)
@@ -70,7 +73,7 @@ interface AdmissionsRepository {
                 comment = application.comment
             )
             // fire-and-forget
-            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            GlobalScope.launch(Dispatchers.IO) {
                 kotlin.runCatching { api.create(body) }
             }
         }
