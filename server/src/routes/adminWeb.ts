@@ -17,6 +17,95 @@ function getAdminCreds() {
   };
 }
 
+function adminLayout(opts: {
+  title: string;
+  active?: 'users' | 'partners' | 'admissions' | 'chats' | 'i18n' | '';
+  body: string;
+}) {
+  const { title, active = '', body } = opts;
+  const navLink = (href: string, label: string, key: typeof active) =>
+    `<a class="nav-link ${active === key ? 'active' : ''}" href="${href}">${label}</a>`;
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+    <style>
+      :root{
+        --bg:#0b1021; --card:#0f1631; --muted:#94a3b8; --text:#e2e8f0;
+        --accent:#2563eb; --accent-2:#0ea5e9; --danger:#ef4444; --border:#1e293b;
+      }
+      *{box-sizing:border-box}
+      html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif}
+      a{color:var(--accent);text-decoration:none}
+      a:hover{text-decoration:underline}
+      .container{max-width:1200px;margin:0 auto;padding:16px}
+      .topbar{
+        display:flex;align-items:center;justify-content:space-between;gap:12px;
+        position:sticky;top:0;background:linear-gradient(180deg,#0b1021 0%, rgba(11,16,33,0.85) 100%);
+        backdrop-filter: blur(6px); border-bottom:1px solid var(--border); padding:10px 16px; z-index: 10;
+      }
+      .brand{display:flex;align-items:center;gap:10px;font-weight:700}
+      .brand .dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+      .nav{display:flex;gap:10px;flex-wrap:wrap}
+      .nav-link{padding:8px 12px;border:1px solid var(--border);border-radius:8px;color:var(--text);display:inline-block}
+      .nav-link.active{border-color:var(--accent);background:rgba(37,99,235,0.12)}
+      .logout{margin-left:auto}
+
+      .page{padding:16px}
+      .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+      h1,h2,h3{margin:0 0 12px 0}
+      .muted{color:var(--muted)}
+
+      .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+      .btn{display:inline-block;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:#11183a;color:var(--text)}
+      .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#fff}
+      .btn.danger{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.5);color:#fecaca}
+
+      .grid{display:grid;gap:12px}
+      @media (min-width: 900px){
+        .grid.cols-2{grid-template-columns: 1fr 1fr}
+      }
+
+      .form-row{display:flex;flex-wrap:wrap;gap:8px}
+      input,select,textarea{background:#0c1330;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;outline:none;min-width:0}
+      textarea{resize:vertical}
+      label{display:block;margin:6px 0}
+
+      .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}
+      table{border-collapse:collapse;min-width:800px;width:100%;}
+      th,td{border-bottom:1px solid var(--border);text-align:left;padding:10px;vertical-align:top}
+      thead th{position:sticky;top:0;background:#0c1330}
+
+      .stack{display:none}
+      @media (max-width: 720px){
+        .nav{display:grid;grid-template-columns: 1fr 1fr;gap:8px}
+        .table-wrap{border-radius:10px;overflow:auto}
+        table{min-width:680px}
+        .stack{display:block}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span> Kleos Admin</div>
+      <nav class="nav">
+        ${navLink('/admin/users','Users','users')}
+        ${navLink('/admin/partners','Partners','partners')}
+        ${navLink('/admin/admissions','Admissions','admissions')}
+        ${navLink('/admin/chats','Chats','chats')}
+        ${navLink('/admin/i18n','I18n','i18n')}
+      </nav>
+      <div class="logout"><a class="nav-link" href="/admin/logout">Logout</a></div>
+    </div>
+    <div class="container page">
+      ${body}
+    </div>
+  </body>
+</html>`;
+}
+
 function adminAuthMiddleware(req: any, res: any, next: any) {
   const token = req.cookies?.admin_token;
   if (!token) {
@@ -40,27 +129,31 @@ router.get('/', (_req, res) => {
 
 // Login form
 router.get('/admin', (req, res) => {
-  res.send(`
-<!doctype html>
-<html><head><meta charset="utf-8"><title>Kleos Admin</title>
-<style>
-body{font-family:Arial;max-width:560px;margin:40px auto;padding:0 16px;}
-label{display:block;margin:8px 0 4px;}
-input{width:100%;padding:8px;}
-button{margin-top:12px;padding:10px 16px;}
-.err{color:#c00;margin:8px 0;}
-</style></head><body>
-  <h2>Kleos Admin Login</h2>
-  ${req.query.err ? `<div class="err">${req.query.err}</div>` : ''}
-  <form method="post" action="/admin/login">
-    <label>Username</label>
-    <input name="username" />
-    <label>Password</label>
-    <input name="password" type="password" />
-    <button type="submit">Sign In</button>
-  </form>
-</body></html>
-  `);
+  const body = `
+    <div class="grid cols-2">
+      <div class="card">
+        <h2>Sign in</h2>
+        <p class="muted">Use your admin credentials</p>
+        ${req.query.err ? `<div style="color:#fecaca;margin:8px 0;">${req.query.err}</div>` : ''}
+        <form method="post" action="/admin/login" class="form" style="margin-top:10px;display:grid;gap:10px">
+          <div>
+            <label>Username</label>
+            <input name="username" placeholder="admin" />
+          </div>
+          <div>
+            <label>Password</label>
+            <input name="password" type="password" placeholder="••••••••" />
+          </div>
+          <div><button class="btn primary" type="submit">Sign in</button></div>
+        </form>
+      </div>
+      <div class="card stack">
+        <h3>Welcome to Kleos Admin</h3>
+        <p class="muted">Manage users, partners, admissions and support chats</p>
+      </div>
+    </div>
+  `;
+  res.send(adminLayout({ title: 'Kleos Admin - Login', active: '', body }));
 });
 
 // Handle login
@@ -104,36 +197,27 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
           <input name="payment" placeholder="Payment" value="${(u as any).payment || ''}" />
           <input name="penalties" placeholder="Penalties" value="${(u as any).penalties || ''}" />
           <input name="notes" placeholder="Notes" value="${(u as any).notes || ''}" />
-          <button type="submit">Save</button>
+          <button class="btn primary" type="submit">Save</button>
         </form>
         <form method="post" action="/admin/users/${u._id}/delete" onsubmit="return confirm('Delete this user?')">
-          <button type="submit" style="margin-top:6px;color:#a00">Delete</button>
+          <button class="btn danger" type="submit" style="margin-top:6px;">Delete</button>
         </form>
       </td>
     </tr>
   `).join('');
 
-  res.send(`
-<!doctype html>
-<html><head><meta charset="utf-8"><title>Kleos Admin - Users</title>
-<style>
-body{font-family:Arial;max-width:1000px;margin:40px auto;padding:0 16px;}
-table{border-collapse:collapse;width:100%;}
-td,th{border:1px solid #ddd;padding:8px;vertical-align:top;}
-form {display:flex; gap:8px; align-items:center;}
-input,select{padding:6px;}
-a{margin-right:12px;}
-</style></head><body>
-  <h2>Users</h2>
-  <div><a href="/admin/logout">Logout</a></div>
-  <div style="margin:8px 0;"><a href="/admin/partners">Partners</a> | <a href="/admin/admissions">Admissions</a> | <a href="/admin/chats">Chats</a></div>
-  <div style="margin:8px 0;"><a href="/admin/i18n">I18n</a></div>
-  <table>
-    <thead><tr><th>ID</th><th>Data</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-</body></html>
-  `);
+  const body = `
+    <div class="card">
+      <h2>Users</h2>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  res.send(adminLayout({ title: 'Kleos Admin - Users', active: 'users', body }));
 });
 
 // Update user
@@ -182,25 +266,32 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
         </form>
       </td>
     </tr>`).join('');
-  res.send(`<!doctype html><html><body style="font-family:Arial;max-width:1000px;margin:40px auto;padding:0 16px;">
-  <h2>Partners</h2>
-  <div><a href="/admin/users">Users</a> | <a href="/admin/admissions">Admissions</a> | <a href="/admin/chats">Chats</a></div>
-  <h3>Add partner</h3>
-  <form method="post" action="/admin/partners">
-    <input name="name" placeholder="Name"/>
-    <input name="description" placeholder="Description"/>
-    <input name="logoUrl" placeholder="Logo URL"/>
-    <input name="url" placeholder="Site URL"/>
-    <input name="order" type="number" value="0"/>
-    <label><input type="checkbox" name="active" checked/> active</label>
-    <button type="submit">Create</button>
-  </form>
-  <h3>All</h3>
-  <table border="1" cellpadding="6" style="width:100%;border-collapse:collapse;">
-    <thead><tr><th>ID</th><th>Data</th></tr></thead>
-    <tbody>${items}</tbody>
-  </table>
-  </body></html>`);
+  const body = `
+    <div class="grid cols-2">
+      <div class="card">
+        <h2>Add partner</h2>
+        <form method="post" action="/admin/partners" class="form-row" style="margin-top:10px">
+          <input name="name" placeholder="Name"/>
+          <input name="description" placeholder="Description"/>
+          <input name="logoUrl" placeholder="Logo URL"/>
+          <input name="url" placeholder="Site URL"/>
+          <input name="order" type="number" value="0" style="max-width:120px"/>
+          <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="active" checked/> active</label>
+          <button class="btn primary" type="submit">Create</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>All partners</h2>
+        <div class="table-wrap" style="margin-top:12px">
+          <table>
+            <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
+            <tbody>${items}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+  res.send(adminLayout({ title: 'Kleos Admin - Partners', active: 'partners', body }));
 });
 
 router.post('/admin/partners', adminAuthMiddleware, async (req, res) => {
@@ -255,14 +346,18 @@ router.get('/admin/admissions', adminAuthMiddleware, async (_req, res) => {
         </form>
       </td>
     </tr>`).join('');
-  res.send(`<!doctype html><html><body style="font-family:Arial;max-width:1000px;margin:40px auto;padding:0 16px;">
-  <h2>Admissions</h2>
-  <div><a href="/admin/users">Users</a> | <a href="/admin/partners">Partners</a> | <a href="/admin/chats">Chats</a></div>
-  <table border="1" cellpadding="6" style="width:100%;border-collapse:collapse;">
-    <thead><tr><th>ID</th><th>Data</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  </body></html>`);
+  const body = `
+    <div class="card">
+      <h2>Admissions</h2>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  res.send(adminLayout({ title: 'Kleos Admin - Admissions', active: 'admissions', body }));
 });
 
 router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
@@ -274,10 +369,12 @@ router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
 
 // Chats simple UI (uses public chats endpoints)
 router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
-  res.send(`<!doctype html><html><body style="font-family:Arial;max-width:1000px;margin:40px auto;padding:0 16px;">
-  <h2>Chats</h2>
-  <div><a href="/admin/users">Users</a> | <a href="/admin/partners">Partners</a> | <a href="/admin/admissions">Admissions</a></div>
-  <script>
+  const body = `
+    <div class="card">
+      <h2>Chats</h2>
+      <ul id="list" style="margin-top:12px">Loading...</ul>
+    </div>
+    <script>
     async function loadChats(){
       const r=await fetch('/chats/all',{headers:{'Accept':'application/json'}});
       const data=await r.json();
@@ -285,22 +382,24 @@ router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
       list.innerHTML=data.map(c=>'<li><a href="/admin/chats/'+c.id+'">'+c.id+' (user '+c.userId+')</a></li>').join('');
     }
     window.addEventListener('load',loadChats);
-  </script>
-  <ul id="list">Loading...</ul>
-  </body></html>`);
+    </script>
+  `;
+  res.send(adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
 });
 
 router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
   const chatId = req.params.id;
-  res.send(`<!doctype html><html><body style="font-family:Arial;max-width:800px;margin:40px auto;padding:0 16px;">
-  <div><a href="/admin/chats">&larr; Back</a></div>
-  <h3>Chat ${chatId}</h3>
-  <div id="msgs" style="border:1px solid #ccc;padding:8px;height:400px;overflow:auto;">Loading...</div>
-  <form id="sendForm">
-    <input name="text" placeholder="Message" style="width:70%"/>
-    <button type="submit">Send</button>
-  </form>
-  <script>
+  const body = `
+    <div class="card">
+      <div><a href="/admin/chats">&larr; Back</a></div>
+      <h3 style="margin-top:8px">Chat ${chatId}</h3>
+      <div id="msgs" class="card" style="margin-top:10px;height:400px;overflow:auto;">Loading...</div>
+      <form id="sendForm" class="form-row" style="margin-top:10px">
+        <input name="text" placeholder="Message" style="flex:1;min-width:180px"/>
+        <button class="btn primary" type="submit">Send</button>
+      </form>
+    </div>
+    <script>
     async function load(){
       const r=await fetch('/chats/${chatId}/messages',{headers:{'Accept':'application/json'}});
       const data=await r.json();
@@ -315,8 +414,9 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
       load();
     });
     load();
-  </script>
-  </body></html>`);
+    </script>
+  `;
+  res.send(adminLayout({ title: `Kleos Admin - Chat ${chatId}`, active: 'chats', body }));
 });
 
 // I18n UI
@@ -333,31 +433,34 @@ router.get('/admin/i18n', adminAuthMiddleware, async (req, res) => {
           <input type="hidden" name="key" value="${t.key}" />
           <textarea name="value" rows="2" style="width:100%">${(t.value || '').toString().replace(/</g,'&lt;')}</textarea>
           <div style="margin-top:6px">
-            <button type="submit">Save</button>
-            <button formaction="/admin/i18n/delete" formmethod="post" style="color:#a00" onclick="return confirm('Delete?')">Delete</button>
+            <button class="btn primary" type="submit">Save</button>
+            <button class="btn danger" formaction="/admin/i18n/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
           </div>
         </form>
       </td>
     </tr>
   `).join('');
-  res.send(`<!doctype html><html><body style="font-family:Arial;max-width:1000px;margin:40px auto;padding:0 16px;">
-    <h2>I18n (Translations)</h2>
-    <div>
-      ${langs.map(l => `<a href="/admin/i18n?lang=${l}" ${l===lang?'style="font-weight:bold"':''}>${l}</a>`).join(' | ')}
+  const body = `
+    <div class="card">
+      <h2>I18n (Translations)</h2>
+      <div class="toolbar">
+        ${langs.map(l => `<a class="nav-link ${l===lang?'active':''}" href="/admin/i18n?lang=${l}">${l}</a>`).join('')}
+      </div>
+      <form method="post" action="/admin/i18n/save" class="form-row">
+        <select name="lang">${langs.map(l=>`<option ${l===lang?'selected':''} value="${l}">${l}</option>`).join('')}</select>
+        <input name="key" placeholder="key (e.g., no_suitable_question)" style="min-width:260px"/>
+        <input name="value" placeholder="value" style="min-width:300px;flex:1"/>
+        <button class="btn primary" type="submit">Create</button>
+      </form>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th style="width:30%">Key</th><th>Value</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
     </div>
-    <h3 style="margin-top:12px;">Add</h3>
-    <form method="post" action="/admin/i18n/save" style="display:flex; gap:8px; align-items:center;">
-      <select name="lang">${langs.map(l=>`<option ${l===lang?'selected':''} value="${l}">${l}</option>`).join('')}</select>
-      <input name="key" placeholder="key (e.g., no_suitable_question)" style="width:300px"/>
-      <input name="value" placeholder="value" style="width:420px"/>
-      <button type="submit">Create</button>
-    </form>
-    <h3 style="margin-top:12px;">All (${lang})</h3>
-    <table border="1" cellpadding="6" style="width:100%;border-collapse:collapse;">
-      <thead><tr><th style="width:30%">Key</th><th>Value</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </body></html>`);
+  `;
+  res.send(adminLayout({ title: `Kleos Admin - I18n (${lang})`, active: 'i18n', body }));
 });
 
 router.post('/admin/i18n/save', adminAuthMiddleware, async (req, res) => {
