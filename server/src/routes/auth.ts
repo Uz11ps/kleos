@@ -146,13 +146,13 @@ router.post('/verify/consume', async (req, res) => {
     const appScheme = process.env.APP_DEEP_LINK_SCHEME || 'kleos';
     const appHost = 'verified';
     const appLink = `${appScheme}://${appHost}?jwt=${jwtToken}`;
+    const intentLink = `intent://${appHost}?jwt=${encodeURIComponent(jwtToken)}#Intent;scheme=${appScheme};package=com.example.kleos;end`;
     return res.send(`<!DOCTYPE html>
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Email подтверждён</title>
-    <meta http-equiv="refresh" content="0; url='${appLink}'" />
     <style>
       body { font-family: Arial, sans-serif; background:#f6f7fb; margin:0; padding:0; }
       .card {
@@ -173,9 +173,16 @@ router.post('/verify/consume', async (req, res) => {
       <p>Сейчас откроется приложение Kleos.</p>
       <p>Если этого не произошло, нажмите кнопку:</p>
       <p><a class="btn" href="${appLink}">Открыть приложение</a></p>
+      <p style="margin-top:8px;"><a class="btn" href="${intentLink}">Открыть через intent</a></p>
     </div>
     <script>
-      setTimeout(function(){ window.location.href='${appLink}'; }, 100);
+      (function(){
+        var opened = false;
+        try { window.location.href='${appLink}'; opened = true; } catch(e) {}
+        setTimeout(function(){
+          if (!opened) { window.location.href='${intentLink}'; }
+        }, 250);
+      })();
     </script>
   </body>
 </html>`);
