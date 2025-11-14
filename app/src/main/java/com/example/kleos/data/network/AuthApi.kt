@@ -17,6 +17,9 @@ interface AuthApi {
 
     @POST("auth/verify/consume")
     suspend fun verifyConsume(@Body body: Map<String, String>): AuthResponse
+
+    @POST("auth/verify/resend")
+    suspend fun resendVerify(@Body body: Map<String, String>): Map<String, Any?>
 }
 
 

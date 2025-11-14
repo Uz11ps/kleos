@@ -56,13 +56,24 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/resendButton"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:text="Отправить письмо повторно"
+        app:layout_constraintTop_toBottomOf="@id/openMailButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/backToLoginButton"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginTop="12dp"
         android:text="Назад"
-        app:layout_constraintTop_toBottomOf="@id/openMailButton"
+        app:layout_constraintTop_toBottomOf="@id/resendButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

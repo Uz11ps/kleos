@@ -99,13 +99,25 @@ class AuthActivity : AppCompatActivity() {
             if (result.isSuccess) {
                 proceedToMain(true)
             } else {
-                // Фоллбэк в оффлайн-режим (локальная авторизация)
-                val localRepo = AuthRepository.Local(this@AuthActivity)
-                val localResult = withContext(Dispatchers.IO) { localRepo.login(email, password) }
-                if (localResult.isSuccess) {
-                    proceedToMain(true)
+                // Если почта не подтверждена — отправляем на экран подтверждения
+                val httpEx = result.exceptionOrNull() as? retrofit2.HttpException
+                val serverError = try {
+                    val body = httpEx?.response()?.errorBody()?.string()
+                    if (!body.isNullOrEmpty()) org.json.JSONObject(body).optString("error") else ""
+                } catch (_: Exception) { "" }
+                if (serverError == "email_not_verified") {
+                    val intent = Intent(this@AuthActivity, com.example.kleos.ui.verify.VerifyEmailActivity::class.java)
+                        .putExtra("email", email)
+                    startActivity(intent)
                 } else {
-                    Toast.makeText(this@AuthActivity, result.exceptionOrNull()?.message ?: "Ошибка входа", Toast.LENGTH_SHORT).show()
+                    // Фоллбэк в оффлайн-режим допустим для прочих ошибок
+                    val localRepo = AuthRepository.Local(this@AuthActivity)
+                    val localResult = withContext(Dispatchers.IO) { localRepo.login(email, password) }
+                    if (localResult.isSuccess) {
+                        proceedToMain(true)
+                    } else {
+                        Toast.makeText(this@AuthActivity, result.exceptionOrNull()?.message ?: "Ошибка входа", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

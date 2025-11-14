@@ -226,6 +226,10 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
           <input name="payment" placeholder="Payment" value="${(u as any).payment || ''}" />
           <input name="penalties" placeholder="Penalties" value="${(u as any).penalties || ''}" />
           <input name="notes" placeholder="Notes" value="${(u as any).notes || ''}" />
+          <label style="display:inline-flex;align-items:center;gap:6px">
+            <input type="checkbox" name="emailVerified" ${u.emailVerified ? 'checked' : ''} />
+            Verified
+          </label>
           <button class="btn primary" type="submit">Save</button>
         </form>
         <form method="post" action="/admin/users/${u._id}/delete" onsubmit="return confirm('Delete this user?')">
@@ -262,10 +266,15 @@ router.post('/admin/users/:id', adminAuthMiddleware, async (req: any, res: any) 
     payment: z.string().optional(),
     penalties: z.string().optional(),
     notes: z.string().optional(),
-    studentId: z.string().optional()
+    studentId: z.string().optional(),
+    emailVerified: z.union([z.literal('on'), z.string()]).optional()
   });
-  const data = schema.parse(req.body);
-  await User.updateOne({ _id: req.params.id }, data);
+  const parsed = schema.parse(req.body);
+  const update: any = { ...parsed };
+  if ('emailVerified' in parsed) {
+    update.emailVerified = parsed.emailVerified === 'on';
+  }
+  await User.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/users');
 });
 
@@ -528,8 +537,11 @@ router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
 // I18n UI
 router.get('/admin/i18n', adminAuthMiddleware, async (req, res) => {
   const lang = (req.query.lang as string) || 'en';
+  const q = (req.query.q as string || '').trim();
   const langs = ['en', 'ru', 'zh'];
-  const items = await (await import('../models/Translation.js')).Translation.find({ lang }).sort({ key: 1 }).lean();
+  const filter: any = { lang };
+  if (q) filter.key = { $regex: q, $options: 'i' };
+  const items = await (await import('../models/Translation.js')).Translation.find(filter).sort({ key: 1 }).lean();
   const rows = items.map(t => `
     <tr>
       <td>${t.key}</td>
@@ -550,7 +562,14 @@ router.get('/admin/i18n', adminAuthMiddleware, async (req, res) => {
     <div class="card">
       <h2>I18n (Translations)</h2>
       <div class="toolbar">
-        ${langs.map(l => `<a class="nav-link ${l===lang?'active':''}" href="/admin/i18n?lang=${l}">${l}</a>`).join('')}
+        ${langs.map(l => `<a class="nav-link ${l===lang?'active':''}" href="/admin/i18n?lang=${l}${q?`&q=${encodeURIComponent(q)}`:''}">${l}</a>`).join('')}
+        <form method="get" action="/admin/i18n" style="display:inline-flex;gap:8px;align-items:center;margin-left:auto">
+          <input type="hidden" name="lang" value="${lang}" />
+          <input name="q" placeholder="Search key..." value="${q.replace(/"/g,'&quot;')}" />
+          <button class="btn" type="submit">Search</button>
+          <a class="btn" href="/admin/i18n?lang=${lang}">Reset</a>
+          <a class="btn" href="/admin/i18n/export?lang=${lang}">Export JSON</a>
+        </form>
       </div>
       <form method="post" action="/admin/i18n/save" class="form-row">
         <select name="lang">${langs.map(l=>`<option ${l===lang?'selected':''} value="${l}">${l}</option>`).join('')}</select>
@@ -558,6 +577,16 @@ router.get('/admin/i18n', adminAuthMiddleware, async (req, res) => {
         <input name="value" placeholder="value" style="min-width:300px;flex:1"/>
         <button class="btn primary" type="submit">Create</button>
       </form>
+      <div class="card" style="margin-top:12px">
+        <h3>Import JSON</h3>
+        <form method="post" action="/admin/i18n/import">
+          <div class="form-row" style="margin-bottom:8px">
+            <select name="lang">${langs.map(l=>`<option ${l===lang?'selected':''} value="${l}">${l}</option>`).join('')}</select>
+            <button class="btn" type="submit">Import & Upsert</button>
+          </div>
+          <textarea name="json" rows="8" placeholder='{"key":"value"}' style="width:100%"></textarea>
+        </form>
+      </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th style="width:30%">Key</th><th>Value</th></tr></thead>
@@ -585,6 +614,29 @@ router.post('/admin/i18n/delete', adminAuthMiddleware, async (req, res) => {
   res.redirect(`/admin/i18n?lang=${data.lang}`);
 });
 
+router.get('/admin/i18n/export', adminAuthMiddleware, async (req, res) => {
+  const lang = (req.query.lang as string) || 'en';
+  const { Translation } = await import('../models/Translation.js');
+  const items = await Translation.find({ lang }).lean();
+  const map: Record<string, string> = {};
+  for (const it of items) map[it.key] = it.value;
+  res.setHeader('Content-Disposition', `attachment; filename=translations_${lang}.json`);
+  res.json(map);
+});
+
+router.post('/admin/i18n/import', adminAuthMiddleware, async (req, res) => {
+  const schema = z.object({ lang: z.enum(['en','ru','zh']), json: z.string().min(2) });
+  const data = schema.parse(req.body);
+  const parsed = JSON.parse(data.json);
+  if (typeof parsed !== 'object' || Array.isArray(parsed)) return res.status(400).send('Bad JSON');
+  const { Translation } = await import('../models/Translation.js');
+  const ops: any[] = [];
+  for (const [key, value] of Object.entries(parsed as Record<string, string>)) {
+    ops.push({ updateOne: { filter: { lang: data.lang, key }, update: { $set: { value: String(value ?? '') } }, upsert: true } });
+  }
+  if (ops.length) await Translation.bulkWrite(ops, { ordered: false });
+  res.redirect(`/admin/i18n?lang=${data.lang}`);
+});
 export default router;
 
 

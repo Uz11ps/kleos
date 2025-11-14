@@ -3,31 +3,59 @@ package com.example.kleos.ui.chat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.kleos.data.chat.ChatsRepository
 import com.example.kleos.data.model.Message
-import java.util.UUID
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class ChatViewModel : ViewModel() {
+
+    private val repository = ChatsRepository()
 
     private val _messages = MutableLiveData<List<Message>>(emptyList())
     val messages: LiveData<List<Message>> = _messages
 
+    private var pollingJob: Job? = null
+
+    init {
+        // Первичная загрузка истории
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            runCatching { repository.loadMessages() }
+                .onSuccess { _messages.value = it }
+                .onFailure { /* можно добавить телеметрию/тосты */ }
+        }
+    }
+
     fun sendUserMessage(text: String) {
         if (text.isBlank()) return
-        val newMessage = Message(
-            id = UUID.randomUUID().toString(),
-            sender = "user",
-            text = text,
-            timestampMillis = System.currentTimeMillis()
-        )
-        _messages.value = (_messages.value ?: emptyList()) + newMessage
-        // Simulate support auto-reply
-        val reply = Message(
-            id = UUID.randomUUID().toString(),
-            sender = "support",
-            text = "Спасибо! Мы свяжемся с вами.",
-            timestampMillis = System.currentTimeMillis()
-        )
-        _messages.value = (_messages.value ?: emptyList()) + reply
+        viewModelScope.launch {
+            runCatching { repository.sendMessage(text.trim()) }
+                .onSuccess { _messages.value = it }
+                .onFailure { /* обработать ошибку UI-способом */ }
+        }
+    }
+
+    fun startPolling(intervalMs: Long = 3000L) {
+        if (pollingJob?.isActive == true) return
+        pollingJob = viewModelScope.launch {
+            while (isActive) {
+                runCatching { repository.loadMessages() }
+                    .onSuccess { _messages.value = it }
+                delay(intervalMs)
+            }
+        }
+    }
+
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 }
 

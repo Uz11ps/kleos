@@ -9,6 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.kleos.MainActivity
 import com.example.kleos.data.auth.SessionManager
 import com.example.kleos.databinding.ActivityVerifyEmailBinding
+import com.example.kleos.data.network.ApiClient
+import com.example.kleos.data.network.AuthApi
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class VerifyEmailActivity : AppCompatActivity() {
 
@@ -36,6 +42,24 @@ class VerifyEmailActivity : AppCompatActivity() {
 
         binding.backToLoginButton.setOnClickListener {
             finish()
+        }
+
+        binding.resendButton.setOnClickListener {
+            if (email.isBlank()) {
+                Toast.makeText(this, "Email не указан", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val api = ApiClient.retrofit.create(AuthApi::class.java)
+            lifecycleScope.launch {
+                try {
+                    withContext(Dispatchers.IO) {
+                        api.resendVerify(mapOf("email" to email))
+                    }
+                    Toast.makeText(this@VerifyEmailActivity, "Письмо отправлено повторно", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this@VerifyEmailActivity, "Не удалось отправить письмо", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 

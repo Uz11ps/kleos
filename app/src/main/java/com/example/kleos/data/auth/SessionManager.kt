@@ -12,7 +12,10 @@ class SessionManager(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun isLoggedIn(): Boolean {
-        return preferences.contains(KEY_USER_EMAIL) && !getToken().isNullOrEmpty()
+        val token = getToken()
+        // Считаем валидной только JWT-подобную строку (три сегмента через точку)
+        val looksLikeJwt = token?.count { it == '.' } == 2
+        return preferences.contains(KEY_USER_EMAIL) && !token.isNullOrEmpty() && looksLikeJwt
     }
 
     fun getCurrentUser(): User? {

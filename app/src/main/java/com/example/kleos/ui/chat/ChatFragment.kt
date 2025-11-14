@@ -11,6 +11,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.kleos.databinding.FragmentChatBinding
+import com.example.kleos.data.auth.SessionManager
+import android.content.Intent
+import com.example.kleos.ui.auth.AuthActivity
 
 class ChatFragment : Fragment() {
 
@@ -56,6 +59,11 @@ class ChatFragment : Fragment() {
 
         binding.sendButton.setOnClickListener {
             val text = binding.messageEditText.text?.toString().orEmpty()
+            val session = SessionManager(requireContext())
+            if (!session.isLoggedIn()) {
+                startActivity(Intent(requireContext(), AuthActivity::class.java))
+                return@setOnClickListener
+            }
             viewModel.sendUserMessage(text)
             binding.messageEditText.setText("")
         }
@@ -84,13 +92,32 @@ class ChatFragment : Fragment() {
                 .show()
         }) {
             // CTA: скрыть FAQ и показать чат
-            binding.faqRecycler.visibility = View.GONE
-            binding.messagesList.visibility = View.VISIBLE
-            binding.messageInputBar.visibility = View.VISIBLE
+            val session = SessionManager(requireContext())
+            if (!session.isLoggedIn()) {
+                startActivity(Intent(requireContext(), AuthActivity::class.java))
+            } else {
+                binding.faqRecycler.visibility = View.GONE
+                binding.messagesList.visibility = View.VISIBLE
+                binding.messageInputBar.visibility = View.VISIBLE
+                viewModel.refresh()
+                viewModel.startPolling()
+            }
         }
         rv.adapter = faqAdapter
         rv.setHasFixedSize(true)
         // simple spacing by item margins already set in item layout
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (binding.messagesList.visibility == View.VISIBLE) {
+            viewModel.startPolling()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.stopPolling()
     }
 
     private fun loadFaqItems(): List<FaqItem> {
