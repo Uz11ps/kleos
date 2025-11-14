@@ -6,6 +6,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.kleos.MainActivity
+import com.example.kleos.data.auth.SessionManager
 import com.example.kleos.databinding.ActivityVerifyEmailBinding
 
 class VerifyEmailActivity : AppCompatActivity() {
@@ -33,6 +35,16 @@ class VerifyEmailActivity : AppCompatActivity() {
         }
 
         binding.backToLoginButton.setOnClickListener {
+            finish()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Если пользователь уже подтвердил email (JWT сохранён) — уводим на главный экран
+        val session = SessionManager(this)
+        if (session.isLoggedIn()) {
+            startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK))
             finish()
         }
     }
