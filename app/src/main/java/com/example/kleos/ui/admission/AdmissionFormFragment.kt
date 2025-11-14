@@ -29,7 +29,7 @@ class AdmissionFormFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentAdmissionFormBinding.inflate(inflater, container, false)
-        admissionsRepository = AdmissionsRepository.Local(requireContext())
+        admissionsRepository = AdmissionsRepository.Http(requireContext())
         return binding.root
     }
 

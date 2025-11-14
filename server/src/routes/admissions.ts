@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { Admission } from '../models/Admission.js';
-import { auth } from '../middleware/auth.js';
+import jwt from 'jsonwebtoken';
 
 const router = Router();
 
@@ -13,9 +13,20 @@ const createSchema = z.object({
   comment: z.string().optional()
 });
 
-router.post('/', auth(), async (req, res) => {
+router.post('/', async (req, res) => {
   const data = createSchema.parse(req.body);
-  const userId = (req as any).auth?.uid;
+  let userId: string | undefined;
+  const authz = req.headers.authorization || '';
+  const m = authz.match(/^Bearer\s+(.+)$/i);
+  if (m) {
+    try {
+      const token = m[1];
+      const payload: any = jwt.verify(token, process.env.JWT_SECRET!);
+      userId = payload?.uid;
+    } catch {
+      // ignore invalid token; allow unauthenticated submission
+    }
+  }
   await Admission.create({ ...data, userId });
   res.status(201).json({ ok: true });
 });

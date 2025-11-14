@@ -57,6 +57,26 @@ interface AdmissionsRepository {
             private const val KEY_APPLICATIONS = "applications"
         }
     }
+
+    class Http(private val context: Context) : AdmissionsRepository {
+        override fun submit(application: AdmissionApplication) {
+            val api = com.example.kleos.data.network.ApiClient.retrofit
+                .create(com.example.kleos.data.network.AdmissionsApi::class.java)
+            val body = com.example.kleos.data.network.AdmissionRequest(
+                fullName = application.fullName,
+                phone = application.phone,
+                email = application.email,
+                program = application.program,
+                comment = application.comment
+            )
+            // fire-and-forget
+            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                kotlin.runCatching { api.create(body) }
+            }
+        }
+
+        override fun list(): List<AdmissionApplication> = emptyList()
+    }
 }
 
 
