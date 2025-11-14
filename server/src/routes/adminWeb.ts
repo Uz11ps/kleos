@@ -252,17 +252,18 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
     <tr>
       <td>${p._id}</td>
       <td>
-        <form method="post" action="/admin/partners/${p._id}">
+        <form method="post" action="/admin/partners/${p._id}" enctype="multipart/form-data">
           <input name="name" value="${(p.name || '').toString().replace(/"/g, '&quot;')}" />
           <input name="description" value="${(p.description || '').toString().replace(/"/g, '&quot;')}" />
-          <input name="logoUrl" placeholder="Logo URL" value="${(p.logoUrl || '').toString().replace(/"/g, '&quot;')}" />
+          <input name="logoUrl" placeholder="Logo URL (optional)" value="${(p.logoUrl || '').toString().replace(/"/g, '&quot;')}" />
+          <input type="file" name="logoFile" accept="image/*" />
           <input name="url" placeholder="Site URL" value="${(p.url || '').toString().replace(/"/g, '&quot;')}" />
           <input name="order" type="number" value="${p.order || 0}" />
           <label><input type="checkbox" name="active" ${p.active ? 'checked' : ''}/> active</label>
-          <button type="submit">Save</button>
+          <button class="btn primary" type="submit">Save</button>
         </form>
         <form method="post" action="/admin/partners/${p._id}/delete" onsubmit="return confirm('Delete partner?')">
-          <button type="submit" style="margin-top:6px;color:#a00">Delete</button>
+          <button class="btn danger" type="submit" style="margin-top:6px;">Delete</button>
         </form>
       </td>
     </tr>`).join('');
@@ -270,10 +271,11 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
     <div class="grid cols-2">
       <div class="card">
         <h2>Add partner</h2>
-        <form method="post" action="/admin/partners" class="form-row" style="margin-top:10px">
+        <form method="post" action="/admin/partners" class="form-row" style="margin-top:10px" enctype="multipart/form-data">
           <input name="name" placeholder="Name"/>
           <input name="description" placeholder="Description"/>
-          <input name="logoUrl" placeholder="Logo URL"/>
+          <input name="logoUrl" placeholder="Logo URL (optional)"/>
+          <input type="file" name="logoFile" accept="image/*" />
           <input name="url" placeholder="Site URL"/>
           <input name="order" type="number" value="0" style="max-width:120px"/>
           <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="active" checked/> active</label>
@@ -294,7 +296,7 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
   res.send(adminLayout({ title: 'Kleos Admin - Partners', active: 'partners', body }));
 });
 
-router.post('/admin/partners', adminAuthMiddleware, async (req, res) => {
+router.post('/admin/partners', adminAuthMiddleware, upload.single('logoFile'), async (req: any, res) => {
   const schema = z.object({
     name: z.string(),
     description: z.string().optional(),
@@ -304,11 +306,16 @@ router.post('/admin/partners', adminAuthMiddleware, async (req, res) => {
     active: z.string().optional()
   });
   const data = schema.parse(req.body);
-  await Partner.create({ ...data, active: !!data.active });
+  let finalLogo = data.logoUrl;
+  if (req.file) {
+    const base = process.env.PUBLIC_BASE_URL || '';
+    finalLogo = `${base}/uploads/logos/${req.file.filename}`;
+  }
+  await Partner.create({ ...data, logoUrl: finalLogo, active: !!data.active });
   res.redirect('/admin/partners');
 });
 
-router.post('/admin/partners/:id', adminAuthMiddleware, async (req, res) => {
+router.post('/admin/partners/:id', adminAuthMiddleware, upload.single('logoFile'), async (req: any, res) => {
   const schema = z.object({
     name: z.string().optional(),
     description: z.string().optional(),
@@ -318,7 +325,12 @@ router.post('/admin/partners/:id', adminAuthMiddleware, async (req, res) => {
     active: z.string().optional()
   });
   const data = schema.parse(req.body);
-  await Partner.updateOne({ _id: req.params.id }, { ...data, active: !!data.active });
+  let finalLogo = data.logoUrl;
+  if (req.file) {
+    const base = process.env.PUBLIC_BASE_URL || '';
+    finalLogo = `${base}/uploads/logos/${req.file.filename}`;
+  }
+  await Partner.updateOne({ _id: req.params.id }, { ...data, logoUrl: finalLogo, active: !!data.active });
   res.redirect('/admin/partners');
 });
 

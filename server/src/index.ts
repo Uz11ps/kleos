@@ -11,6 +11,8 @@ import adminWeb from './routes/adminWeb.js';
 import usersRoutes from './routes/users.js';
 import chatsRoutes from './routes/chats.js';
 import i18nRoutes from './routes/i18n.js';
+import path from 'path';
+import fs from 'fs';
 
 const app = express();
 app.use(cors({
@@ -20,6 +22,12 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
+
+// Static uploads
+const uploadsDir = path.join(process.cwd(), 'uploads');
+const logosDir = path.join(uploadsDir, 'logos');
+try { fs.mkdirSync(logosDir, { recursive: true }); } catch {}
+app.use('/uploads', express.static(uploadsDir));
 
 const mongoUri = process.env.MONGODB_URI;
 if (!mongoUri) {
