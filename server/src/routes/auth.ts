@@ -58,7 +58,37 @@ router.get('/verify', async (req, res) => {
   const token = (req.query.token as string) || '';
   if (!token) return res.status(400).send('Missing token');
   const user = await User.findOne({ emailVerifyToken: token, emailVerifyExpires: { $gt: new Date() } });
-  if (!user) return res.status(400).send('Invalid or expired token');
+  if (!user) {
+    return res.status(400).send(`<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ссылка недействительна</title>
+    <style>
+      body { font-family: Arial, sans-serif; background:#f6f7fb; margin:0; padding:0; }
+      .card {
+        max-width: 560px; margin: 40px auto; background:#fff; border:1px solid #eee;
+        border-radius: 10px; padding: 24px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      }
+      h2 { margin: 0 0 14px 0; color:#111; font-size: 20px; }
+      p { margin: 0 0 10px 0; color:#444; line-height: 1.55; }
+      .hint { color:#666; font-size: 14px; }
+      .btn {
+        display:inline-block; padding: 10px 16px; background:#2563eb; color:#fff; text-decoration:none;
+        border-radius: 6px; font-weight: 600; margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Ссылка недействительна или уже использована</h2>
+      <p>Похоже, токен подтверждения истёк, был заменён новым или уже использован ранее.</p>
+      <p class="hint">Откройте приложение Kleos и запросите повторное письмо подтверждения в разделе входа/регистрации.</p>
+    </div>
+  </body>
+</html>`);
+  }
   user.emailVerified = true;
   user.emailVerifyToken = undefined as any;
   user.emailVerifyExpires = undefined as any;
