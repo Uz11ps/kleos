@@ -50,6 +50,10 @@ const loginSchema = z.object({
   password: z.string().min(6)
 });
 
+const resendSchema = z.object({
+  email: z.string().email()
+});
+
 router.get('/verify', async (req, res) => {
   const token = (req.query.token as string) || '';
   if (!token) return res.status(400).send('Missing token');
@@ -94,6 +98,34 @@ router.post('/register', async (req, res) => {
       .then(() => console.log(`Verification email queued to ${email}`))
       .catch((e) => console.error('Send verification email failed', e));
     return res.json({ requiresVerification: true, verifyUrl: webLink, appLink });
+  } catch (e: any) {
+    return res.status(400).json({ error: e?.message || 'bad_request' });
+  }
+});
+
+// Resend verification email for not-verified accounts
+router.post('/verify/resend', async (req, res) => {
+  try {
+    const { email } = resendSchema.parse(req.body);
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'not_found' });
+    if (user.emailVerified) return res.status(400).json({ error: 'already_verified' });
+
+    // issue a new token and expiry
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    user.emailVerifyToken = verifyToken;
+    user.emailVerifyExpires = verifyExpires;
+    await user.save();
+
+    const base = process.env.PUBLIC_BASE_URL || `https://${req.get('host')}`;
+    const webLink = `${base}/auth/verify?token=${verifyToken}`;
+    const appScheme = process.env.APP_DEEP_LINK_SCHEME || 'kleos';
+    const appHost = process.env.APP_DEEP_LINK_HOST || 'verify';
+    const appLink = `${appScheme}://${appHost}?token=${verifyToken}`;
+
+    await sendVerificationEmail(email, user.fullName, webLink, appLink);
+    return res.json({ ok: true, verifyUrl: webLink, appLink });
   } catch (e: any) {
     return res.status(400).json({ error: e?.message || 'bad_request' });
   }
@@ -171,6 +203,23 @@ router.get('/smtp/ping', async (_req, res) => {
   }
 });
 
+// Diagnostics: HTTP relay ping
+router.get('/relay/ping', async (_req, res) => {
+  try {
+    const relayUrl = getRelayUrl();
+    if (!relayUrl) return res.status(400).json({ ok: false, error: 'relay_not_configured' });
+    const resp = await fetch(relayUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ping: true })
+    });
+    const text = await resp.text();
+    return res.status(resp.status).json({ ok: resp.ok, body: text });
+  } catch (e: any) {
+    return res.status(500).json({ ok: false, error: e?.message || 'relay_error' });
+  }
+});
+
 export default router;
 
 async function sendVerificationEmail(to: string, name: string, webLink: string, appLink: string) {
@@ -203,6 +252,10 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
       clearTimeout(timeout);
       if (resp.ok) return;
       // if relay responded but not ok, fall through to SMTP
+      try {
+        const body = await resp.text();
+        console.error(`Email relay responded with ${resp.status} to ${to}: ${body}`);
+      } catch {}
     } catch (_e) {
       // ignore and fall back to SMTP
     }
