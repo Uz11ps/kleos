@@ -31,9 +31,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Применяем сохранённую локаль перед инициализацией UI
-        LocaleManager.applySavedLocale(this)
-
         val sessionManager = SessionManager(this)
         if (!sessionManager.isLoggedIn()) {
             startActivity(Intent(this, AuthActivity::class.java))

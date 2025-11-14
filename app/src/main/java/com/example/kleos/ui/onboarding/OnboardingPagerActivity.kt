@@ -2,7 +2,9 @@ package com.example.kleos.ui.onboarding
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.example.kleos.ui.auth.AuthActivity
 import com.example.kleos.R
@@ -41,14 +43,24 @@ class OnboardingPagerActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        com.example.kleos.ui.language.LocaleManager.applySavedLocale(this)
         super.onCreate(savedInstanceState)
         binding = ActivityOnboardingPagerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         adapter = OnboardingPagerAdapter(pages)
         binding.pager.adapter = adapter
-        TabLayoutMediator(binding.indicator, binding.pager) { _, _ -> }.attach()
+        binding.pager.offscreenPageLimit = 1
+        // Отключаем лишние эффекты и вложенный скролл у внутреннего RecyclerView
+        (binding.pager.getChildAt(0) as? RecyclerView)?.let { rv ->
+            rv.itemAnimator = null
+            rv.overScrollMode = View.OVER_SCROLL_NEVER
+            rv.isNestedScrollingEnabled = false
+        }
+        // Переносим инициализацию индикатора и первичный апдейт на следующую петлю
+        binding.pager.post {
+            TabLayoutMediator(binding.indicator, binding.pager) { _, _ -> }.attach()
+            updateControls(0)
+        }
 
         binding.skip.setOnClickListener { finishFlow() }
         binding.btnNext.setOnClickListener { goNext() }
@@ -60,7 +72,6 @@ class OnboardingPagerActivity : AppCompatActivity() {
                 updateControls(position)
             }
         })
-        updateControls(0)
     }
 
     private fun updateControls(position: Int) {

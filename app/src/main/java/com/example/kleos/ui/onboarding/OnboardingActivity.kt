@@ -11,7 +11,6 @@ class OnboardingActivity : AppCompatActivity() {
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
-        com.example.kleos.ui.language.LocaleManager.applySavedLocale(this)
         super.onCreate(savedInstanceState)
         binding = ActivityOnboardingBinding.inflate(layoutInflater)
         setContentView(binding.root)

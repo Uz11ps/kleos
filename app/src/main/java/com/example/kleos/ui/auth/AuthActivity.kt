@@ -25,8 +25,6 @@ class AuthActivity : AppCompatActivity() {
     private var isRegisterMode: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Применяем сохранённую локаль до инициализации UI
-        com.example.kleos.ui.language.LocaleManager.applySavedLocale(this)
         super.onCreate(savedInstanceState)
         binding = ActivityAuthBinding.inflate(layoutInflater)
         setContentView(binding.root)
