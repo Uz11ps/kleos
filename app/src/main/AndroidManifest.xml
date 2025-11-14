@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".KleosApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -58,7 +59,8 @@
             android:name=".ui.auth.AuthActivity"
             android:exported="false"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Kleos.NoActionBar" />
+            android:theme="@style/Theme.Kleos.NoActionBar"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
     </application>
 
 </manifest>
