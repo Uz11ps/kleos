@@ -6,7 +6,7 @@ import com.example.kleos.data.model.AdmissionApplication
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -62,6 +62,7 @@ interface AdmissionsRepository {
     }
 
     class Http(private val context: Context) : AdmissionsRepository {
+        private val scope = CoroutineScope(Dispatchers.IO)
         override fun submit(application: AdmissionApplication) {
             val api = com.example.kleos.data.network.ApiClient.retrofit
                 .create(com.example.kleos.data.network.AdmissionsApi::class.java)
@@ -73,7 +74,7 @@ interface AdmissionsRepository {
                 comment = application.comment
             )
             // fire-and-forget
-            GlobalScope.launch(Dispatchers.IO) {
+            scope.launch {
                 kotlin.runCatching { api.create(body) }
             }
         }

@@ -58,6 +58,10 @@ class AdmissionFormFragment : Fragment() {
                 Toast.makeText(requireContext(), "Заполните обязательные поля", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(requireContext(), "Некорректный email", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val application = AdmissionApplication(
                 id = UUID.randomUUID().toString(),
                 fullName = fullName,

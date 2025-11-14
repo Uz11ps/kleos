@@ -15,21 +15,25 @@ const createSchema = z.object({
 });
 
 router.post('/', async (req, res) => {
-  const data = createSchema.parse(req.body);
-  let userId: string | undefined;
-  const authz = req.headers.authorization || '';
-  const m = authz.match(/^Bearer\s+(.+)$/i);
-  if (m) {
-    try {
-      const token = m[1];
-      const payload: any = jwt.verify(token, process.env.JWT_SECRET!);
-      userId = payload?.uid;
-    } catch {
-      // ignore invalid token; allow unauthenticated submission
+  try {
+    const data = createSchema.parse(req.body);
+    let userId: string | undefined;
+    const authz = req.headers.authorization || '';
+    const m = authz.match(/^Bearer\s+(.+)$/i);
+    if (m) {
+      try {
+        const token = m[1];
+        const payload: any = jwt.verify(token, process.env.JWT_SECRET!);
+        userId = payload?.uid;
+      } catch {
+        // ignore invalid token; allow unauthenticated submission
+      }
     }
+    await Admission.create({ ...data, userId });
+    return res.status(201).json({ ok: true });
+  } catch (e: any) {
+    return res.status(400).json({ ok: false, error: e?.message || 'bad_request' });
   }
-  await Admission.create({ ...data, userId });
-  res.status(201).json({ ok: true });
 });
 
 router.get('/', auth('admin'), async (_req, res) => {

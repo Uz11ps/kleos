@@ -26,19 +26,9 @@ object LocaleManager {
         if (current != locales) {
             AppCompatDelegate.setApplicationLocales(locales)
         }
-        // Избегаем тяжёлого updateConfiguration, если локаль не меняется.
-        val currentLang = context.resources.configuration.locales.get(0)?.language
-        if (currentLang != code) {
-            val locale = Locale(code)
-            Locale.setDefault(locale)
-            val config = Configuration(context.resources.configuration)
-            config.setLocale(locale)
-            // Выполняем обновление на контексте приложения, чтобы не блокировать конкретную Activity
-            context.applicationContext.resources.updateConfiguration(
-                config,
-                context.applicationContext.resources.displayMetrics
-            )
-        }
+        // Дополнительно синхронизируем Locale по умолчанию (без updateConfiguration)
+        val locale = Locale(code)
+        Locale.setDefault(locale)
     }
 
     private fun currentLocale(): String {
