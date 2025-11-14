@@ -8,6 +8,7 @@ import { Admission } from '../models/Admission.js';
 import chatsRoutes from './chats.js';
 import multer from 'multer';
 import path from 'path';
+import { Schema, model, Types } from 'mongoose';
 
 const router = Router();
 
@@ -30,6 +31,20 @@ const upload = multer({
   }),
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
+
+// Minimal chat models for server-side admin rendering
+const ChatSchema = new Schema({
+  userId: { type: Types.ObjectId, ref: 'User', index: true },
+  status: { type: String, enum: ['open', 'closed'], default: 'open', index: true },
+  lastMessageAt: { type: Date, index: true }
+}, { timestamps: true });
+const MessageSchema = new Schema({
+  chatId: { type: Types.ObjectId, ref: 'Chat', index: true },
+  senderRole: { type: String, enum: ['student', 'admin', 'system'] },
+  text: String
+}, { timestamps: true });
+const Chat = model('Chat', ChatSchema);
+const Message = model('Message', MessageSchema);
 
 function adminLayout(opts: {
   title: string;
@@ -471,54 +486,43 @@ router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
 
 // Chats simple UI (uses public chats endpoints)
 router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
+  const chats = await Chat.find().sort({ lastMessageAt: -1 }).limit(200).lean();
+  const items = chats.map(c => `<li><a href="/admin/chats/${c._id}">${c._id} (user ${c.userId})</a></li>`).join('');
   const body = `
     <div class="card">
       <h2>Chats</h2>
-      <ul id="list" style="margin-top:12px">Loading...</ul>
+      <ul style="margin-top:12px">${items || '<li class="muted">Нет чатов</li>'}</ul>
     </div>
-    <script>
-    async function loadChats(){
-      const r=await fetch('/chats/all',{headers:{'Accept':'application/json'}});
-      const data=await r.json();
-      const list=document.getElementById('list');
-      list.innerHTML=data.map(c=>'<li><a href="/admin/chats/'+c.id+'">'+c.id+' (user '+c.userId+')</a></li>').join('');
-    }
-    window.addEventListener('load',loadChats);
-    </script>
   `;
   res.send(adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
 });
 
 router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
   const chatId = req.params.id;
+  const msgs = await Message.find({ chatId }).sort({ createdAt: 1 }).lean();
+  const list = msgs.map(m => `<div><b>${m.senderRole}:</b> ${String(m.text || '').replace(/</g,'&lt;')}</div>`).join('');
   const body = `
     <div class="card">
       <div><a href="/admin/chats">&larr; Back</a></div>
       <h3 style="margin-top:8px">Chat ${chatId}</h3>
-      <div id="msgs" class="card" style="margin-top:10px;height:400px;overflow:auto;">Loading...</div>
-      <form id="sendForm" class="form-row" style="margin-top:10px">
+      <div class="card" style="margin-top:10px;height:400px;overflow:auto;">${list || '<div class="muted">Пока нет сообщений</div>'}</div>
+      <form method="post" action="/admin/chats/${chatId}/send" class="form-row" style="margin-top:10px">
         <input name="text" placeholder="Message" style="flex:1;min-width:180px"/>
         <button class="btn primary" type="submit">Send</button>
       </form>
     </div>
-    <script>
-    async function load(){
-      const r=await fetch('/chats/${chatId}/messages',{headers:{'Accept':'application/json'}});
-      const data=await r.json();
-      document.getElementById('msgs').innerHTML=data.map(m=>'<div><b>'+m.senderRole+':</b> '+m.text+'</div>').join('');
-    }
-    document.getElementById('sendForm').addEventListener('submit',async (e)=>{
-      e.preventDefault();
-      const fd=new FormData(e.target);
-      const text=fd.get('text');
-      await fetch('/chats/${chatId}/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
-      e.target.reset();
-      load();
-    });
-    load();
-    </script>
   `;
   res.send(adminLayout({ title: `Kleos Admin - Chat ${chatId}`, active: 'chats', body }));
+});
+
+router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
+  const chatId = req.params.id;
+  const text = (req.body?.text as string || '').trim();
+  if (text.length > 0) {
+    await Message.create({ chatId, senderRole: 'admin', text });
+    await Chat.updateOne({ _id: chatId }, { lastMessageAt: new Date() });
+  }
+  res.redirect(`/admin/chats/${chatId}`);
 });
 
 // I18n UI
