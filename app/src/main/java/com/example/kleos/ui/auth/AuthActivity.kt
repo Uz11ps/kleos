@@ -132,7 +132,11 @@ class AuthActivity : AppCompatActivity() {
             val result = withContext(Dispatchers.IO) { authRepository.register(fullName, email, password) }
             binding.submitButton.isEnabled = true
             if (result.isSuccess) {
-                Toast.makeText(this@AuthActivity, "Проверьте почту и подтвердите email", Toast.LENGTH_LONG).show()
+                // Переходим на экран ожидания подтверждения почты
+                val intent = Intent(this@AuthActivity, com.example.kleos.ui.verify.VerifyEmailActivity::class.java)
+                    .putExtra("email", email)
+                startActivity(intent)
+                finish()
             } else {
                 val msg = result.exceptionOrNull()?.let { ex ->
                     try {

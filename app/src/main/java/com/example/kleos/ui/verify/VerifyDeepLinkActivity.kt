@@ -16,14 +16,29 @@ import kotlinx.coroutines.withContext
 
 class VerifyDeepLinkActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        com.example.kleos.ui.language.LocaleManager.applySavedLocale(this)
         super.onCreate(savedInstanceState)
         val data: Uri? = intent?.data
+        val host = data?.host.orEmpty()
+        if (host == "verified") {
+            // Приложение вызвано из HTML после успешного POST /auth/verify/consume — принимаем JWT
+            val jwt = data?.getQueryParameter("jwt")
+            if (jwt.isNullOrEmpty()) {
+                Toast.makeText(this, "Missing session", Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
+            val session = SessionManager(this@VerifyDeepLinkActivity)
+            // email и имя на этом шаге неизвестны — оставим как было
+            session.saveToken(jwt)
+            startActivity(Intent(this@VerifyDeepLinkActivity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK))
+            finish()
+            return
+        }
+
         val token = data?.getQueryParameter("token")
         if (token.isNullOrEmpty()) {
             Toast.makeText(this, "Missing token", Toast.LENGTH_SHORT).show()
-            finish()
-            return
+            finish(); return
         }
         val api = ApiClient.retrofit.create(AuthApi::class.java)
         CoroutineScope(Dispatchers.IO).launch {

@@ -139,6 +139,48 @@ router.post('/verify/consume', async (req, res) => {
   user.emailVerifyExpires = undefined as any;
   await user.save();
   const jwtToken = jwt.sign({ uid: user._id.toString(), role: user.role }, process.env.JWT_SECRET!, { expiresIn: '30d' });
+
+  const wantsHtml = (req.headers.accept || '').includes('text/html');
+  if (wantsHtml) {
+    // Возвращаем HTML, который перекинет пользователя обратно в приложение с готовым JWT
+    const appScheme = process.env.APP_DEEP_LINK_SCHEME || 'kleos';
+    const appHost = 'verified';
+    const appLink = `${appScheme}://${appHost}?jwt=${jwtToken}`;
+    return res.send(`<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Email подтверждён</title>
+    <meta http-equiv="refresh" content="0; url='${appLink}'" />
+    <style>
+      body { font-family: Arial, sans-serif; background:#f6f7fb; margin:0; padding:0; }
+      .card {
+        max-width: 560px; margin: 40px auto; background:#fff; border:1px solid #eee;
+        border-radius: 10px; padding: 24px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      }
+      h2 { margin: 0 0 14px 0; color:#111; font-size: 20px; }
+      p { margin: 0 0 10px 0; color:#444; line-height: 1.55; }
+      .btn {
+        display:inline-block; padding: 10px 16px; background:#2563eb; color:#fff; text-decoration:none;
+        border-radius: 6px; font-weight: 600; margin-top: 12px; border:0; cursor:pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Email подтверждён</h2>
+      <p>Сейчас откроется приложение Kleos.</p>
+      <p>Если этого не произошло, нажмите кнопку:</p>
+      <p><a class="btn" href="${appLink}">Открыть приложение</a></p>
+    </div>
+    <script>
+      setTimeout(function(){ window.location.href='${appLink}'; }, 100);
+    </script>
+  </body>
+</html>`);
+  }
+
   return res.json({ token: jwtToken, user: { id: user._id, fullName: user.fullName, email: user.email, role: user.role } });
 });
 
