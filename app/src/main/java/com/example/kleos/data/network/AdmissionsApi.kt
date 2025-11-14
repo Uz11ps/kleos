@@ -7,6 +7,13 @@ data class AdmissionRequest(
     val fullName: String,
     val phone: String,
     val email: String,
+    val dateOfBirth: String?,
+    val placeOfBirth: String?,
+    val nationality: String?,
+    val passportNumber: String?,
+    val passportIssue: String?,
+    val passportExpiry: String?,
+    val visaCity: String?,
     val program: String,
     val comment: String?
 )

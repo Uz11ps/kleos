@@ -5,9 +5,17 @@ const admissionSchema = new Schema({
   fullName: String,
   phone: String,
   email: String,
+  dateOfBirth: String,
+  placeOfBirth: String,
+  nationality: String,
+  passportNumber: String,
+  passportIssue: String,
+  passportExpiry: String,
+  visaCity: String,
   program: String,
   comment: String,
-  status: { type: String, enum: ['new', 'processing', 'done'], default: 'new', index: true }
+  studentId: String,
+  status: { type: String, enum: ['new', 'processing', 'done', 'rejected'], default: 'new', index: true }
 }, { timestamps: true });
 
 export const Admission = model('Admission', admissionSchema);

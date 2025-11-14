@@ -52,7 +52,13 @@ class AdmissionFormFragment : Fragment() {
             val fullName = binding.fullNameEditText.text?.toString().orEmpty()
             val phone = binding.phoneEditText.text?.toString().orEmpty()
             val email = binding.emailEditText.text?.toString().orEmpty()
+            val dateOfBirth = binding.dateOfBirthEditText.text?.toString()
+            val placeOfBirth = view?.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.kleos.R.id.placeOfBirthEditText)?.text?.toString()
+            val nationality = view?.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.kleos.R.id.nationalityEditText)?.text?.toString()
+            val passportNumber = view?.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.kleos.R.id.passportNumberEditText)?.text?.toString()
+            val passportIssue = view?.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.kleos.R.id.passportIssueEditText)?.text?.toString()
             val program = binding.programEditText.text?.toString().orEmpty()
+            val visaCity = view?.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.kleos.R.id.visaCityEditText)?.text?.toString()
             val comment = binding.commentEditText.text?.toString()
             if (fullName.isBlank() || phone.isBlank() || email.isBlank() || program.isBlank()) {
                 Toast.makeText(requireContext(), "Заполните обязательные поля", Toast.LENGTH_SHORT).show()
@@ -67,6 +73,13 @@ class AdmissionFormFragment : Fragment() {
                 fullName = fullName,
                 phone = phone,
                 email = email,
+                dateOfBirth = dateOfBirth,
+                placeOfBirth = placeOfBirth,
+                nationality = nationality,
+                passportNumber = passportNumber,
+                passportIssue = passportIssue,
+                passportExpiry = binding.passportExpiryEditText.text?.toString(),
+                visaCity = visaCity,
                 program = program,
                 comment = comment
             )

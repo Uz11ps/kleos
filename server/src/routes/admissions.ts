@@ -10,6 +10,13 @@ const createSchema = z.object({
   fullName: z.string().min(1),
   phone: z.string().min(3),
   email: z.string().email(),
+  dateOfBirth: z.string().optional(),
+  placeOfBirth: z.string().optional(),
+  nationality: z.string().optional(),
+  passportNumber: z.string().optional(),
+  passportIssue: z.string().optional(),
+  passportExpiry: z.string().optional(),
+  visaCity: z.string().optional(),
   program: z.string().min(1),
   comment: z.string().optional()
 });

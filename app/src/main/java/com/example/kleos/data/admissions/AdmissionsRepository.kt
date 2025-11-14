@@ -70,6 +70,13 @@ interface AdmissionsRepository {
                 fullName = application.fullName,
                 phone = application.phone,
                 email = application.email,
+                dateOfBirth = application.dateOfBirth,
+                placeOfBirth = application.placeOfBirth,
+                nationality = application.nationality,
+                passportNumber = application.passportNumber,
+                passportIssue = application.passportIssue,
+                passportExpiry = application.passportExpiry,
+                visaCity = application.visaCity,
                 program = application.program,
                 comment = application.comment
             )
