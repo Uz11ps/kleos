@@ -8,6 +8,7 @@ import { Admission } from '../models/Admission.js';
 import chatsRoutes from './chats.js';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import mongoose, { Schema, model, Types } from 'mongoose';
 
 const router = Router();
@@ -48,7 +49,7 @@ const Message = (mongoose.models.Message as any) || model('Message', MessageSche
 
 function adminLayout(opts: {
   title: string;
-  active?: 'users' | 'partners' | 'admissions' | 'chats' | 'i18n' | '';
+  active?: 'users' | 'partners' | 'admissions' | 'chats' | 'i18n' | 'news' | '';
   body: string;
 }) {
   const { title, active = '', body } = opts;
@@ -125,6 +126,7 @@ function adminLayout(opts: {
         ${navLink('/admin/admissions','Admissions','admissions')}
         ${navLink('/admin/chats','Chats','chats')}
         ${navLink('/admin/i18n','I18n','i18n')}
+        ${navLink('/admin/news','News','news')}
       </nav>
       <div class="logout"><a class="nav-link" href="/admin/logout">Logout</a></div>
     </div>
@@ -541,6 +543,28 @@ router.get('/admin/i18n', adminAuthMiddleware, async (_req, res) => {
   const all = await Translation.find({}).lean();
   const keySet = new Set<string>();
   for (const t of all) keySet.add(t.key);
+  // Дополнительно подтягиваем ключи из Android strings.xml проекта
+  try {
+    const baseDir = path.resolve(process.cwd(), '..', 'app', 'src', 'main', 'res');
+    const files = [
+      path.join(baseDir, 'values', 'strings.xml'),
+      path.join(baseDir, 'values-ru', 'strings.xml'),
+      path.join(baseDir, 'values-zh-rCN', 'strings.xml'),
+      path.join(baseDir, 'values-en', 'strings.xml')
+    ];
+    const strRe = /<string\s+[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/string>/g;
+    for (const f of files) {
+      if (!fs.existsSync(f)) continue;
+      const xml = fs.readFileSync(f, 'utf8');
+      let m: RegExpExecArray | null;
+      while ((m = strRe.exec(xml)) !== null) {
+        const key = m[1];
+        // Пропускаем явно не переводимые
+        if (/\btranslatable="false"/.test(m[0])) continue;
+        keySet.add(key);
+      }
+    }
+  } catch {}
   const keys = Array.from(keySet).sort((a,b)=>a.localeCompare(b));
   const map: Record<string, Record<string,string>> = {};
   for (const k of keys) map[k] = { ru:'', en:'', zh:'' };
