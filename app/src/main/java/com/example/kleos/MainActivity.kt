@@ -118,6 +118,13 @@ class MainActivity : AppCompatActivity() {
                 prefs.edit().putBoolean("invite_dialog_shown", true).apply()
             }
         }
+
+        // Автопереход на форму поступления с выбранной программой
+        val prefillProgram = intent.getStringExtra("prefill_program")
+        if (!prefillProgram.isNullOrBlank()) {
+            // Перейдём на экран подачи заявки
+            navController.navigate(R.id.nav_admission)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

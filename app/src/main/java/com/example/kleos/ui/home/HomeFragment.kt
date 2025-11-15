@@ -13,6 +13,11 @@ import com.example.kleos.databinding.FragmentHomeBinding
 import com.example.kleos.databinding.DialogInviteBinding
 import com.example.kleos.data.auth.SessionManager
 import com.example.kleos.ui.language.t
+import androidx.lifecycle.lifecycleScope
+import com.example.kleos.data.news.NewsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeFragment : Fragment() {
 
@@ -37,12 +42,14 @@ class HomeFragment : Fragment() {
         binding.newsRecycler.layoutManager = LinearLayoutManager(requireContext())
         binding.newsRecycler.adapter = adapter
 
-        val demo = listOf(
-            NewsItem("1", "Lobachevsky University with KLEOS", "March 6, 2024"),
-            NewsItem("2", "دراسة الطب ... سيتشينوف", "August 10, 2023"),
-            NewsItem("3", "Summer Camp in Sochi", "June 20, 2023")
-        )
-        adapter.submitList(demo)
+        // Загрузка новостей из API
+        val repo = NewsRepository()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val items = withContext(Dispatchers.IO) {
+                runCatching { repo.fetch() }.getOrElse { emptyList() }
+            }
+            adapter.submitList(items)
+        }
 
         // Greeting and user card binding
         val session = SessionManager(requireContext())

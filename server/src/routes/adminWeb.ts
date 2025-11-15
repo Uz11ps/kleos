@@ -725,6 +725,127 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
   res.send(adminLayout({ title: 'Kleos Admin - News', active: 'news', body }));
 });
 
+// Programs UI
+router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
+  const { Program } = await import('../models/Program.js');
+  const q = String(req.query.q || '').trim();
+  const filter: any = {};
+  if (q) filter.$or = [{ title: { $regex: q, $options: 'i' } }, { university: { $regex: q, $options: 'i' } }];
+  const list = await Program.find(filter).sort({ order: 1, createdAt: -1 }).lean();
+  const rows = list.map(p => `
+    <tr>
+      <td>${p._id}</td>
+      <td>
+        <form method="post" action="/admin/programs/${p._id}">
+          <div class="form-row" style="margin-bottom:6px">
+            <input name="title" value="${(p.title || '').toString().replace(/"/g,'&quot;')}" placeholder="Title"/>
+            <input name="slug" value="${(p.slug || '').toString().replace(/"/g,'&quot;')}" placeholder="Slug"/>
+            <select name="language">
+              ${['ru','en','zh'].map(l=>`<option value="${l}" ${p.language===l?'selected':''}>${l}</option>`).join('')}
+            </select>
+            <select name="level">
+              ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l}</option>`).join('')}
+            </select>
+            <input name="university" value="${(p.university||'').toString().replace(/"/g,'&quot;')}" placeholder="University"/>
+            <input type="number" name="tuition" value="${p.tuition || 0}" placeholder="Tuition"/>
+            <input type="number" name="durationMonths" value="${p.durationMonths || 0}" placeholder="Duration, months"/>
+            <input name="imageUrl" value="${(p.imageUrl||'').toString().replace(/"/g,'&quot;')}" placeholder="Image URL"/>
+            <input type="number" name="order" value="${p.order || 0}" placeholder="Order"/>
+            <label><input type="checkbox" name="active" ${p.active ? 'checked' : ''}/> active</label>
+          </div>
+          <textarea name="description" rows="3" style="width:100%" placeholder="Description">${(p.description || '').toString().replace(/</g,'&lt;')}</textarea>
+          <div style="margin-top:6px">
+            <button class="btn primary" type="submit">Save</button>
+            <button class="btn danger" formaction="/admin/programs/${p._id}/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
+          </div>
+        </form>
+      </td>
+    </tr>
+  `).join('');
+  const body = `
+    <div class="card">
+      <h2>Programs</h2>
+      <div class="toolbar">
+        <form method="get" action="/admin/programs" class="form-row" style="gap:8px">
+          <input name="q" placeholder="Search..." value="${q.replace(/"/g,'&quot;')}"/>
+          <button class="btn" type="submit">Search</button>
+          <a class="btn" href="/admin/programs">Reset</a>
+        </form>
+      </div>
+      <form method="post" action="/admin/programs/create" class="form-row">
+        <input name="title" placeholder="Title" style="min-width:220px"/>
+        <input name="slug" placeholder="Slug"/>
+        <select name="language">${['ru','en','zh'].map(l=>`<option value="${l}">${l}</option>`).join('')}</select>
+        <select name="level">${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}">${l}</option>`).join('')}</select>
+        <input name="university" placeholder="University"/>
+        <input type="number" name="tuition" placeholder="Tuition"/>
+        <input type="number" name="durationMonths" placeholder="Duration, months"/>
+        <input name="imageUrl" placeholder="Image URL"/>
+        <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" checked/> active</label>
+        <input type="number" name="order" value="0" placeholder="Order"/>
+        <button class="btn primary" type="submit">Create</button>
+      </form>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  res.send(adminLayout({ title: 'Kleos Admin - Programs', active: '', body }));
+});
+
+router.post('/admin/programs/create', adminAuthMiddleware, async (req, res) => {
+  const { Program } = await import('../models/Program.js');
+  const schema = z.object({
+    title: z.string().min(1),
+    slug: z.string().min(1),
+    language: z.enum(['ru','en','zh']).optional().default('en'),
+    level: z.enum(['bachelor','master','phd','foundation','other']).optional().default('other'),
+    university: z.string().optional().default(''),
+    tuition: z.coerce.number().optional().default(0),
+    durationMonths: z.coerce.number().optional().default(0),
+    imageUrl: z.string().optional().default(''),
+    active: z.string().optional(),
+    order: z.coerce.number().optional().default(0)
+  });
+  const d = schema.parse(req.body);
+  await Program.create({
+    title: d.title, slug: d.slug, language: d.language, level: d.level,
+    university: d.university, tuition: d.tuition, durationMonths: d.durationMonths,
+    imageUrl: d.imageUrl, active: d.active === 'on', order: d.order, description: ''
+  });
+  res.redirect('/admin/programs');
+});
+
+router.post('/admin/programs/:id', adminAuthMiddleware, async (req, res) => {
+  const { Program } = await import('../models/Program.js');
+  const schema = z.object({
+    title: z.string().optional(),
+    slug: z.string().optional(),
+    description: z.string().optional(),
+    language: z.enum(['ru','en','zh']).optional(),
+    level: z.enum(['bachelor','master','phd','foundation','other']).optional(),
+    university: z.string().optional(),
+    tuition: z.coerce.number().optional(),
+    durationMonths: z.coerce.number().optional(),
+    imageUrl: z.string().optional(),
+    active: z.string().optional(),
+    order: z.coerce.number().optional()
+  });
+  const d = schema.parse(req.body);
+  const update: any = { ...d };
+  if ('active' in d) update.active = d.active === 'on';
+  await Program.updateOne({ _id: req.params.id }, update);
+  res.redirect('/admin/programs');
+});
+
+router.post('/admin/programs/:id/delete', adminAuthMiddleware, async (req, res) => {
+  const { Program } = await import('../models/Program.js');
+  await Program.deleteOne({ _id: req.params.id });
+  res.redirect('/admin/programs');
+});
 router.post('/admin/news/create', adminAuthMiddleware, async (req, res) => {
   const { News } = await import('../models/News.js');
   const schema = z.object({

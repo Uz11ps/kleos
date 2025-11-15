@@ -12,6 +12,7 @@ import usersRoutes from './routes/users.js';
 import chatsRoutes from './routes/chats.js';
 import i18nRoutes from './routes/i18n.js';
 import newsRoutes from './routes/news.js';
+import programsRoutes from './routes/programs.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -63,6 +64,7 @@ app.use('/users', usersRoutes);
 app.use('/chats', chatsRoutes);
 app.use('/i18n', i18nRoutes);
 app.use('/news', newsRoutes);
+app.use('/programs', programsRoutes);
 app.use('/', adminWeb);
 
 const port = Number(process.env.PORT) || 8080;

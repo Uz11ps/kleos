@@ -39,6 +39,13 @@ class AdmissionFormFragment : Fragment() {
         applyDateMask(binding.dateOfBirthEditText)
         applyDateMask(binding.passportExpiryEditText)
 
+        // Автоподстановка выбранной программы из Intent/аргументов
+        val argProgram = arguments?.getString("program")
+            ?: requireActivity().intent?.getStringExtra("prefill_program")
+        if (!argProgram.isNullOrBlank() && binding.programEditText.text.isNullOrBlank()) {
+            binding.programEditText.setText(argProgram)
+        }
+
         // Phone mask per language
         val lang = resources.configuration.locales[0]?.language ?: "en"
         binding.phoneEditText.addTextChangedListener(
