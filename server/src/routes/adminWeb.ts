@@ -543,27 +543,32 @@ router.get('/admin/i18n', adminAuthMiddleware, async (_req, res) => {
   const all = await Translation.find({}).lean();
   const keySet = new Set<string>();
   for (const t of all) keySet.add(t.key);
-  // Дополнительно подтягиваем ключи из Android strings.xml проекта
+  // Дополнительно подтягиваем ключи и значения из Android strings.xml проекта
   try {
     const baseDir = path.resolve(process.cwd(), '..', 'app', 'src', 'main', 'res');
-    const files = [
-      path.join(baseDir, 'values', 'strings.xml'),
-      path.join(baseDir, 'values-ru', 'strings.xml'),
-      path.join(baseDir, 'values-zh-rCN', 'strings.xml'),
-      path.join(baseDir, 'values-en', 'strings.xml')
+    const files: Array<{ file: string; lang: 'ru'|'en'|'zh' }> = [
+      { file: path.join(baseDir, 'values', 'strings.xml'), lang: 'en' }, // дефолт считаем en
+      { file: path.join(baseDir, 'values-en', 'strings.xml'), lang: 'en' },
+      { file: path.join(baseDir, 'values-ru', 'strings.xml'), lang: 'ru' },
+      { file: path.join(baseDir, 'values-zh-rCN', 'strings.xml'), lang: 'zh' }
     ];
+    const xmlVals: Record<'ru'|'en'|'zh', Record<string,string>> = { ru:{}, en:{}, zh:{} };
     const strRe = /<string\s+[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/string>/g;
-    for (const f of files) {
-      if (!fs.existsSync(f)) continue;
-      const xml = fs.readFileSync(f, 'utf8');
+    for (const it of files) {
+      if (!fs.existsSync(it.file)) continue;
+      const xml = fs.readFileSync(it.file, 'utf8');
       let m: RegExpExecArray | null;
       while ((m = strRe.exec(xml)) !== null) {
         const key = m[1];
         // Пропускаем явно не переводимые
         if (/\btranslatable="false"/.test(m[0])) continue;
         keySet.add(key);
+        const val = m[2].replace(/\s+/g, ' ').trim();
+        xmlVals[it.lang][key] = val;
       }
     }
+    // Сохраняем xml значения для автозаполнения ниже
+    (globalThis as any).__i18nXmlVals = xmlVals;
   } catch {}
   const keys = Array.from(keySet).sort((a,b)=>a.localeCompare(b));
   const map: Record<string, Record<string,string>> = {};
@@ -571,6 +576,17 @@ router.get('/admin/i18n', adminAuthMiddleware, async (_req, res) => {
   for (const t of all) {
     if (!map[t.key]) map[t.key] = { ru:'', en:'', zh:'' };
     (map[t.key] as any)[t.lang] = t.value || '';
+  }
+  // Автозаполняем пустые значения из xml, если есть
+  const xmlValsLoaded = (globalThis as any).__i18nXmlVals as (Record<'ru'|'en'|'zh', Record<string,string>> | undefined);
+  if (xmlValsLoaded) {
+    for (const k of keys) {
+      for (const ln of langs as Array<'ru'|'en'|'zh'>) {
+        if (!map[k][ln] && xmlValsLoaded[ln] && xmlValsLoaded[ln][k]) {
+          map[k][ln] = xmlValsLoaded[ln][k];
+        }
+      }
+    }
   }
   const rows = keys.map(k => {
     const r = map[k];
@@ -706,7 +722,7 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
       </div>
     </div>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - News', active: '', body }));
+  res.send(adminLayout({ title: 'Kleos Admin - News', active: 'news', body }));
 });
 
 router.post('/admin/news/create', adminAuthMiddleware, async (req, res) => {
