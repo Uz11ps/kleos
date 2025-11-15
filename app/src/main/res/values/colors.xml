@@ -12,4 +12,6 @@
     <color name="kleos_yellow">#FFD600</color>
     <color name="faq_card_bg">#FFF8E1</color>
     <color name="faq_chip_bg">#E3F2FD</color>
+    <!-- Ripple/hover color (20% opacity of primary blue) -->
+    <color name="kleos_blue_ripple">#332B5DBA</color>
 </resources>
