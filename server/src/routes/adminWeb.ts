@@ -49,7 +49,7 @@ const Message = (mongoose.models.Message as any) || model('Message', MessageSche
 
 function adminLayout(opts: {
   title: string;
-  active?: 'users' | 'partners' | 'admissions' | 'chats' | 'i18n' | 'news' | '';
+  active?: 'users' | 'partners' | 'admissions' | 'programs' | 'chats' | 'i18n' | 'news' | '';
   body: string;
 }) {
   const { title, active = '', body } = opts;
@@ -124,6 +124,7 @@ function adminLayout(opts: {
         ${navLink('/admin/users','Users','users')}
         ${navLink('/admin/partners','Partners','partners')}
         ${navLink('/admin/admissions','Admissions','admissions')}
+        ${navLink('/admin/programs','Programs','programs')}
         ${navLink('/admin/chats','Chats','chats')}
         ${navLink('/admin/i18n','I18n','i18n')}
         ${navLink('/admin/news','News','news')}
