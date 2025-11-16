@@ -22,16 +22,16 @@
         <ImageView
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:src="@mipmap/ic_launcher"
+            android:src="@drawable/logo_kleos_fon"
             android:contentDescription="@string/app_name" />
 
-        <TextView
+        <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="18dp"
             android:layout_marginStart="8dp"
-            android:text="SIMATEX\nSTUDY IN RUSSIA"
-            android:textColor="@color/kleos_blue"
-            android:textSize="10sp" />
+            android:adjustViewBounds="true"
+            android:src="@drawable/kleos_fon"
+            android:contentDescription="@string/app_name" />
     </LinearLayout>
 
     <!-- Контент по центру между брендом и кнопками -->
@@ -163,6 +163,9 @@
         android:layout_marginBottom="12dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
         app:layout_constraintBottom_toTopOf="@+id/bottomBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -181,7 +184,10 @@
             android:layout_height="wrap_content"
             android:text="@string/continue_as_guest"
             android:textColor="@color/kleos_blue"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
 
     <!-- Кнопки у самого низа -->

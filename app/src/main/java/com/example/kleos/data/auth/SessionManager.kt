@@ -13,9 +13,8 @@ class SessionManager(context: Context) {
 
     fun isLoggedIn(): Boolean {
         val token = getToken()
-        // Считаем валидной только JWT-подобную строку (три сегмента через точку)
-        val looksLikeJwt = token?.count { it == '.' } == 2
-        return preferences.contains(KEY_USER_EMAIL) && !token.isNullOrEmpty() && looksLikeJwt
+        // Достаточно непустого токена: допускаем гостевые/локальные сессии
+        return preferences.contains(KEY_USER_EMAIL) && !token.isNullOrEmpty()
     }
 
     fun getCurrentUser(): User? {

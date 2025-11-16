@@ -38,10 +38,12 @@ class AuthActivity : AppCompatActivity() {
         binding.guestText.setOnClickListener {
             // Вход как гость: создаём сессию с именем guest и техническим токеном
             val session = SessionManager(this)
-            session.saveUser(fullName = "guest", email = "guest@local")
-            session.saveToken("guest_token")
+            session.saveUser(fullName = getString(com.example.kleos.R.string.guest), email = "guest@local")
+            session.saveToken(java.util.UUID.randomUUID().toString())
             proceedToMain()
         }
+        // Клик по всей строке ссылок на гостевой вход
+        binding.linksRow.setOnClickListener { binding.guestText.performClick() }
 
         binding.toggleModeButton.setOnClickListener {
             isRegisterMode = !isRegisterMode
@@ -57,6 +59,14 @@ class AuthActivity : AppCompatActivity() {
         }
 
         renderMode()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Если уже авторизованы (включая гостя), сразу на главную
+        if (SessionManager(this).isLoggedIn()) {
+            proceedToMain()
+        }
     }
 
     private fun proceedToMain(showInviteFallback: Boolean = false) {
