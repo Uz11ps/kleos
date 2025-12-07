@@ -72,4 +72,3 @@ class SessionManager(context: Context) {
     }
 }
 
-

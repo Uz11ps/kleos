@@ -16,5 +16,3 @@ class ProgramsRepository {
         withContext(Dispatchers.IO) { api.get(id) }
 }
 
-
-

@@ -15,5 +15,3 @@ interface NewsApi {
     suspend fun list(): List<NewsDto>
 }
 
-
-

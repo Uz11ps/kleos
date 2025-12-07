@@ -16,4 +16,3 @@ data class AdmissionApplication(
     val comment: String?
 )
 
-
