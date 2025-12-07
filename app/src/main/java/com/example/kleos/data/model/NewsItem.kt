@@ -6,4 +6,3 @@ data class NewsItem(
     val dateText: String
 )
 
-

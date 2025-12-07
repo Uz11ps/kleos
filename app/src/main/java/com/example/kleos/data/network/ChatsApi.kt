@@ -36,5 +36,3 @@ interface ChatsApi {
     suspend fun send(@Path("id") id: String, @Body body: SendMessageRequest): Map<String, Any?>
 }
 
-
-

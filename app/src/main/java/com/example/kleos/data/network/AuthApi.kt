@@ -22,4 +22,3 @@ interface AuthApi {
     suspend fun resendVerify(@Body body: Map<String, String>): Map<String, Any?>
 }
 
-

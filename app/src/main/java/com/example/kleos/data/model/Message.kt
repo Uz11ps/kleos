@@ -7,4 +7,3 @@ data class Message(
     val timestampMillis: Long
 )
 
-

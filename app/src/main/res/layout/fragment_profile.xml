@@ -43,6 +43,7 @@
             android:layout_marginTop="12dp"
             android:hint="@string/profile_payment">
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/paymentEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -54,6 +55,7 @@
             android:layout_marginTop="12dp"
             android:hint="@string/profile_penalties">
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/penaltiesEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -78,6 +80,7 @@
             android:layout_marginTop="12dp"
             android:hint="@string/profile_course">
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/courseEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -89,6 +92,7 @@
             android:layout_marginTop="12dp"
             android:hint="@string/profile_speciality">
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/specialityEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -100,6 +104,7 @@
             android:layout_marginTop="12dp"
             android:hint="@string/profile_status">
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/statusEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -111,6 +116,7 @@
             android:layout_marginTop="12dp"
             android:hint="@string/profile_university">
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/universityEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -122,8 +128,10 @@
             android:layout_marginTop="12dp"
             android:hint="@string/profile_student_id">
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/studentIdEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:enabled="false"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton

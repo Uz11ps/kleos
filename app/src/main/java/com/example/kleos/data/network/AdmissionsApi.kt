@@ -25,4 +25,3 @@ interface AdmissionsApi {
     suspend fun create(@Body body: AdmissionRequest): AdmissionResponse
 }
 
-

@@ -102,6 +102,25 @@ class AuthActivity : AppCompatActivity() {
     private fun performLogin() {
         val email = binding.emailEditText.text?.toString().orEmpty()
         val password = binding.passwordEditText.text?.toString().orEmpty()
+        
+        // Валидация перед отправкой запроса
+        if (email.isBlank()) {
+            Toast.makeText(this, "Введите email", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Некорректный email", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (password.isBlank()) {
+            Toast.makeText(this, "Введите пароль", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (password.length < 6) {
+            Toast.makeText(this, "Пароль должен быть не менее 6 символов", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
         binding.submitButton.isEnabled = false
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) { authRepository.login(email, password) }

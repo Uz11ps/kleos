@@ -6,4 +6,3 @@ data class Partner(
     val description: String
 )
 
-

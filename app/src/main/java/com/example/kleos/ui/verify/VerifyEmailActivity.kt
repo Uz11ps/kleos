@@ -13,12 +13,16 @@ import com.example.kleos.data.network.ApiClient
 import com.example.kleos.data.network.AuthApi
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class VerifyEmailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityVerifyEmailBinding
+    private var verificationCheckJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +65,27 @@ class VerifyEmailActivity : AppCompatActivity() {
                 }
             }
         }
+
+        // Запускаем периодическую проверку статуса верификации
+        startVerificationCheck()
+    }
+
+    private fun startVerificationCheck() {
+        verificationCheckJob = lifecycleScope.launch {
+            while (isActive) {
+                delay(2000) // Проверяем каждые 2 секунды
+                val session = SessionManager(this@VerifyEmailActivity)
+                if (session.isLoggedIn()) {
+                    // Пользователь подтвердил email - переходим на главный экран
+                    startActivity(
+                        Intent(this@VerifyEmailActivity, MainActivity::class.java)
+                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                    finish()
+                    break
+                }
+            }
+        }
     }
 
     override fun onResume() {
@@ -70,7 +95,18 @@ class VerifyEmailActivity : AppCompatActivity() {
         if (session.isLoggedIn()) {
             startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK))
             finish()
+        } else {
+            // Перезапускаем проверку, если она была остановлена
+            if (verificationCheckJob?.isActive != true) {
+                startVerificationCheck()
+            }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        verificationCheckJob?.cancel()
+        verificationCheckJob = null
     }
 }
 

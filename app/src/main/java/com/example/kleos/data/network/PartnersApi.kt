@@ -15,4 +15,3 @@ interface PartnersApi {
     suspend fun list(): List<PartnerDto>
 }
 
-

@@ -252,6 +252,50 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
         </table>
       </div>
     </div>
+    <script>
+      // Автоматическое обновление данных каждые 3 секунды
+      let refreshInterval;
+      function refreshUserData() {
+        fetch('/admin/users')
+          .then(r => r.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newRows = doc.querySelectorAll('tbody tr');
+            const currentRows = document.querySelectorAll('tbody tr');
+            
+            newRows.forEach((newRow, idx) => {
+              if (idx >= currentRows.length) return;
+              const currentRow = currentRows[idx];
+              const newInputs = newRow.querySelectorAll('input, select');
+              const currentInputs = currentRow.querySelectorAll('input, select');
+              
+              newInputs.forEach((newInput, inputIdx) => {
+                if (inputIdx >= currentInputs.length) return;
+                const currentInput = currentInputs[inputIdx];
+                // Обновляем только если поле не в фокусе
+                if (document.activeElement !== currentInput && currentInput.type !== 'checkbox') {
+                  currentInput.value = newInput.value || '';
+                }
+                if (currentInput.type === 'checkbox' && document.activeElement !== currentInput) {
+                  currentInput.checked = newInput.checked;
+                }
+                if (currentInput.tagName === 'SELECT' && document.activeElement !== currentInput) {
+                  currentInput.value = newInput.value;
+                }
+              });
+            });
+          })
+          .catch(err => console.error('Refresh error:', err));
+      }
+      
+      refreshInterval = setInterval(refreshUserData, 3000);
+      
+      // Останавливаем обновление при уходе со страницы
+      window.addEventListener('beforeunload', () => {
+        if (refreshInterval) clearInterval(refreshInterval);
+      });
+    </script>
   `;
   res.send(adminLayout({ title: 'Kleos Admin - Users', active: 'users', body }));
 });
