@@ -20,10 +20,8 @@ class ChatViewModel : ViewModel() {
 
     private var pollingJob: Job? = null
 
-    init {
-        // Первичная загрузка истории
-        refresh()
-    }
+    // Не вызываем refresh() в init, чтобы избежать запросов для неавторизованных пользователей
+    // refresh() будет вызван явно в ChatFragment когда пользователь откроет чат
 
     fun refresh() {
         viewModelScope.launch {
