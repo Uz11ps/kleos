@@ -2,15 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_chat"
-        android:icon="@android:drawable/ic_menu_send"
+        android:icon="@drawable/ic_nav_chat"
         android:title="@string/menu_chat" />
     <item
         android:id="@+id/nav_admission"
-        android:icon="@android:drawable/ic_menu_edit"
+        android:icon="@drawable/ic_nav_admission"
         android:title="@string/menu_admission" />
     <item
         android:id="@+id/nav_home"
-        android:icon="@android:drawable/ic_menu_view"
+        android:icon="@drawable/ic_nav_home"
         android:title="@string/menu_home" />
     <item
         android:id="@+id/nav_gallery"
