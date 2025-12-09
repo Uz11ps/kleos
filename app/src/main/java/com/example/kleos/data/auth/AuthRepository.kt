@@ -55,6 +55,7 @@ interface AuthRepository {
             val resp = api.login(com.example.kleos.data.network.LoginRequest(email, password))
             sessionManager.saveToken(resp.token)
             sessionManager.saveUser(resp.user.fullName, resp.user.email)
+            sessionManager.saveRole(resp.user.role)
             sessionManager.getCurrentUser()!!
         }
 

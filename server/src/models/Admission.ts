@@ -2,7 +2,9 @@ import { Schema, model, Types } from 'mongoose';
 
 const admissionSchema = new Schema({
   userId: { type: Types.ObjectId, ref: 'User' },
-  fullName: String,
+  firstName: String,
+  lastName: String,
+  patronymic: String,
   phone: String,
   email: String,
   dateOfBirth: String,

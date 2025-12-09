@@ -47,14 +47,18 @@ const MessageSchema = new Schema({
 const Chat = (mongoose.models.Chat as any) || model('Chat', ChatSchema);
 const Message = (mongoose.models.Message as any) || model('Message', MessageSchema);
 
-function adminLayout(opts: {
+async function adminLayout(opts: {
   title: string;
-  active?: 'users' | 'partners' | 'admissions' | 'programs' | 'chats' | 'i18n' | 'news' | '';
+  active?: 'users' | 'partners' | 'admissions' | 'programs' | 'chats' | 'i18n' | 'news' | 'gallery' | 'universities' | '';
   body: string;
 }) {
   const { title, active = '', body } = opts;
-  const navLink = (href: string, label: string, key: typeof active) =>
-    `<a class="nav-link ${active === key ? 'active' : ''}" href="${href}">${label}</a>`;
+  // Проверяем наличие непрочитанных сообщений от студентов
+  const unreadCount = await Message.countDocuments({ senderRole: 'student', isReadByAdmin: false });
+  const navLink = (href: string, label: string, key: typeof active, badge?: number) => {
+    const badgeHtml = badge && badge > 0 ? ` <span style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 6px;font-size:11px;margin-left:4px">${badge}</span>` : '';
+    return `<a class="nav-link ${active === key ? 'active' : ''}" href="${href}">${label}${badgeHtml}</a>`;
+  };
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -125,9 +129,10 @@ function adminLayout(opts: {
         ${navLink('/admin/partners','Partners','partners')}
         ${navLink('/admin/admissions','Admissions','admissions')}
         ${navLink('/admin/programs','Programs','programs')}
-        ${navLink('/admin/chats','Chats','chats')}
+        ${navLink('/admin/chats','Chats','chats', unreadCount)}
         ${navLink('/admin/i18n','I18n','i18n')}
         ${navLink('/admin/news','News','news')}
+        ${navLink('/admin/gallery','Gallery','gallery')}
       </nav>
       <div class="logout"><a class="nav-link" href="/admin/logout">Logout</a></div>
     </div>
@@ -185,7 +190,7 @@ router.get('/admin', (req, res) => {
       </div>
     </div>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - Login', active: '', body }));
+  res.send(await adminLayout({ title: 'Kleos Admin - Login', active: '', body }));
 });
 
 // Handle login
@@ -297,7 +302,7 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
       });
     </script>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - Users', active: 'users', body }));
+  res.send(await adminLayout({ title: 'Kleos Admin - Users', active: 'users', body }));
 });
 
 // Update user
@@ -378,7 +383,7 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
       </div>
     </div>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - Partners', active: 'partners', body }));
+  res.send(await adminLayout({ title: 'Kleos Admin - Partners', active: 'partners', body }));
 });
 
 router.post('/admin/partners', adminAuthMiddleware, upload.single('logoFile'), async (req: any, res) => {
@@ -438,7 +443,7 @@ router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
       <td>${a._id}</td>
       <td>
         <div style="margin-bottom:8px">
-          <div><b>${a.fullName}</b></div>
+          <div><b>${((a as any).lastName || '')} ${((a as any).firstName || '')} ${((a as any).patronymic || '')}</b></div>
           <div>Email: ${a.email} | Phone: ${a.phone}</div>
           <div>Program: ${a.program}</div>
           ${a.comment ? `<div class="muted">Comment: ${(a.comment as string).toString().replace(/</g,'&lt;')}</div>` : ''}
@@ -478,7 +483,7 @@ router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
       </div>
     </div>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - Admissions', active: 'admissions', body }));
+  res.send(await adminLayout({ title: 'Kleos Admin - Admissions', active: 'admissions', body }));
 });
 
 // Accept admission: set status=done, optionally assign studentId; if linked userId exists — make role=student
@@ -545,7 +550,7 @@ router.get('/admin/admissions/:id/view', adminAuthMiddleware, async (req, res) =
       </div>
     </div>
   `;
-  res.send(adminLayout({ title: `Kleos Admin - Admission ${id}`, active: 'admissions', body }));
+  res.send(await adminLayout({ title: `Kleos Admin - Admission ${id}`, active: 'admissions', body }));
 });
 
 router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
@@ -565,11 +570,13 @@ router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
       <ul style="margin-top:12px">${items || '<li class="muted">Нет чатов</li>'}</ul>
     </div>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
+  res.send(await adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
 });
 
 router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
   const chatId = req.params.id;
+  // Помечаем все сообщения от студентов в этом чате как прочитанные
+  await Message.updateMany({ chatId, senderRole: 'student' }, { isReadByAdmin: true });
   const msgs = await Message.find({ chatId }).sort({ createdAt: 1 }).lean();
   const list = msgs.map(m => `<div><b>${m.senderRole}:</b> ${String(m.text || '').replace(/</g,'&lt;')}</div>`).join('');
   const body = `
@@ -583,7 +590,7 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
       </form>
     </div>
   `;
-  res.send(adminLayout({ title: `Kleos Admin - Chat ${chatId}`, active: 'chats', body }));
+  res.send(await adminLayout({ title: `Kleos Admin - Chat ${chatId}`, active: 'chats', body }));
 });
 
 router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
@@ -687,7 +694,7 @@ router.get('/admin/i18n', adminAuthMiddleware, async (_req, res) => {
       </form>
     </div>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - I18n', active: 'i18n', body }));
+  res.send(await adminLayout({ title: 'Kleos Admin - I18n', active: 'i18n', body }));
 });
 
 router.post('/admin/i18n/save-bulk', adminAuthMiddleware, async (req, res) => {
@@ -782,17 +789,22 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
       </div>
     </div>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - News', active: 'news', body }));
+  res.send(await adminLayout({ title: 'Kleos Admin - News', active: 'news', body }));
 });
 
 // Programs UI
 router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
   const { Program } = await import('../models/Program.js');
+  const { University } = await import('../models/University.js');
   const q = String(req.query.q || '').trim();
   const filter: any = {};
   if (q) filter.$or = [{ title: { $regex: q, $options: 'i' } }, { university: { $regex: q, $options: 'i' } }];
   const list = await Program.find(filter).sort({ order: 1, createdAt: -1 }).lean();
-  const rows = list.map(p => `
+  const universities = await University.find({ active: true }).sort({ name: 1 }).lean();
+  const universityOptions = universities.map(u => `<option value="${u._id}">${u.name}</option>`).join('');
+  const rows = list.map(p => {
+    const currentUnivId = (p as any).universityId?.toString() || '';
+    return `
     <tr>
       <td>${p._id}</td>
       <td>
@@ -806,7 +818,11 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
             <select name="level">
               ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l}</option>`).join('')}
             </select>
-            <input name="university" value="${(p.university||'').toString().replace(/"/g,'&quot;')}" placeholder="University"/>
+            <select name="universityId" style="min-width:200px">
+              <option value="">-- Select University --</option>
+              ${universities.map(u => `<option value="${u._id}" ${currentUnivId === u._id.toString() ? 'selected' : ''}>${u.name}</option>`).join('')}
+            </select>
+            <input name="university" value="${(p.university||'').toString().replace(/"/g,'&quot;')}" placeholder="University (legacy)"/>
             <input type="number" name="tuition" value="${p.tuition || 0}" placeholder="Tuition"/>
             <input type="number" name="durationMonths" value="${p.durationMonths || 0}" placeholder="Duration, months"/>
             <input name="imageUrl" value="${(p.imageUrl||'').toString().replace(/"/g,'&quot;')}" placeholder="Image URL"/>
@@ -821,7 +837,8 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
         </form>
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
   const body = `
     <div class="card">
       <h2>Programs</h2>
@@ -837,7 +854,11 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
         <input name="slug" placeholder="Slug"/>
         <select name="language">${['ru','en','zh'].map(l=>`<option value="${l}">${l}</option>`).join('')}</select>
         <select name="level">${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}">${l}</option>`).join('')}</select>
-        <input name="university" placeholder="University"/>
+        <select name="universityId" style="min-width:200px">
+          <option value="">-- Select University --</option>
+          ${universityOptions}
+        </select>
+        <input name="university" placeholder="University (legacy)"/>
         <input type="number" name="tuition" placeholder="Tuition"/>
         <input type="number" name="durationMonths" placeholder="Duration, months"/>
         <input name="imageUrl" placeholder="Image URL"/>
@@ -853,7 +874,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
       </div>
     </div>
   `;
-  res.send(adminLayout({ title: 'Kleos Admin - Programs', active: '', body }));
+  res.send(await adminLayout({ title: 'Kleos Admin - Programs', active: 'programs', body }));
 });
 
 router.post('/admin/programs/create', adminAuthMiddleware, async (req, res) => {
@@ -864,17 +885,20 @@ router.post('/admin/programs/create', adminAuthMiddleware, async (req, res) => {
     language: z.enum(['ru','en','zh']).optional().default('en'),
     level: z.enum(['bachelor','master','phd','foundation','other']).optional().default('other'),
     university: z.string().optional().default(''),
+    universityId: z.string().optional(),
     tuition: z.coerce.number().optional().default(0),
     durationMonths: z.coerce.number().optional().default(0),
     imageUrl: z.string().optional().default(''),
     active: z.string().optional(),
-    order: z.coerce.number().optional().default(0)
+    order: z.coerce.number().optional().default(0),
+    description: z.string().optional().default('')
   });
   const d = schema.parse(req.body);
   await Program.create({
     title: d.title, slug: d.slug, language: d.language, level: d.level,
-    university: d.university, tuition: d.tuition, durationMonths: d.durationMonths,
-    imageUrl: d.imageUrl, active: d.active === 'on', order: d.order, description: ''
+    university: d.university, universityId: d.universityId || undefined,
+    tuition: d.tuition, durationMonths: d.durationMonths,
+    imageUrl: d.imageUrl, active: d.active === 'on', order: d.order, description: d.description || ''
   });
   res.redirect('/admin/programs');
 });
@@ -888,6 +912,7 @@ router.post('/admin/programs/:id', adminAuthMiddleware, async (req, res) => {
     language: z.enum(['ru','en','zh']).optional(),
     level: z.enum(['bachelor','master','phd','foundation','other']).optional(),
     university: z.string().optional(),
+    universityId: z.string().optional(),
     tuition: z.coerce.number().optional(),
     durationMonths: z.coerce.number().optional(),
     imageUrl: z.string().optional(),
@@ -897,6 +922,8 @@ router.post('/admin/programs/:id', adminAuthMiddleware, async (req, res) => {
   const d = schema.parse(req.body);
   const update: any = { ...d };
   if ('active' in d) update.active = d.active === 'on';
+  if (d.universityId === '') update.universityId = null;
+  else if (d.universityId) update.universityId = d.universityId;
   await Program.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/programs');
 });
@@ -950,6 +977,181 @@ router.post('/admin/news/:id/delete', adminAuthMiddleware, async (req, res) => {
   await News.deleteOne({ _id: req.params.id });
   res.redirect('/admin/news');
 });
+
+// Gallery UI
+router.get('/admin/gallery', adminAuthMiddleware, async (_req, res) => {
+  const { GalleryItem } = await import('../models/GalleryItem.js');
+  const list = await GalleryItem.find().sort({ order: 1, createdAt: -1 }).lean();
+  const rows = list.map(g => `
+    <tr>
+      <td>${g._id}</td>
+      <td>
+        <form method="post" action="/admin/gallery/${g._id}">
+          <input name="title" value="${(g.title || '').toString().replace(/"/g,'&quot;')}" placeholder="Title"/>
+          <input name="mediaUrl" placeholder="Media URL" value="${(g.mediaUrl || '').toString().replace(/"/g,'&quot;')}" />
+          <select name="mediaType">
+            <option value="photo" ${g.mediaType === 'photo' ? 'selected' : ''}>Photo</option>
+            <option value="video" ${g.mediaType === 'video' ? 'selected' : ''}>Video</option>
+          </select>
+          <input type="number" name="order" value="${g.order || 0}" placeholder="Order"/>
+          <textarea name="description" rows="2" placeholder="Description" style="width:100%">${(g.description || '').toString().replace(/</g,'&lt;')}</textarea>
+          <div style="margin-top:6px">
+            <button class="btn primary" type="submit">Save</button>
+            <button class="btn danger" formaction="/admin/gallery/${g._id}/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
+          </div>
+        </form>
+      </td>
+    </tr>
+  `).join('');
+  const body = `
+    <div class="card">
+      <h2>Gallery</h2>
+      <form method="post" action="/admin/gallery/create" class="form-row">
+        <input name="title" placeholder="Title" style="min-width:200px"/>
+        <input name="mediaUrl" placeholder="Media URL"/>
+        <select name="mediaType">
+          <option value="photo">Photo</option>
+          <option value="video">Video</option>
+        </select>
+        <input type="number" name="order" placeholder="Order" value="0"/>
+        <textarea name="description" rows="2" placeholder="Description" style="width:100%"></textarea>
+        <button class="btn primary" type="submit">Create</button>
+      </form>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  res.send(await adminLayout({ title: 'Kleos Admin - Gallery', active: 'gallery', body }));
+});
+
+router.post('/admin/gallery/create', adminAuthMiddleware, async (req: any, res: any) => {
+  const { GalleryItem } = await import('../models/GalleryItem.js');
+  const schema = z.object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    mediaUrl: z.string().url(),
+    mediaType: z.enum(['photo', 'video']).default('photo'),
+    order: z.coerce.number().optional()
+  });
+  const data = schema.parse(req.body);
+  await GalleryItem.create(data);
+  res.redirect('/admin/gallery');
+});
+
+router.post('/admin/gallery/:id', adminAuthMiddleware, async (req: any, res: any) => {
+  const { GalleryItem } = await import('../models/GalleryItem.js');
+  const schema = z.object({
+    title: z.string().min(1).optional(),
+    description: z.string().optional(),
+    mediaUrl: z.string().url().optional(),
+    mediaType: z.enum(['photo', 'video']).optional(),
+    order: z.coerce.number().optional()
+  });
+  const update = schema.parse(req.body);
+  await GalleryItem.updateOne({ _id: req.params.id }, update);
+  res.redirect('/admin/gallery');
+});
+
+router.post('/admin/gallery/:id/delete', adminAuthMiddleware, async (req, res) => {
+  const { GalleryItem } = await import('../models/GalleryItem.js');
+  await GalleryItem.deleteOne({ _id: req.params.id });
+  res.redirect('/admin/gallery');
+});
+
+// Universities UI
+router.get('/admin/universities', adminAuthMiddleware, async (_req, res) => {
+  const { University } = await import('../models/University.js');
+  const list = await University.find().sort({ order: 1, name: 1 }).lean();
+  const rows = list.map(u => `
+    <tr>
+      <td>${u._id}</td>
+      <td>
+        <form method="post" action="/admin/universities/${u._id}">
+          <input name="name" value="${(u.name || '').toString().replace(/"/g,'&quot;')}" placeholder="Name" style="min-width:200px"/>
+          <input name="city" value="${(u.city || '').toString().replace(/"/g,'&quot;')}" placeholder="City"/>
+          <input name="country" value="${(u.country || 'Russia').toString().replace(/"/g,'&quot;')}" placeholder="Country"/>
+          <input name="website" value="${(u.website || '').toString().replace(/"/g,'&quot;')}" placeholder="Website URL"/>
+          <input name="logoUrl" value="${(u.logoUrl || '').toString().replace(/"/g,'&quot;')}" placeholder="Logo URL"/>
+          <input type="number" name="order" value="${u.order || 0}" placeholder="Order"/>
+          <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" ${u.active ? 'checked' : ''}/> active</label>
+          <textarea name="description" rows="2" placeholder="Description" style="width:100%">${(u.description || '').toString().replace(/</g,'&lt;')}</textarea>
+          <div style="margin-top:6px">
+            <button class="btn primary" type="submit">Save</button>
+            <button class="btn danger" formaction="/admin/universities/${u._id}/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
+          </div>
+        </form>
+      </td>
+    </tr>
+  `).join('');
+  const body = `
+    <div class="card">
+      <h2>Universities</h2>
+      <form method="post" action="/admin/universities/create" class="form-row">
+        <input name="name" placeholder="Name" style="min-width:200px"/>
+        <input name="city" placeholder="City"/>
+        <input name="country" placeholder="Country" value="Russia"/>
+        <input name="website" placeholder="Website URL"/>
+        <input name="logoUrl" placeholder="Logo URL"/>
+        <input type="number" name="order" placeholder="Order" value="0"/>
+        <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" checked/> active</label>
+        <textarea name="description" rows="2" placeholder="Description" style="width:100%"></textarea>
+        <button class="btn primary" type="submit">Create</button>
+      </form>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  res.send(await adminLayout({ title: 'Kleos Admin - Universities', active: 'universities', body }));
+});
+
+router.post('/admin/universities/create', adminAuthMiddleware, async (req: any, res: any) => {
+  const { University } = await import('../models/University.js');
+  const schema = z.object({
+    name: z.string().min(1),
+    city: z.string().optional(),
+    country: z.string().optional().default('Russia'),
+    description: z.string().optional(),
+    website: z.string().url().optional(),
+    logoUrl: z.string().url().optional(),
+    active: z.coerce.boolean().optional().default(true),
+    order: z.coerce.number().optional().default(0)
+  });
+  const data = schema.parse(req.body);
+  await University.create(data);
+  res.redirect('/admin/universities');
+});
+
+router.post('/admin/universities/:id', adminAuthMiddleware, async (req: any, res: any) => {
+  const { University } = await import('../models/University.js');
+  const schema = z.object({
+    name: z.string().min(1).optional(),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    description: z.string().optional(),
+    website: z.string().url().optional(),
+    logoUrl: z.string().url().optional(),
+    active: z.coerce.boolean().optional(),
+    order: z.coerce.number().optional()
+  });
+  const update = schema.parse(req.body);
+  await University.updateOne({ _id: req.params.id }, update);
+  res.redirect('/admin/universities');
+});
+
+router.post('/admin/universities/:id/delete', adminAuthMiddleware, async (req, res) => {
+  const { University } = await import('../models/University.js');
+  await University.deleteOne({ _id: req.params.id });
+  res.redirect('/admin/universities');
+});
+
 export default router;
 
 

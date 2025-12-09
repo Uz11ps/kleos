@@ -3,7 +3,7 @@
     <string name="next">Next</string>
     <string name="back">Back</string>
     <string name="start">Start</string>
-    <string name="app_name">Kleos</string>
+    <string name="app_name">Kleos education</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">Android Studio</string>
@@ -12,9 +12,13 @@
     <string name="action_settings">Settings</string>
 
     <string name="menu_home">Home</string>
+    <string name="menu_news">News</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Programs</string>
     <string name="label_full_name">Full name</string>
+    <string name="label_first_name">First name</string>
+    <string name="label_last_name">Last name</string>
+    <string name="label_patronymic">Patronymic (optional)</string>
     <string name="label_email">Email</string>
     <string name="label_password">Password</string>
     <string name="action_login">Sign In</string>

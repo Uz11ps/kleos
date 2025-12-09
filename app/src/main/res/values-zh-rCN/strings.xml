@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Kleos</string>
+    <string name="app_name">Kleos education</string>
     <string name="action_login">登录</string>
     <string name="action_register">注册</string>
     <string name="menu_home">首页</string>
+    <string name="menu_news">新闻</string>
     <string name="menu_gallery">大学</string>
     <string name="menu_slideshow">项目</string>
     <string name="menu_profile">个人资料</string>
@@ -39,6 +40,9 @@
     <!-- Admission form -->
     <string name="admission_apply_now">立即申请</string>
     <string name="label_full_name">姓名</string>
+    <string name="label_first_name">名字</string>
+    <string name="label_last_name">姓氏</string>
+    <string name="label_patronymic">父名（可选）</string>
     <string name="label_surname">姓氏</string>
     <string name="label_date_of_birth">出生日期</string>
     <string name="label_place_of_birth">出生地</string>

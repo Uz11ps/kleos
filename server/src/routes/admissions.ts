@@ -7,7 +7,9 @@ import { auth } from '../middleware/auth.js';
 const router = Router();
 
 const createSchema = z.object({
-  fullName: z.string().min(1),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  patronymic: z.string().optional(),
   phone: z.string().min(3),
   email: z.string().email(),
   dateOfBirth: z.string().optional(),
@@ -47,7 +49,9 @@ router.get('/', auth('admin'), async (_req, res) => {
   const items = await Admission.find().sort({ createdAt: -1 });
   res.json(items.map(a => ({
     id: a._id,
-    fullName: a.fullName,
+    firstName: a.firstName,
+    lastName: a.lastName,
+    patronymic: a.patronymic,
     phone: a.phone,
     email: a.email,
     program: a.program,

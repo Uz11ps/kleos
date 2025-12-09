@@ -5,14 +5,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
+import com.example.kleos.R
+import com.example.kleos.data.gallery.GalleryRepository
 import com.example.kleos.databinding.FragmentGalleryBinding
-import androidx.lifecycle.lifecycleScope
-import com.example.kleos.data.network.ApiClient
-import com.example.kleos.data.network.PartnersApi
-import com.example.kleos.data.network.ProgramsApi
-import com.example.kleos.ui.programs.ProgramDetailActivity
-import com.example.kleos.ui.partners.PartnersSimpleAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -20,9 +17,6 @@ import kotlinx.coroutines.withContext
 class GalleryFragment : Fragment() {
 
     private var _binding: FragmentGalleryBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -36,31 +30,25 @@ class GalleryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val adapter = PartnersSimpleAdapter(emptyList()) { p ->
-            val intent = android.content.Intent(requireContext(), ProgramDetailActivity::class.java)
-            intent.putExtra("title", p.name)
-            intent.putExtra("description", p.description)
-            intent.putExtra("university", "")
-            intent.putExtra("tuition", "")
-            intent.putExtra("duration", "")
-            startActivity(intent)
+        
+        val adapter = GalleryAdapter(emptyList()) { item ->
+            val bundle = Bundle().apply {
+                putString("itemId", item.id)
+                putString("itemTitle", item.title)
+                putString("itemDescription", item.description ?: "")
+                putString("itemMediaUrl", item.mediaUrl)
+                putString("itemMediaType", item.mediaType)
+            }
+            findNavController().navigate(com.example.kleos.R.id.galleryDetailFragment, bundle)
         }
-        binding.universitiesRecycler.layoutManager = LinearLayoutManager(requireContext())
-        binding.universitiesRecycler.adapter = adapter
+        
+        binding.galleryRecycler.layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.galleryRecycler.adapter = adapter
+
+        val repo = GalleryRepository()
         viewLifecycleOwner.lifecycleScope.launch {
             val items = withContext(Dispatchers.IO) {
-                runCatching {
-                    val programs = ApiClient.retrofit.create(ProgramsApi::class.java).list()
-                    programs.map { pr ->
-                        com.example.kleos.data.network.PartnerDto(
-                            id = pr.id,
-                            name = pr.title,
-                            description = pr.university ?: pr.level ?: "",
-                            logoUrl = pr.imageUrl,
-                            url = null
-                        )
-                    }
-                }.getOrElse { emptyList() }
+                runCatching { repo.fetch() }.getOrElse { emptyList() }
             }
             adapter.submitList(items)
         }

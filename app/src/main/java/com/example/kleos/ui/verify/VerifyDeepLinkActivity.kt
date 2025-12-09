@@ -47,6 +47,7 @@ class VerifyDeepLinkActivity : AppCompatActivity() {
                 val session = SessionManager(this@VerifyDeepLinkActivity)
                 session.saveToken(resp.token)
                 session.saveUser(resp.user.fullName, resp.user.email)
+                session.saveRole(resp.user.role)
                 withContext(Dispatchers.Main) {
                     startActivity(Intent(this@VerifyDeepLinkActivity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK))
                     finish()

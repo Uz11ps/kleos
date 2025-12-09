@@ -22,21 +22,20 @@ import com.example.kleos.ui.auth.AuthActivity
 import com.example.kleos.ui.language.LocaleManager
 import com.example.kleos.data.auth.AuthRepository
 import com.example.kleos.ui.language.t
+import com.example.kleos.data.profile.ProfileRepository
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    private val sessionManager by lazy { SessionManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val sessionManager = SessionManager(this)
-        if (!sessionManager.isLoggedIn()) {
-            startActivity(Intent(this, AuthActivity::class.java))
-            finish()
-            return
-        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -53,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.nav_home,
+                R.id.nav_news,
                 R.id.nav_gallery,
                 R.id.nav_slideshow,
                 R.id.nav_profile,
@@ -109,6 +109,21 @@ class MainActivity : AppCompatActivity() {
 
         val bottomNav: BottomNavigationView = findViewById(R.id.bottom_nav)
         bottomNav.setupWithNavController(navController)
+        
+        // Загружаем профиль пользователя, если он залогинен, и обновляем видимость меню
+        if (sessionManager.isLoggedIn()) {
+            lifecycleScope.launch {
+                runCatching {
+                    val profile = withContext(Dispatchers.IO) {
+                        ProfileRepository().loadProfile()
+                    }
+                    sessionManager.saveRole(profile.role)
+                }.onFailure { /* ignore errors */ }
+                updateMenuVisibility()
+            }
+        } else {
+            updateMenuVisibility()
+        }
 
         // Показ приглашения после входа (если передан флаг из AuthActivity)
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
@@ -166,5 +181,21 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
+    }
+    
+    private fun updateMenuVisibility() {
+        val navView: NavigationView = binding.navView
+        val bottomNav: BottomNavigationView = findViewById(R.id.bottom_nav)
+        val isLoggedIn = sessionManager.isLoggedIn()
+        val userRole = sessionManager.getUserRole()
+        val isStudent = userRole == "student"
+        
+        // Управление видимостью пунктов меню в боковом меню
+        navView.menu.findItem(R.id.nav_chat)?.isVisible = isLoggedIn
+        navView.menu.findItem(R.id.nav_profile)?.isVisible = isStudent
+        
+        // Управление видимостью пунктов меню в нижней навигации
+        bottomNav.menu.findItem(R.id.nav_chat)?.isVisible = isLoggedIn
+        bottomNav.menu.findItem(R.id.nav_profile)?.isVisible = isStudent
     }
 }

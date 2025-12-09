@@ -25,7 +25,9 @@ interface AdmissionsRepository {
             current.forEach { a ->
                 val obj = JSONObject()
                 obj.put("id", a.id)
-                obj.put("fullName", a.fullName)
+                obj.put("firstName", a.firstName)
+                obj.put("lastName", a.lastName)
+                obj.put("patronymic", a.patronymic ?: "")
                 obj.put("phone", a.phone)
                 obj.put("email", a.email)
                 obj.put("program", a.program)
@@ -44,11 +46,13 @@ interface AdmissionsRepository {
                 result.add(
                     AdmissionApplication(
                         id = obj.optString("id"),
-                        fullName = obj.optString("fullName"),
+                        firstName = obj.optString("firstName", obj.optString("fullName", "")),
+                        lastName = obj.optString("lastName", ""),
+                        patronymic = obj.optString("patronymic").takeIf { it.isNotEmpty() },
                         phone = obj.optString("phone"),
                         email = obj.optString("email"),
                         program = obj.optString("program"),
-                        comment = obj.optString("comment")
+                        comment = obj.optString("comment").takeIf { it.isNotEmpty() }
                     )
                 )
             }
@@ -67,7 +71,9 @@ interface AdmissionsRepository {
             val api = com.example.kleos.data.network.ApiClient.retrofit
                 .create(com.example.kleos.data.network.AdmissionsApi::class.java)
             val body = com.example.kleos.data.network.AdmissionRequest(
-                fullName = application.fullName,
+                firstName = application.firstName,
+                lastName = application.lastName,
+                patronymic = application.patronymic,
                 phone = application.phone,
                 email = application.email,
                 dateOfBirth = application.dateOfBirth,

@@ -52,11 +52,15 @@ class AdmissionFormFragment : Fragment() {
             com.example.kleos.ui.common.PhoneMaskTextWatcher(binding.phoneEditText, lang)
         )
         // Apply dynamic i18n overrides to hints (if provided from admin)
-        binding.fullNameEditText.hint = requireContext().t(com.example.kleos.R.string.label_full_name)
+        binding.firstNameEditText.hint = requireContext().t(com.example.kleos.R.string.label_first_name)
+        binding.lastNameEditText.hint = requireContext().t(com.example.kleos.R.string.label_last_name)
+        binding.patronymicEditText.hint = requireContext().t(com.example.kleos.R.string.label_patronymic)
         binding.emailEditText.hint = requireContext().t(com.example.kleos.R.string.label_email)
 
         binding.submitButton.setOnClickListener {
-            val fullName = binding.fullNameEditText.text?.toString().orEmpty()
+            val firstName = binding.firstNameEditText.text?.toString().orEmpty()
+            val lastName = binding.lastNameEditText.text?.toString().orEmpty()
+            val patronymic = binding.patronymicEditText.text?.toString().takeIf { it.isNotBlank() }
             val phone = binding.phoneEditText.text?.toString().orEmpty()
             val email = binding.emailEditText.text?.toString().orEmpty()
             val dateOfBirth = binding.dateOfBirthEditText.text?.toString()
@@ -67,7 +71,7 @@ class AdmissionFormFragment : Fragment() {
             val program = binding.programEditText.text?.toString().orEmpty()
             val visaCity = view?.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.kleos.R.id.visaCityEditText)?.text?.toString()
             val comment = binding.commentEditText.text?.toString()
-            if (fullName.isBlank() || phone.isBlank() || email.isBlank() || program.isBlank()) {
+            if (firstName.isBlank() || lastName.isBlank() || phone.isBlank() || email.isBlank() || program.isBlank()) {
                 Toast.makeText(requireContext(), "Заполните обязательные поля", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -77,7 +81,9 @@ class AdmissionFormFragment : Fragment() {
             }
             val application = AdmissionApplication(
                 id = UUID.randomUUID().toString(),
-                fullName = fullName,
+                firstName = firstName,
+                lastName = lastName,
+                patronymic = patronymic,
                 phone = phone,
                 email = email,
                 dateOfBirth = dateOfBirth,
@@ -92,7 +98,9 @@ class AdmissionFormFragment : Fragment() {
             )
             admissionsRepository.submit(application)
             Toast.makeText(requireContext(), "Заявка отправлена", Toast.LENGTH_SHORT).show()
-            binding.fullNameEditText.setText("")
+            binding.firstNameEditText.setText("")
+            binding.lastNameEditText.setText("")
+            binding.patronymicEditText.setText("")
             binding.phoneEditText.setText("")
             binding.emailEditText.setText("")
             binding.programEditText.setText("")

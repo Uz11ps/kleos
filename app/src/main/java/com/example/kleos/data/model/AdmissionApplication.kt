@@ -2,7 +2,9 @@ package com.example.kleos.data.model
 
 data class AdmissionApplication(
     val id: String,
-    val fullName: String,
+    val firstName: String,
+    val lastName: String,
+    val patronymic: String? = null,
     val phone: String,
     val email: String,
     val dateOfBirth: String? = null,

@@ -4,7 +4,9 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 data class AdmissionRequest(
-    val fullName: String,
+    val firstName: String,
+    val lastName: String,
+    val patronymic: String?,
     val phone: String,
     val email: String,
     val dateOfBirth: String?,

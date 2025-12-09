@@ -20,12 +20,25 @@ class SessionManager(context: Context) {
     fun getCurrentUser(): User? {
         val email = preferences.getString(KEY_USER_EMAIL, null) ?: return null
         val fullName = preferences.getString(KEY_USER_FULL_NAME, "") ?: ""
+        val role = preferences.getString(KEY_USER_ROLE, null)
         var id = preferences.getString(KEY_USER_ID, null)
         if (id.isNullOrBlank()) {
             id = generateNumericId()
             preferences.edit().putString(KEY_USER_ID, id).apply()
         }
-        return User(id = id, fullName = fullName, email = email)
+        return User(id = id, fullName = fullName, email = email, role = role)
+    }
+    
+    fun saveRole(role: String?) {
+        if (role != null) {
+            preferences.edit().putString(KEY_USER_ROLE, role).apply()
+        } else {
+            preferences.edit().remove(KEY_USER_ROLE).apply()
+        }
+    }
+    
+    fun getUserRole(): String? {
+        return preferences.getString(KEY_USER_ROLE, null)
     }
 
     fun saveUser(fullName: String, email: String) {
@@ -69,6 +82,7 @@ class SessionManager(context: Context) {
         private const val KEY_USER_FULL_NAME = "user_full_name"
         private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_TOKEN = "auth_token"
+        private const val KEY_USER_ROLE = "user_role"
     }
 }
 

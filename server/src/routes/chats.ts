@@ -12,7 +12,8 @@ const ChatSchema = new Schema({
 const MessageSchema = new Schema({
   chatId: { type: Types.ObjectId, ref: 'Chat', index: true },
   senderRole: { type: String, enum: ['student', 'admin', 'system'] },
-  text: String
+  text: String,
+  isReadByAdmin: { type: Boolean, default: false, index: true }
 }, { timestamps: true });
 const Chat = (mongoose.models.Chat as any) || model('Chat', ChatSchema);
 const Message = (mongoose.models.Message as any) || model('Message', MessageSchema);

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Kleos</string>
+    <string name="app_name">Kleos education</string>
     <string name="action_login">Войти</string>
     <string name="action_register">Зарегистрироваться</string>
     <string name="menu_home">Главная</string>
@@ -39,6 +39,9 @@
     <!-- Admission form -->
     <string name="admission_apply_now">Подать заявку</string>
     <string name="label_full_name">ФИО</string>
+    <string name="label_first_name">Имя</string>
+    <string name="label_last_name">Фамилия</string>
+    <string name="label_patronymic">Отчество (необязательно)</string>
     <string name="label_surname">Фамилия</string>
     <string name="label_date_of_birth">Дата рождения</string>
     <string name="label_place_of_birth">Место рождения</string>
