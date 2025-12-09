@@ -2,6 +2,8 @@ package com.example.kleos.ui.profile
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -109,10 +111,41 @@ class ProfileFragment : Fragment() {
         fields.forEach { editText ->
             editText.setOnFocusChangeListener { _, hasFocus ->
                 if (!hasFocus) {
-                    saveProfile()
+                    // Для телефона проверяем минимальную длину перед сохранением
+                    if (editText == binding.phoneEditText) {
+                        val phoneText = editText.text?.toString().orEmpty()
+                        val phoneDigits = phoneText.filter { it.isDigit() }
+                        // Сохраняем только если номер пустой или содержит минимум 10 цифр
+                        if (phoneText.isEmpty() || phoneDigits.length >= 10) {
+                            saveProfile()
+                        }
+                    } else {
+                        saveProfile()
+                    }
                 }
             }
         }
+        
+        // Дополнительно сохраняем телефон при изменении текста (с задержкой)
+        var phoneSaveJob: Job? = null
+        binding.phoneEditText.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                phoneSaveJob?.cancel()
+                val phoneText = s?.toString().orEmpty()
+                val phoneDigits = phoneText.filter { it.isDigit() }
+                // Сохраняем только если номер содержит минимум 10 цифр
+                if (phoneDigits.length >= 10) {
+                    phoneSaveJob = lifecycleScope.launch {
+                        delay(2000) // Ждем 2 секунды после последнего изменения
+                        if (isActive) {
+                            saveProfile()
+                        }
+                    }
+                }
+            }
+        })
     }
 
     private fun saveProfile() {
@@ -123,10 +156,15 @@ class ProfileFragment : Fragment() {
             delay(1000) // Ждем 1 секунду после последнего изменения
             if (!isActive) return@launch
             
+            // Валидация номера телефона: минимум 10 цифр (без учета форматирования)
+            val phoneText = binding.phoneEditText.text?.toString().orEmpty()
+            val phoneDigits = phoneText.filter { it.isDigit() }
+            val isValidPhone = phoneDigits.length >= 10 || phoneText.isEmpty()
+            
             val result = withContext(Dispatchers.IO) {
                 profileRepository.updateProfile(
                     fullName = binding.nameEditText.text?.toString()?.takeIf { it.isNotBlank() },
-                    phone = binding.phoneEditText.text?.toString()?.takeIf { it.isNotBlank() },
+                    phone = phoneText.takeIf { isValidPhone && it.isNotBlank() },
                     notes = binding.notesEditText.text?.toString()?.takeIf { it.isNotBlank() },
                     payment = binding.paymentEditText.text?.toString()?.takeIf { it.isNotBlank() },
                     penalties = binding.penaltiesEditText.text?.toString()?.takeIf { it.isNotBlank() },

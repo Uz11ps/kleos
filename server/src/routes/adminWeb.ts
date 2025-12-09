@@ -425,9 +425,15 @@ router.post('/admin/partners/:id/delete', adminAuthMiddleware, async (req, res) 
 });
 
 // Admissions UI
-router.get('/admin/admissions', adminAuthMiddleware, async (_req, res) => {
-  const list = await Admission.find().sort({ createdAt: -1 }).lean();
-  const rows = list.map(a => `
+router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
+  const showAll = req.query.all === 'true';
+  const filter = showAll ? {} : { $or: [{ status: { $in: ['new', 'processing', null] } }, { status: { $exists: false } }] };
+  const list = await Admission.find(filter).sort({ createdAt: -1 }).lean();
+  const rows = list.map(a => {
+    const status = a.status || 'new';
+    const isProcessed = status === 'done' || status === 'rejected';
+    const statusColor = status === 'done' ? '#10b981' : status === 'rejected' ? '#ef4444' : '#3b82f6';
+    return `
     <tr>
       <td>${a._id}</td>
       <td>
@@ -436,11 +442,12 @@ router.get('/admin/admissions', adminAuthMiddleware, async (_req, res) => {
           <div>Email: ${a.email} | Phone: ${a.phone}</div>
           <div>Program: ${a.program}</div>
           ${a.comment ? `<div class="muted">Comment: ${(a.comment as string).toString().replace(/</g,'&lt;')}</div>` : ''}
-          <div class="muted">Status: ${a.status || 'new'}${(a as any).userId ? ` | userId: ${(a as any).userId}` : ''}</div>
+          <div class="muted">Status: <span style="color:${statusColor};font-weight:600">${status}</span>${(a as any).studentId ? ` | Student ID: ${(a as any).studentId}` : ''}${(a as any).userId ? ` | userId: ${(a as any).userId}` : ''}</div>
         </div>
         <div style="margin:6px 0">
           <a class="btn" href="/admin/admissions/${a._id}/view">Подробнее</a>
         </div>
+        ${!isProcessed ? `
         <div class="form-row">
           <form method="post" action="/admin/admissions/${a._id}/accept" class="form-row">
             <input name="studentId" placeholder="Student ID" value="${(a as any).studentId || ''}" />
@@ -450,11 +457,19 @@ router.get('/admin/admissions', adminAuthMiddleware, async (_req, res) => {
             <button class="btn danger" type="submit">Отклонить</button>
           </form>
         </div>
+        ` : ''}
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   const body = `
     <div class="card">
-      <h2>Admissions</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+        <h2 style="margin:0">Admissions</h2>
+        <div>
+          <a class="btn ${showAll ? '' : 'primary'}" href="/admin/admissions">Новые</a>
+          <a class="btn ${showAll ? 'primary' : ''}" href="/admin/admissions?all=true" style="margin-left:8px">Все</a>
+        </div>
+      </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
