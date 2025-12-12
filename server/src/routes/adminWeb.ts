@@ -54,7 +54,12 @@ async function adminLayout(opts: {
 }) {
   const { title, active = '', body } = opts;
   // Проверяем наличие непрочитанных сообщений от студентов
-  const unreadCount = await Message.countDocuments({ senderRole: 'student', isReadByAdmin: false });
+  let unreadCount = 0;
+  try {
+    unreadCount = await Message.countDocuments({ senderRole: 'student', isReadByAdmin: false });
+  } catch (e) {
+    // Игнорируем ошибки при подсчете непрочитанных сообщений
+  }
   const navLink = (href: string, label: string, key: typeof active, badge?: number, icon?: string) => {
     const badgeHtml = badge && badge > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 6px;font-size:11px;margin-left:auto;font-weight:600">${badge}</span>` : '';
     const iconHtml = icon ? `<span style="font-size:18px">${icon}</span>` : '';
@@ -362,7 +367,7 @@ router.get('/', (_req, res) => {
 });
 
 // Login form
-router.get('/admin', (req, res) => {
+router.get('/admin', async (req, res) => {
   const body = `
     <div class="grid cols-2">
       <div class="card">
