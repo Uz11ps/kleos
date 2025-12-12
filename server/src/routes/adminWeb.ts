@@ -189,17 +189,67 @@ async function adminLayout(opts: {
       }
 
       .form-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+      
       input,select,textarea{
-        background:#0c1330;border:1px solid var(--border);
-        color:var(--text);padding:12px 16px;border-radius:10px;
-        outline:none;min-width:0;transition:all 0.2s ease;
+        background:#0c1330;
+        border:1px solid var(--border);
+        border-width:1px;
+        color:var(--text);
+        padding:12px 16px;
+        border-radius:10px;
+        outline:none;
+        min-width:0;
         font-size:14px;
+        transition:border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                   box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                   background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-sizing:border-box;
+        vertical-align:top;
       }
+      
       input:focus,select:focus,textarea:focus{
-        border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.1);
+        border-color:var(--accent);
+        border-width:1px;
+        box-shadow:0 0 0 3px rgba(37,99,235,0.15),
+                   0 2px 8px rgba(37,99,235,0.1);
+        outline:none;
+        background:#0d1432;
       }
+      
+      input:hover:not(:focus),select:hover:not(:focus),textarea:hover:not(:focus){
+        border-color:rgba(37,99,235,0.4);
+        background:#0d1431;
+      }
+      
+      input::placeholder,textarea::placeholder{
+        color:var(--muted);
+        opacity:0.6;
+        transition:opacity 0.3s ease;
+      }
+      
+      input:focus::placeholder,textarea:focus::placeholder{
+        opacity:0.4;
+      }
+      
       textarea{resize:vertical;min-height:100px}
-      label{display:block;margin:8px 0 6px 0;font-size:14px;font-weight:500}
+      
+      label{
+        display:block;
+        margin:8px 0 6px 0;
+        font-size:14px;
+        font-weight:500;
+        color:var(--text);
+        transition:color 0.3s ease;
+      }
+      
+      form:has(input:focus) label,
+      form:has(select:focus) label,
+      form:has(textarea:focus) label,
+      div:has(input:focus) > label,
+      div:has(select:focus) > label,
+      div:has(textarea:focus) > label{
+        color:var(--accent-2);
+      }
 
       .table-wrap{
         overflow:auto;border:1px solid var(--border);
