@@ -27,6 +27,31 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 
+// Отключаем ETag только для админ-роутов
+app.use((req, res, next) => {
+  if (req.path.startsWith('/admin')) {
+    // Отключаем автоматическое добавление ETag для админ-роутов
+    res.setHeader('ETag', '');
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    // Переопределяем send для гарантированного удаления ETag
+    const originalSend = res.send.bind(res);
+    res.send = function(body: any) {
+      res.removeHeader('ETag');
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      return originalSend(body);
+    };
+  }
+  next();
+});
+
 // Static uploads
 const uploadsDir = path.join(process.cwd(), 'uploads');
 const logosDir = path.join(uploadsDir, 'logos');
