@@ -42,7 +42,8 @@ const ChatSchema = new Schema({
 const MessageSchema = new Schema({
   chatId: { type: Types.ObjectId, ref: 'Chat', index: true },
   senderRole: { type: String, enum: ['student', 'admin', 'system'] },
-  text: String
+  text: String,
+  isReadByAdmin: { type: Boolean, default: false, index: true }
 }, { timestamps: true });
 const Chat = (mongoose.models.Chat as any) || model('Chat', ChatSchema);
 const Message = (mongoose.models.Message as any) || model('Message', MessageSchema);
@@ -54,7 +55,12 @@ async function adminLayout(opts: {
 }) {
   const { title, active = '', body } = opts;
   // Проверяем наличие непрочитанных сообщений от студентов
-  const unreadCount = await Message.countDocuments({ senderRole: 'student', isReadByAdmin: false });
+  let unreadCount = 0;
+  try {
+    unreadCount = await Message.countDocuments({ senderRole: 'student', isReadByAdmin: false });
+  } catch (e) {
+    // Игнорируем ошибки при подсчете непрочитанных сообщений
+  }
   const navLink = (href: string, label: string, key: typeof active, badge?: number) => {
     const badgeHtml = badge && badge > 0 ? ` <span style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 6px;font-size:11px;margin-left:4px">${badge}</span>` : '';
     return `<a class="nav-link ${active === key ? 'active' : ''}" href="${href}">${label}${badgeHtml}</a>`;
@@ -165,7 +171,7 @@ router.get('/', (_req, res) => {
 });
 
 // Login form
-router.get('/admin', (req, res) => {
+router.get('/admin', async (req, res) => {
   const body = `
     <div class="grid cols-2">
       <div class="card">
