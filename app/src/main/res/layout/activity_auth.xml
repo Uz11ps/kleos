@@ -60,10 +60,10 @@
                 android:id="@+id/titleText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="32dp"
                 android:text="Sign In"
-                android:textSize="32sp"
-                android:textStyle="bold" />
+                android:textAppearance="@style/TextAppearance.Kleos.Display"
+                android:textColor="@color/dark_on_surface" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/fullNameInputLayout"
@@ -73,7 +73,8 @@
                 android:visibility="gone"
                 android:layout_marginTop="8dp"
                 app:boxBackgroundMode="none"
-                app:endIconMode="clear_text">
+                app:endIconMode="clear_text"
+                app:hintTextColor="@color/dark_on_surface_variant">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/fullNameEditText"
@@ -82,14 +83,16 @@
                     android:inputType="textPersonName|textCapWords"
                     android:singleLine="true"
                     android:maxLines="1"
-                    android:imeOptions="actionNext" />
+                    android:imeOptions="actionNext"
+                    android:textColor="@color/dark_on_surface"
+                    android:textColorHint="@color/dark_on_surface_variant" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <View
                 android:id="@+id/fullNameUnderline"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="#BDBDBD"
+                android:background="@color/dark_outline"
                 android:visibility="gone" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -99,7 +102,8 @@
                 android:hint="@string/label_email"
                 android:layout_marginTop="12dp"
                 app:boxBackgroundMode="none"
-                app:endIconMode="clear_text">
+                app:endIconMode="clear_text"
+                app:hintTextColor="@color/dark_on_surface_variant">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/emailEditText"
@@ -108,13 +112,15 @@
                     android:inputType="textEmailAddress"
                     android:singleLine="true"
                     android:maxLines="1"
-                    android:imeOptions="actionNext" />
+                    android:imeOptions="actionNext"
+                    android:textColor="@color/dark_on_surface"
+                    android:textColorHint="@color/dark_on_surface_variant" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="#BDBDBD" />
+                android:background="@color/dark_outline" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/passwordInputLayout"
@@ -123,7 +129,8 @@
                 android:hint="@string/label_password"
                 android:layout_marginTop="12dp"
                 app:boxBackgroundMode="none"
-                app:endIconMode="password_toggle">
+                app:endIconMode="password_toggle"
+                app:hintTextColor="@color/dark_on_surface_variant">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/passwordEditText"
@@ -132,13 +139,15 @@
                     android:inputType="textPassword"
                     android:singleLine="true"
                     android:maxLines="1"
-                    android:imeOptions="actionDone" />
+                    android:imeOptions="actionDone"
+                    android:textColor="@color/dark_on_surface"
+                    android:textColorHint="@color/dark_on_surface_variant" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="#BDBDBD" />
+                android:background="@color/dark_outline" />
 
             <!-- Forgot password -->
             <TextView
@@ -176,6 +185,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/dont_have_account"
+            android:textAppearance="@style/TextAppearance.Kleos.Body1"
+            android:textColor="@color/dark_on_surface_variant"
             android:visibility="gone" />
 
         <TextView
@@ -205,25 +216,18 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/toggleModeButton"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Widget.Kleos.Button.Outlined.Rounded"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
-            android:insetTop="8dp"
-            android:insetBottom="8dp"
-            app:cornerRadius="26dp"
-                android:text="@string/action_register"
-                android:textSize="14sp"
-                android:textAllCaps="false"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:includeFontPadding="false"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="12sp"
-                android:autoSizeMaxTextSize="14sp"
-                android:autoSizeStepGranularity="1sp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="@string/action_register"
+            android:textAllCaps="false"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
             app:strokeColor="@color/kleos_blue"
-            app:strokeWidth="1dp"
             android:textColor="@color/kleos_blue" />
 
         <Space
@@ -232,23 +236,17 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/submitButton"
-            style="@style/Widget.MaterialComponents.Button"
+            style="@style/Widget.Kleos.Button.Rounded"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
-            android:insetTop="8dp"
-            android:insetBottom="8dp"
-            app:cornerRadius="26dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="@string/action_login"
             android:textAllCaps="false"
-                android:textSize="14sp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:includeFontPadding="false"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="12sp"
-                android:autoSizeMaxTextSize="14sp"
-                android:autoSizeStepGranularity="1sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
             android:textColor="@android:color/white"
             android:backgroundTint="@color/kleos_blue" />
     </LinearLayout>

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.kleos.R
 import com.example.kleos.data.gallery.GalleryRepository
 import com.example.kleos.databinding.FragmentGalleryBinding
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

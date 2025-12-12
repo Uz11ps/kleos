@@ -47,7 +47,7 @@ class SplashActivity : AppCompatActivity() {
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction {
                 startActivity(Intent(this, OnboardingActivity::class.java))
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+                overridePendingTransition(com.example.kleos.R.anim.scale_in, com.example.kleos.R.anim.fade_out)
                 // Завершаем, чтобы не возвращаться на сплэш
                 finish()
             }

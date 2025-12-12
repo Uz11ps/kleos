@@ -1,9 +1,4 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <gradient
-        android:angle="135"
-        android:type="linear"
-        android:startColor="@color/kleos_blue"
-        android:centerColor="@color/kleos_blue"
-        android:endColor="@color/kleos_blue_variant" />
+    <solid android:color="@color/dark_surface" />
 </shape>

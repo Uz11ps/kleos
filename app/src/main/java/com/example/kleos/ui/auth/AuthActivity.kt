@@ -29,6 +29,38 @@ class AuthActivity : AppCompatActivity() {
         binding = ActivityAuthBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Анимации появления элементов
+        com.example.kleos.ui.utils.AnimationUtils.slideUpFade(binding.titleText, 600, 0)
+        com.example.kleos.ui.utils.AnimationUtils.slideUpFade(binding.emailInputLayout, 500, 100)
+        com.example.kleos.ui.utils.AnimationUtils.slideUpFade(binding.passwordInputLayout, 500, 200)
+        com.example.kleos.ui.utils.AnimationUtils.slideUpFade(binding.forgotPasswordText, 400, 300)
+        com.example.kleos.ui.utils.AnimationUtils.slideUpFade(binding.bottomBar, 500, 400)
+        
+        // Анимации для кнопок при нажатии
+        binding.submitButton.setOnTouchListener { view, motionEvent ->
+            when (motionEvent.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    com.example.kleos.ui.utils.AnimationUtils.pressButton(view)
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    com.example.kleos.ui.utils.AnimationUtils.releaseButton(view)
+                }
+            }
+            false
+        }
+        
+        binding.toggleModeButton.setOnTouchListener { view, motionEvent ->
+            when (motionEvent.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    com.example.kleos.ui.utils.AnimationUtils.pressButton(view)
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    com.example.kleos.ui.utils.AnimationUtils.releaseButton(view)
+                }
+            }
+            false
+        }
+
         // Try HTTP repository first; fallback to Local if it fails later.
         authRepository = AuthRepository.Http(this)
 
@@ -76,13 +108,28 @@ class AuthActivity : AppCompatActivity() {
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
+        overridePendingTransition(com.example.kleos.R.anim.slide_in_from_right, com.example.kleos.R.anim.fade_out)
     }
 
     private fun renderMode() {
         val showFullName = isRegisterMode
-        binding.fullNameInputLayout.visibility = if (showFullName) View.VISIBLE else View.GONE
+        
+        // Анимация переключения режима
+        if (showFullName && binding.fullNameInputLayout.visibility != View.VISIBLE) {
+            binding.fullNameInputLayout.alpha = 0f
+            binding.fullNameInputLayout.visibility = View.VISIBLE
+            com.example.kleos.ui.utils.AnimationUtils.slideUpFade(binding.fullNameInputLayout, 400)
+        } else if (!showFullName && binding.fullNameInputLayout.visibility == View.VISIBLE) {
+            com.example.kleos.ui.utils.AnimationUtils.fadeOutScale(binding.fullNameInputLayout, 300) {
+                binding.fullNameInputLayout.visibility = View.GONE
+            }
+        }
+        
         val underline = binding.root.findViewById<View>(com.example.kleos.R.id.fullNameUnderline)
         underline?.visibility = if (showFullName) View.VISIBLE else View.GONE
+        
+        // Анимация изменения заголовка
+        com.example.kleos.ui.utils.AnimationUtils.rotateIn(binding.titleText, 400)
         binding.submitButton.text = if (isRegisterMode) {
             getString(com.example.kleos.R.string.action_register)
         } else {

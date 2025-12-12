@@ -114,9 +114,7 @@ class MainActivity : AppCompatActivity() {
         if (sessionManager.isLoggedIn()) {
             lifecycleScope.launch {
                 runCatching {
-                    val profile = withContext(Dispatchers.IO) {
-                        ProfileRepository().loadProfile()
-                    }
+                    val profile = ProfileRepository().getProfile()
                     sessionManager.saveRole(profile.role)
                 }.onFailure { /* ignore errors */ }
                 updateMenuVisibility()

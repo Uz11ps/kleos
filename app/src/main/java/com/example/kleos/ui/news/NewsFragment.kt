@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.kleos.data.news.NewsRepository
 import com.example.kleos.databinding.FragmentNewsBinding
 import com.example.kleos.ui.home.NewsAdapter
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

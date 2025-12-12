@@ -21,8 +21,8 @@
             android:id="@+id/titleText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
-            android:textSize="20sp"
+            android:textAppearance="@style/TextAppearance.Kleos.Headline"
+            android:textColor="@color/dark_on_surface"
             android:paddingTop="16dp"
             android:text="Title" />
 
@@ -30,7 +30,8 @@
             android:id="@+id/descriptionText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textAppearance="@style/TextAppearance.Kleos.Body1"
+            android:textColor="@color/dark_on_surface"
             android:paddingTop="8dp"
             android:text="Description" />
 
@@ -40,7 +41,7 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:paddingTop="8dp"
-            android:textColor="#666"
+            android:textColor="@color/dark_on_surface_variant"
             android:text="Media URL" />
     </LinearLayout>
 </ScrollView>

@@ -40,13 +40,18 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/hint_message" />
+            android:hint="@string/hint_message"
+            android:textColor="@color/dark_on_surface"
+            android:textColorHint="@color/dark_on_surface_variant"
+            android:backgroundTint="@color/dark_outline" />
 
         <Button
             android:id="@+id/sendButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/action_send" />
+            android:text="@string/action_send"
+            android:textColor="@color/kleos_blue"
+            android:backgroundTint="@color/dark_surface" />
     </LinearLayout>
 </LinearLayout>
 

@@ -38,6 +38,13 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Анимация появления заголовка
+        com.example.kleos.ui.utils.AnimationUtils.slideUpFade(binding.helloText, 500, 0)
+        
+        // Анимация появления карточки пользователя
+        com.example.kleos.ui.utils.AnimationUtils.bounceIn(binding.userCard, 600)
+        
         val adapter = NewsAdapter(emptyList())
         binding.newsRecycler.layoutManager = LinearLayoutManager(requireContext())
         binding.newsRecycler.adapter = adapter

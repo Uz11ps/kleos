@@ -35,19 +35,46 @@ class SlideshowFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Анимации появления элементов
+        val filterQueryEditText = binding.filterQueryEditText
+        val parentView = filterQueryEditText.parent as? View
+        parentView?.let {
+            com.example.kleos.ui.utils.AnimationUtils.slideUpFade(it, 400, 0)
+        }
+        
         adapter = ProgramsAdapter(emptyList()) { p ->
-            val intent = Intent(requireContext(), ProgramDetailActivity::class.java)
-                .putExtra("title", p.title)
-                .putExtra("description", p.description ?: "")
-                .putExtra("university", p.university ?: "")
-                .putExtra("tuition", (p.tuition ?: 0.0).toString())
-                .putExtra("duration", (p.durationMonths ?: 0).toString())
-            startActivity(intent)
+            com.example.kleos.ui.utils.AnimationUtils.pressButton(binding.programsRecycler)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                val intent = Intent(requireContext(), ProgramDetailActivity::class.java)
+                    .putExtra("title", p.title)
+                    .putExtra("description", p.description ?: "")
+                    .putExtra("university", p.university ?: "")
+                    .putExtra("tuition", (p.tuition ?: 0.0).toString())
+                    .putExtra("duration", (p.durationMonths ?: 0).toString())
+                startActivity(intent)
+            }, 150)
         }
         binding.programsRecycler.layoutManager = LinearLayoutManager(requireContext())
         binding.programsRecycler.adapter = adapter
 
-        binding.searchButton.setOnClickListener { loadPrograms() }
+        // Анимация для кнопки поиска
+        binding.searchButton.setOnTouchListener { view, motionEvent ->
+            when (motionEvent.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    com.example.kleos.ui.utils.AnimationUtils.pressButton(view)
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    com.example.kleos.ui.utils.AnimationUtils.releaseButton(view)
+                }
+            }
+            false
+        }
+        
+        binding.searchButton.setOnClickListener { 
+            com.example.kleos.ui.utils.AnimationUtils.shake(binding.searchButton)
+            loadPrograms() 
+        }
         // первичная загрузка без фильтров
         loadPrograms()
     }

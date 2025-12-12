@@ -23,7 +23,24 @@ class ProgramsAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
         holder.binding.nameText.text = item.title
-        holder.binding.root.setOnClickListener { onClick(item) }
+        
+        // Анимация появления карточки с задержкой
+        com.example.kleos.ui.utils.AnimationUtils.cardEnter(holder.itemView, position * 100L)
+        
+        // Анимация при нажатии
+        holder.binding.root.setOnClickListener { 
+            com.example.kleos.ui.utils.AnimationUtils.pressButton(it)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                com.example.kleos.ui.utils.AnimationUtils.releaseButton(it)
+                onClick(item)
+            }, 150)
+        }
+    }
+    
+    override fun onViewAttachedToWindow(holder: VH) {
+        super.onViewAttachedToWindow(holder)
+        // Дополнительная анимация при появлении на экране
+        com.example.kleos.ui.utils.AnimationUtils.fadeInScale(holder.itemView, 300)
     }
 
     fun submitList(newItems: List<ProgramDto>) {
