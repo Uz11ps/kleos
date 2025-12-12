@@ -42,14 +42,10 @@
         android:id="@+id/indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:tabIndicatorHeight="0dp"
-        app:tabIndicator="@null"
-        app:tabSelectedTextColor="@color/kleos_blue"
-        app:tabTextColor="@color/dark_on_surface_variant" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <LinearLayout
         android:id="@+id/bottomBar"
