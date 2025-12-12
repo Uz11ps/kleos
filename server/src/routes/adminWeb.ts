@@ -42,8 +42,7 @@ const ChatSchema = new Schema({
 const MessageSchema = new Schema({
   chatId: { type: Types.ObjectId, ref: 'Chat', index: true },
   senderRole: { type: String, enum: ['student', 'admin', 'system'] },
-  text: String,
-  isReadByAdmin: { type: Boolean, default: false, index: true }
+  text: String
 }, { timestamps: true });
 const Chat = (mongoose.models.Chat as any) || model('Chat', ChatSchema);
 const Message = (mongoose.models.Message as any) || model('Message', MessageSchema);
@@ -55,15 +54,11 @@ async function adminLayout(opts: {
 }) {
   const { title, active = '', body } = opts;
   // Проверяем наличие непрочитанных сообщений от студентов
-  let unreadCount = 0;
-  try {
-    unreadCount = await Message.countDocuments({ senderRole: 'student', isReadByAdmin: false });
-  } catch (e) {
-    // Игнорируем ошибки при подсчете непрочитанных сообщений
-  }
-  const navLink = (href: string, label: string, key: typeof active, badge?: number) => {
-    const badgeHtml = badge && badge > 0 ? ` <span style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 6px;font-size:11px;margin-left:4px">${badge}</span>` : '';
-    return `<a class="nav-link ${active === key ? 'active' : ''}" href="${href}">${label}${badgeHtml}</a>`;
+  const unreadCount = await Message.countDocuments({ senderRole: 'student', isReadByAdmin: false });
+  const navLink = (href: string, label: string, key: typeof active, badge?: number, icon?: string) => {
+    const badgeHtml = badge && badge > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 6px;font-size:11px;margin-left:auto;font-weight:600">${badge}</span>` : '';
+    const iconHtml = icon ? `<span style="font-size:18px">${icon}</span>` : '';
+    return `<a class="nav-link ${active === key ? 'active' : ''}" href="${href}">${iconHtml}<span>${label}</span>${badgeHtml}</a>`;
   };
   return `<!doctype html>
 <html lang="en">
@@ -75,89 +70,213 @@ async function adminLayout(opts: {
       :root{
         --bg:#0b1021; --card:#0f1631; --muted:#94a3b8; --text:#e2e8f0;
         --accent:#2563eb; --accent-2:#0ea5e9; --danger:#ef4444; --border:#1e293b;
+        --sidebar-width:280px;
       }
       *{box-sizing:border-box}
-      html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif}
+      html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;height:100%}
       a{color:var(--accent);text-decoration:none}
       a:hover{text-decoration:underline}
-      .container{max-width:1200px;margin:0 auto;padding:16px}
-      .topbar{
-        display:flex;align-items:center;justify-content:space-between;gap:12px;
-        position:sticky;top:0;background:linear-gradient(180deg,#0b1021 0%, rgba(11,16,33,0.85) 100%);
-        backdrop-filter: blur(6px); border-bottom:1px solid var(--border); padding:10px 16px; z-index: 10;
+      
+      .layout-wrapper{display:flex;min-height:100vh}
+      
+      .sidebar{
+        width:var(--sidebar-width);
+        background:linear-gradient(180deg,#0f1631 0%,#0b1021 100%);
+        border-right:1px solid var(--border);
+        position:fixed;left:0;top:0;bottom:0;
+        display:flex;flex-direction:column;
+        z-index:100;
+        overflow-y:auto;
       }
-      .brand{display:flex;align-items:center;gap:10px;font-weight:700}
-      .brand .dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2))}
-      .nav{display:flex;gap:10px;flex-wrap:wrap}
-      .nav-link{padding:8px 12px;border:1px solid var(--border);border-radius:8px;color:var(--text);display:inline-block}
-      .nav-link.active{border-color:var(--accent);background:rgba(37,99,235,0.12)}
-      .logout{margin-left:auto}
+      
+      .brand{
+        display:flex;align-items:center;gap:12px;
+        font-weight:700;font-size:20px;
+        padding:24px 20px;border-bottom:1px solid var(--border);
+        background:rgba(37,99,235,0.08);
+      }
+      .brand .dot{
+        width:12px;height:12px;border-radius:50%;
+        background:linear-gradient(135deg,var(--accent),var(--accent-2));
+        box-shadow:0 0 8px rgba(37,99,235,0.5);
+      }
+      
+      .nav{
+        display:flex;flex-direction:column;gap:4px;padding:16px 12px;flex:1;
+      }
+      .nav-link{
+        padding:12px 16px;border-radius:10px;color:var(--text);
+        display:flex;align-items:center;gap:12px;
+        transition:all 0.2s ease;
+        border:1px solid transparent;
+        font-size:14px;
+        position:relative;
+      }
+      .nav-link > span:first-of-type{flex-shrink:0;width:24px;text-align:center}
+      .nav-link > span:nth-of-type(2){flex:1}
+      .nav-link > span:last-of-type{margin-left:auto}
+      .nav-link:hover{
+        background:rgba(37,99,235,0.1);
+        border-color:var(--border);
+        transform:translateX(4px);
+      }
+      .nav-link.active{
+        border-color:var(--accent);
+        background:linear-gradient(90deg,rgba(37,99,235,0.2),rgba(37,99,235,0.1));
+        color:#60a5fa;
+        font-weight:500;
+        box-shadow:0 2px 8px rgba(37,99,235,0.15);
+      }
+      
+      .logout-section{
+        padding:16px 12px;border-top:1px solid var(--border);
+        margin-top:auto;
+      }
+      .logout-link{
+        display:flex;align-items:center;gap:10px;
+        padding:12px 16px;border-radius:10px;
+        color:#fecaca;border:1px solid rgba(239,68,68,0.3);
+        background:rgba(239,68,68,0.1);
+        transition:all 0.2s ease;
+        font-size:14px;
+      }
+      .logout-link:hover{
+        background:rgba(239,68,68,0.2);
+        border-color:var(--danger);
+        transform:translateX(4px);
+      }
 
-      .page{padding:16px}
-      .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
-      h1,h2,h3{margin:0 0 12px 0}
-      .muted{color:var(--muted)}
+      .main-content{
+        margin-left:var(--sidebar-width);
+        flex:1;padding:24px;max-width:calc(100vw - var(--sidebar-width));
+      }
+      .container{max-width:1400px;margin:0 auto}
+      
+      .page{padding:0}
+      .card{
+        background:var(--card);border:1px solid var(--border);
+        border-radius:16px;padding:24px;margin-bottom:20px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.2);
+      }
+      h1,h2,h3{margin:0 0 16px 0;font-weight:600}
+      h1{font-size:28px}
+      h2{font-size:24px}
+      h3{font-size:20px}
+      .muted{color:var(--muted);font-size:14px}
 
-      .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
-      .btn{display:inline-block;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:#11183a;color:var(--text)}
-      .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#fff}
-      .btn.danger{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.5);color:#fecaca}
+      .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+      .btn{
+        display:inline-block;padding:12px 20px;border-radius:10px;
+        border:1px solid var(--border);background:#11183a;
+        color:var(--text);cursor:pointer;transition:all 0.2s ease;
+        font-size:14px;font-weight:500;
+      }
+      .btn:hover{background:#152044;transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,0.2)}
+      .btn.primary{
+        background:linear-gradient(135deg,var(--accent),var(--accent-2));
+        border:none;color:#fff;box-shadow:0 4px 12px rgba(37,99,235,0.3);
+      }
+      .btn.primary:hover{box-shadow:0 6px 16px rgba(37,99,235,0.4);transform:translateY(-2px)}
+      .btn.danger{
+        background:rgba(239,68,68,0.15);
+        border:1px solid rgba(239,68,68,0.5);color:#fecaca;
+      }
+      .btn.danger:hover{background:rgba(239,68,68,0.25)}
 
-      .grid{display:grid;gap:12px}
+      .grid{display:grid;gap:16px}
       @media (min-width: 900px){
         .grid.cols-2{grid-template-columns: 1fr 1fr}
       }
 
-      .form-row{display:flex;flex-wrap:wrap;gap:8px}
-      input,select,textarea{background:#0c1330;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;outline:none;min-width:0}
-      textarea{resize:vertical}
-      label{display:block;margin:6px 0}
+      .form-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+      input,select,textarea{
+        background:#0c1330;border:1px solid var(--border);
+        color:var(--text);padding:12px 16px;border-radius:10px;
+        outline:none;min-width:0;transition:all 0.2s ease;
+        font-size:14px;
+      }
+      input:focus,select:focus,textarea:focus{
+        border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.1);
+      }
+      textarea{resize:vertical;min-height:100px}
+      label{display:block;margin:8px 0 6px 0;font-size:14px;font-weight:500}
 
-      .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}
-      table{border-collapse:collapse;min-width:800px;width:100%;}
-      th,td{border-bottom:1px solid var(--border);text-align:left;padding:10px;vertical-align:top}
-      thead th{position:sticky;top:0;background:#0c1330}
+      .table-wrap{
+        overflow:auto;border:1px solid var(--border);
+        border-radius:12px;margin-top:16px;
+      }
+      table{
+        border-collapse:collapse;min-width:800px;width:100%;
+      }
+      th,td{
+        border-bottom:1px solid var(--border);
+        text-align:left;padding:14px 16px;vertical-align:top;
+        font-size:14px;
+      }
+      thead th{
+        position:sticky;top:0;background:#0c1330;
+        font-weight:600;color:var(--accent-2);
+        border-bottom:2px solid var(--accent);
+      }
+      tbody tr:hover{background:rgba(37,99,235,0.05)}
 
       .stack{display:none}
-      @media (max-width: 720px){
-        .nav{display:grid;grid-template-columns: 1fr 1fr;gap:8px}
-        .table-wrap{border-radius:10px;overflow:auto}
-        table{min-width:680px}
-        .stack{display:block}
+      
+      @media (max-width: 1024px){
+        .sidebar{width:240px}
+        .main-content{margin-left:240px;max-width:calc(100vw - 240px)}
+      }
+      
+      @media (max-width: 768px){
+        .sidebar{transform:translateX(-100%);transition:transform 0.3s ease}
+        .sidebar.open{transform:translateX(0)}
+        .main-content{margin-left:0;max-width:100vw;padding:16px}
+        .mobile-menu-btn{
+          position:fixed;top:16px;left:16px;z-index:101;
+          background:var(--card);border:1px solid var(--border);
+          padding:10px;border-radius:8px;cursor:pointer;
+          display:block;
+        }
+      }
+      
+      @media (min-width: 769px){
+        .mobile-menu-btn{display:none}
       }
     </style>
   </head>
   <body>
-    <div class="topbar">
-      <div class="brand"><span class="dot"></span> Kleos Admin</div>
-      <nav class="nav">
-        ${navLink('/admin/users','Users','users')}
-        ${navLink('/admin/partners','Partners','partners')}
-        ${navLink('/admin/admissions','Admissions','admissions')}
-        ${navLink('/admin/programs','Programs','programs')}
-        ${navLink('/admin/chats','Chats','chats', unreadCount)}
-        ${navLink('/admin/i18n','I18n','i18n')}
-        ${navLink('/admin/news','News','news')}
-        ${navLink('/admin/gallery','Gallery','gallery')}
-      </nav>
-      <div class="logout"><a class="nav-link" href="/admin/logout">Logout</a></div>
-    </div>
-    <div class="container page">
-      ${body}
+    <div class="layout-wrapper">
+      <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="dot"></span>
+          <span>Kleos Admin</span>
+        </div>
+        <nav class="nav">
+          ${navLink('/admin/users','Users','users', undefined, '👥')}
+          ${navLink('/admin/partners','Partners','partners', undefined, '🤝')}
+          ${navLink('/admin/admissions','Admissions','admissions', undefined, '📝')}
+          ${navLink('/admin/programs','Programs','programs', undefined, '🎓')}
+          ${navLink('/admin/chats','Chats','chats', unreadCount, '💬')}
+          ${navLink('/admin/i18n','I18n','i18n', undefined, '🌐')}
+          ${navLink('/admin/news','News','news', undefined, '📰')}
+          ${navLink('/admin/gallery','Gallery','gallery', undefined, '🖼️')}
+        </nav>
+        <div class="logout-section">
+          <a class="logout-link" href="/admin/logout">
+            <span>🚪</span>
+            <span>Logout</span>
+          </a>
+        </div>
+      </aside>
+      <main class="main-content">
+        <div class="container page">
+          ${body}
+        </div>
+      </main>
     </div>
   </body>
 </html>`;
-}
-
-// Middleware для отключения кэширования в админ-панели
-function noCacheMiddleware(req: any, res: any, next: any) {
-  res.set({
-    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-    'ETag': false
-  });
-  next();
 }
 
 function adminAuthMiddleware(req: any, res: any, next: any) {
@@ -182,7 +301,7 @@ router.get('/', (_req, res) => {
 });
 
 // Login form
-router.get('/admin', async (req, res) => {
+router.get('/admin', (req, res) => {
   const body = `
     <div class="grid cols-2">
       <div class="card">
