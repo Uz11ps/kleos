@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/dark_background">
 
     <ImageView
         android:id="@+id/topLogo"
@@ -49,9 +49,8 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
         android:text="Welcome to StudyInRussia mobile application"
-        android:textColor="@android:color/black"
-        android:textSize="22sp"
-        android:textStyle="bold"
+        android:textAppearance="@style/TextAppearance.Kleos.Headline"
+        android:textColor="@color/dark_on_surface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/illustration" />
@@ -64,8 +63,8 @@
         android:layout_marginTop="12dp"
         android:layout_marginEnd="24dp"
         android:text="The tailor-made mobile app aiming to help international students to submit, apply and get admission to any well-known Russian universities"
-        android:textColor="#8A000000"
-        android:textSize="14sp"
+        android:textAppearance="@style/TextAppearance.Kleos.Body1"
+        android:textColor="@color/dark_on_surface_variant"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title" />

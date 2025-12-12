@@ -39,6 +39,9 @@ class ChatFragment : Fragment() {
         binding.faqRecycler.visibility = View.VISIBLE
         binding.messagesList.visibility = View.GONE
         binding.messageInputBar.visibility = View.GONE
+        
+        // Крутые анимации появления FAQ списка
+        animateFaqRecycler()
 
         val adapter = ArrayAdapter<String>(
             requireContext(),
@@ -48,25 +51,213 @@ class ChatFragment : Fragment() {
         binding.messagesList.adapter = adapter
 
         viewModel.messages.observe(viewLifecycleOwner) { msgs ->
+            val previousCount = adapter.count
             adapter.clear()
             adapter.addAll(msgs.map { m ->
                 val prefix = if (m.sender == "user") "Вы: " else "Поддержка: "
                 "$prefix${m.text}"
             })
             adapter.notifyDataSetChanged()
-            binding.messagesList.post { binding.messagesList.setSelection(adapter.count - 1) }
+            
+            // Анимация появления новых сообщений
+            if (msgs.size > previousCount && binding.messagesList.visibility == View.VISIBLE) {
+                animateNewMessage()
+            }
+            
+            binding.messagesList.post { 
+                binding.messagesList.setSelection(adapter.count - 1)
+            }
         }
 
+        // Анимация для кнопки отправки
+        binding.sendButton.setOnTouchListener { view, motionEvent ->
+            when (motionEvent.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    com.example.kleos.ui.utils.AnimationUtils.pressButton(view)
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    com.example.kleos.ui.utils.AnimationUtils.releaseButton(view)
+                }
+            }
+            false
+        }
+        
+        // Анимация для поля ввода при фокусе
+        binding.messageEditText.setOnFocusChangeListener { view, hasFocus ->
+            if (hasFocus) {
+                view.animate()
+                    .scaleX(1.02f)
+                    .scaleY(1.02f)
+                    .setDuration(200)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            } else {
+                view.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(200)
+                    .start()
+            }
+        }
+        
         binding.sendButton.setOnClickListener {
             val text = binding.messageEditText.text?.toString().orEmpty()
             val session = SessionManager(requireContext())
             if (!session.isLoggedIn()) {
+                com.example.kleos.ui.utils.AnimationUtils.shake(binding.sendButton)
+                com.example.kleos.ui.utils.AnimationUtils.shake(binding.messageInputBar)
                 startActivity(Intent(requireContext(), AuthActivity::class.java))
                 return@setOnClickListener
             }
+            if (text.isBlank()) {
+                // Анимация при попытке отправить пустое сообщение
+                com.example.kleos.ui.utils.AnimationUtils.shake(binding.messageEditText)
+                return@setOnClickListener
+            }
+            // Анимация отправки сообщения
+            com.example.kleos.ui.utils.AnimationUtils.pulse(binding.sendButton, 200)
             viewModel.sendUserMessage(text)
             binding.messageEditText.setText("")
+            
+            // Анимация появления нового сообщения
+            animateMessageSent()
         }
+    }
+    
+    private fun animateFaqRecycler() {
+        // Анимация появления RecyclerView с эффектом волны
+        if (!isAdded || _binding == null) return
+        
+        if (binding.faqRecycler.visibility == View.VISIBLE) {
+            binding.faqRecycler.alpha = 0f
+            binding.faqRecycler.translationY = 50f
+            binding.faqRecycler.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(600)
+                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .withEndAction {
+                    if (isAdded && _binding != null) {
+                        // Запускаем анимацию карточек после появления RecyclerView
+                        binding.faqRecycler.postDelayed({
+                            if (isAdded && _binding != null) {
+                                animateFaqCards()
+                            }
+                        }, 300)
+                    }
+                }
+                .start()
+        }
+    }
+    
+    private fun animateFaqCards() {
+        if (!isAdded || _binding == null) return
+        
+        val layoutManager = binding.faqRecycler.layoutManager
+        if (layoutManager != null && binding.faqRecycler.visibility == View.VISIBLE) {
+            val childCount = layoutManager.childCount
+            for (i in 0 until childCount) {
+                val child = layoutManager.getChildAt(i)
+                child?.let {
+                    // Проверяем, что view еще не анимирована
+                    val tag = it.tag as? String
+                    if (tag != "animated") {
+                        it.tag = "animated"
+                        it.alpha = 0f
+                        it.scaleX = 0.5f
+                        it.scaleY = 0.5f
+                        it.rotation = if (i % 2 == 0) -10f else 10f
+                        it.translationY = 30f
+                        
+                        val delay = i * 80L
+                        it.animate()
+                            .alpha(1f)
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .rotation(0f)
+                            .translationY(0f)
+                            .setDuration(500)
+                            .setStartDelay(delay)
+                            .setInterpolator(android.view.animation.OvershootInterpolator(1.2f))
+                            .withEndAction {
+                                if (!isAdded || _binding == null) return@withEndAction
+                                // Дополнительный эффект "подпрыгивания" после появления
+                                if (i % 3 == 0) {
+                                    it.animate()
+                                        .translationY(-5f)
+                                        .setDuration(150)
+                                        .withEndAction {
+                                            if (isAdded && _binding != null) {
+                                                it.animate()
+                                                    .translationY(0f)
+                                                    .setDuration(150)
+                                                    .setInterpolator(android.view.animation.BounceInterpolator())
+                                                    .start()
+                                            }
+                                        }
+                                        .start()
+                                }
+                            }
+                            .start()
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun animateMessageSent() {
+        // Анимация поля ввода при отправке
+        binding.messageEditText.animate()
+            .scaleX(0.95f)
+            .scaleY(0.95f)
+            .setDuration(100)
+            .withEndAction {
+                binding.messageEditText.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(150)
+                    .setInterpolator(android.view.animation.OvershootInterpolator())
+                    .start()
+            }
+            .start()
+        
+        // Анимация кнопки отправки
+        binding.sendButton.animate()
+            .rotation(360f)
+            .setDuration(300)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
+            .withEndAction {
+                binding.sendButton.rotation = 0f
+            }
+            .start()
+    }
+    
+    private fun animateNewMessage() {
+        // Анимация появления нового сообщения в списке с эффектом "всплытия"
+        binding.messagesList.alpha = 0.7f
+        binding.messagesList.scaleX = 0.98f
+        binding.messagesList.translationY = 10f
+        binding.messagesList.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .translationY(0f)
+            .setDuration(400)
+            .setInterpolator(android.view.animation.OvershootInterpolator(1.1f))
+            .start()
+        
+        // Анимация кнопки отправки при получении ответа
+        binding.sendButton.animate()
+            .scaleX(1.1f)
+            .scaleY(1.1f)
+            .setDuration(150)
+            .withEndAction {
+                binding.sendButton.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(150)
+                    .start()
+            }
+            .start()
     }
 
     override fun onDestroyView() {
@@ -84,40 +275,117 @@ class ChatFragment : Fragment() {
             }
         }
         rv.layoutManager = grid
-        faqAdapter = FaqAdapter(loadFaqItems(), { item ->
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle(item.question)
-                .setMessage(item.answer)
-                .setPositiveButton(android.R.string.ok, null)
-                .show()
+        faqAdapter = FaqAdapter(loadFaqItems(), { item, cardView ->
+            // Плавная анимация расширения карточки в центр экрана
+            if (isAdded && _binding != null) {
+                com.example.kleos.ui.utils.FaqExpandAnimation.expandFaqCard(
+                    this@ChatFragment,
+                    cardView,
+                    item.question,
+                    item.answer
+                ) {
+                    // Callback после закрытия
+                }
+            }
         }) {
-            // CTA: скрыть FAQ и показать чат
+            // CTA: скрыть FAQ и показать чат с крутыми анимациями
             val session = SessionManager(requireContext())
             if (!session.isLoggedIn()) {
+                // Анимация при попытке войти без авторизации
+                com.example.kleos.ui.utils.AnimationUtils.shake(binding.faqRecycler)
                 startActivity(Intent(requireContext(), AuthActivity::class.java))
             } else {
-                binding.faqRecycler.visibility = View.GONE
-                binding.messagesList.visibility = View.VISIBLE
-                binding.messageInputBar.visibility = View.VISIBLE
-                viewModel.refresh()
-                viewModel.startPolling()
+                // Плавный переход от FAQ к чату
+                animateFaqToChatTransition()
             }
         }
         rv.adapter = faqAdapter
         rv.setHasFixedSize(true)
-        // simple spacing by item margins already set in item layout
+        
+        // Анимации при скролле RecyclerView
+        rv.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                // Параллакс эффект при скролле
+                val layoutManager = recyclerView.layoutManager
+                if (layoutManager != null) {
+                    for (i in 0 until layoutManager.childCount) {
+                        val child = layoutManager.getChildAt(i)
+                        child?.let {
+                            val position = recyclerView.getChildAdapterPosition(it)
+                            val factor = (position % 3) * 0.1f
+                            com.example.kleos.ui.utils.AnimationUtils.parallaxScroll(it, dy, factor)
+                        }
+                    }
+                }
+            }
+        })
+        
+        // Анимация при первом появлении на экране будет вызвана из animateFaqRecycler()
     }
 
     override fun onResume() {
         super.onResume()
         if (binding.messagesList.visibility == View.VISIBLE) {
             viewModel.startPolling()
+            // Анимация появления чата при возврате на экран
+            binding.messagesList.alpha = 0.8f
+            binding.messagesList.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .start()
+        } else if (binding.faqRecycler.visibility == View.VISIBLE) {
+            // Переанимация FAQ карточек при возврате (только если видимы)
+            binding.faqRecycler.postDelayed({
+                animateFaqCards()
+            }, 100)
         }
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.stopPolling()
+    }
+
+    private fun animateFaqToChatTransition() {
+        // Анимация скрытия FAQ с эффектом масштабирования и вращения
+        binding.faqRecycler.animate()
+            .alpha(0f)
+            .scaleX(0.8f)
+            .scaleY(0.8f)
+            .rotation(5f)
+            .setDuration(400)
+            .setInterpolator(android.view.animation.AccelerateInterpolator())
+            .withEndAction {
+                binding.faqRecycler.visibility = View.GONE
+                
+                // Анимация появления чата
+                binding.messagesList.alpha = 0f
+                binding.messagesList.translationX = 100f
+                binding.messagesList.visibility = View.VISIBLE
+                binding.messagesList.animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(500)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+                
+                // Анимация появления поля ввода снизу
+                binding.messageInputBar.alpha = 0f
+                binding.messageInputBar.translationY = 100f
+                binding.messageInputBar.visibility = View.VISIBLE
+                binding.messageInputBar.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(500)
+                    .setStartDelay(200)
+                    .setInterpolator(android.view.animation.OvershootInterpolator(1.2f))
+                    .start()
+                
+                viewModel.refresh()
+                viewModel.startPolling()
+            }
+            .start()
     }
 
     private fun loadFaqItems(): List<FaqItem> {

@@ -1,23 +1,43 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.Kleos" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <!-- Base application theme - темный дизайн -->
+    <style name="Theme.Kleos" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color - синий акцент -->
         <item name="colorPrimary">@color/kleos_blue</item>
         <item name="colorPrimaryVariant">@color/kleos_blue_variant</item>
         <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/kleos_blue</item>
-        <item name="colorSecondaryVariant">@color/kleos_blue_variant</item>
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/kleos_blue_light</item>
+        <item name="colorSecondaryVariant">@color/kleos_blue_dark</item>
         <item name="colorOnSecondary">@color/white</item>
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <item name="android:colorBackground">@color/white</item>
-        <item name="colorSurface">@color/white</item>
-        <item name="colorOnSurface">@color/black</item>
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@color/dark_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <!-- Background / surfaces - темные -->
+        <item name="android:colorBackground">@color/dark_background</item>
+        <item name="colorSurface">@color/dark_surface</item>
+        <item name="colorSurfaceVariant">@color/dark_surface_variant</item>
+        <item name="colorOnSurface">@color/dark_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/dark_on_surface_variant</item>
+        <!-- Outline colors -->
+        <item name="colorOutline">@color/dark_outline</item>
+        <item name="colorOutlineVariant">@color/dark_outline_variant</item>
+        <!-- Ripple / pressed state -->
         <item name="colorControlHighlight">@color/kleos_blue_ripple</item>
+        <!-- Card colors -->
+        <item name="cardBackgroundColor">@color/dark_surface</item>
     </style>
+
+    <style name="Theme.Kleos.NoActionBar" parent="Theme.Kleos">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <!-- Темная шапка для экранов авторизации/регистрации -->
     <style name="Theme.Kleos.ActionBarLight" parent="Theme.Kleos">
-        <item name="colorPrimary">@color/white</item>
-        <item name="colorPrimaryVariant">@color/white</item>
-        <item name="colorOnPrimary">@color/kleos_blue</item>
-        <item name="android:statusBarColor">@color/white</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="colorPrimary">@color/dark_surface</item>
+        <item name="colorPrimaryVariant">@color/dark_background</item>
+        <item name="colorOnPrimary">@color/dark_on_surface</item>
+        <item name="android:statusBarColor">@color/dark_background</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

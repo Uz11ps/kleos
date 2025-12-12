@@ -24,7 +24,24 @@ class GalleryAdapter(
     override fun onBindViewHolder(holder: GalleryViewHolder, position: Int) {
         val item = items[position]
         holder.binding.titleText.text = item.title
-        holder.itemView.setOnClickListener { onItemClick(item) }
+        
+        // Анимация появления карточки с задержкой
+        com.example.kleos.ui.utils.AnimationUtils.cardEnter(holder.itemView, position * 80L)
+        
+        // Анимация при нажатии
+        holder.itemView.setOnClickListener { 
+            com.example.kleos.ui.utils.AnimationUtils.pressButton(it)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                com.example.kleos.ui.utils.AnimationUtils.releaseButton(it)
+                onItemClick(item)
+            }, 150)
+        }
+    }
+    
+    override fun onViewAttachedToWindow(holder: GalleryViewHolder) {
+        super.onViewAttachedToWindow(holder)
+        // Дополнительная анимация при появлении на экране
+        com.example.kleos.ui.utils.AnimationUtils.fadeInScale(holder.itemView, 300)
     }
 
     fun submitList(newItems: List<GalleryItem>) {

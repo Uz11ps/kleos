@@ -8,112 +8,179 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
         <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/titleText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/admission_apply_now"
-            android:textStyle="bold"
-            android:textSize="20sp"
-            android:paddingBottom="12dp"/>
+            android:textAppearance="@style/TextAppearance.Kleos.Display"
+            android:textColor="@color/dark_on_surface"
+            android:paddingBottom="16dp"/>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/label_first_name">
+            android:hint="@string/label_first_name"
+            android:layout_marginBottom="16dp"
+            app:startIconDrawable="@android:drawable/ic_menu_edit"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/firstNameEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_last_name">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_last_name"
+            app:startIconDrawable="@android:drawable/ic_menu_edit"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/lastNameEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_patronymic">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_patronymic"
+            app:startIconDrawable="@android:drawable/ic_menu_edit"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/patronymicEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_surname">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_surname"
+            app:startIconDrawable="@android:drawable/ic_menu_mylocation"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/placeOfBirthEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_date_of_birth">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_date_of_birth"
+            app:startIconDrawable="@android:drawable/ic_menu_today"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/dateOfBirthEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="16sp"
                 android:inputType="number"
-                android:maxLength="10" />
+                android:maxLength="10"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_place_of_birth">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_place_of_birth"
+            app:startIconDrawable="@android:drawable/ic_menu_mylocation"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/nationalityEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_nationality">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_nationality"
+            app:startIconDrawable="@android:drawable/ic_menu_compass"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/passportNumberEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textview.MaterialTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_sex"
+            android:textAppearance="@style/TextAppearance.Kleos.Body1"
+            android:textColor="@color/dark_on_surface"
             android:paddingTop="12dp"
             android:paddingBottom="4dp" />
 
@@ -125,123 +192,199 @@
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sex_male" />
+                android:text="@string/sex_male"
+                android:textColor="@color/dark_on_surface"
+                android:buttonTint="@color/kleos_blue" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
-                android:text="@string/sex_female" />
+                android:text="@string/sex_female"
+                android:textColor="@color/dark_on_surface"
+                android:buttonTint="@color/kleos_blue" />
         </RadioGroup>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_phone">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_phone"
+            app:startIconDrawable="@android:drawable/ic_menu_call"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/phoneEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="phone" />
+                android:textSize="16sp"
+                android:inputType="phone"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_email">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_email"
+            app:startIconDrawable="@android:drawable/ic_dialog_email"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/emailEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress" />
+                android:textSize="16sp"
+                android:inputType="textEmailAddress"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_passport_number">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_passport_number"
+            app:startIconDrawable="@android:drawable/ic_menu_view"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/passportIssueEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_passport_issue">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_passport_issue"
+            app:startIconDrawable="@android:drawable/ic_menu_today"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/visaCityEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_passport_expiry">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_passport_expiry"
+            app:startIconDrawable="@android:drawable/ic_menu_today"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/passportExpiryEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="16sp"
                 android:inputType="number"
-                android:maxLength="10" />
+                android:maxLength="10"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_visa_city">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_visa_city"
+            app:startIconDrawable="@android:drawable/ic_menu_mylocation"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_program">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_program"
+            app:startIconDrawable="@android:drawable/ic_menu_sort_by_size"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/programEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/label_comment_optional">
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_comment_optional"
+            app:startIconDrawable="@android:drawable/ic_menu_edit"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/commentEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="16sp"
                 android:minLines="3"
                 android:gravity="top"
-                android:inputType="textMultiLine" />
+                android:inputType="textMultiLine"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -249,7 +392,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/action_submit_application"
-            android:layout_marginTop="16dp" />
+            style="@style/Widget.Kleos.Button.Rounded"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/kleos_blue"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp" />
     </LinearLayout>
 </ScrollView>
 

@@ -19,7 +19,7 @@
             android:layout_height="24dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/close"
-            android:tint="#8A000000"
+            android:tint="@color/dark_on_surface"
             android:src="@android:drawable/ic_menu_close_clear_cancel" />
     </LinearLayout>
 
@@ -38,20 +38,20 @@
         android:layout_marginTop="16dp"
         android:gravity="center"
         android:text="@string/invite_message"
-        android:textColor="#8A000000"
+        android:textAppearance="@style/TextAppearance.Kleos.Body1"
+        android:textColor="@color/dark_on_surface"
         android:textSize="16sp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/inviteButton"
-        style="@style/Widget.MaterialComponents.Button"
+        style="@style/Widget.Kleos.Button.Rounded.Small"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="16dp"
         android:text="@string/invite_now"
         android:textAllCaps="false"
         android:textColor="@android:color/white"
-        android:backgroundTint="@color/kleos_blue"
-        app:cornerRadius="12dp" />
+        android:backgroundTint="@color/kleos_blue" />
 
 </LinearLayout>
 

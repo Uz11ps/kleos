@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.kleos.data.model.NewsItem
 import com.example.kleos.databinding.ItemNewsCardBinding
+import com.example.kleos.ui.utils.AnimationUtils
 
 class NewsAdapter(
     private var items: List<NewsItem>
@@ -24,7 +25,23 @@ class NewsAdapter(
         val item = items[position]
         holder.binding.titleText.text = item.title
         holder.binding.dateText.text = item.dateText
-        // Image placeholder is static for now
+        
+        // Анимация появления карточки с задержкой
+        AnimationUtils.cardEnter(holder.itemView, position * 100L)
+        
+        // Анимация при нажатии
+        holder.itemView.setOnClickListener {
+            AnimationUtils.pressButton(it)
+            it.postDelayed({
+                AnimationUtils.releaseButton(it)
+            }, 100)
+        }
+    }
+    
+    override fun onViewAttachedToWindow(holder: NewsViewHolder) {
+        super.onViewAttachedToWindow(holder)
+        // Дополнительная анимация при появлении на экране
+        AnimationUtils.fadeInScale(holder.itemView, 300)
     }
 
     fun submitList(newItems: List<NewsItem>) {

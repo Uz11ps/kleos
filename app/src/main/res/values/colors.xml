@@ -7,11 +7,40 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="kleos_blue">#0D47A1</color>
-    <color name="kleos_blue_variant">#0B3C8C</color>
+    
+    <!-- Kleos Blue - современный акцентный цвет 2025 -->
+    <color name="kleos_blue">#3B82F6</color>
+    <color name="kleos_blue_variant">#2563EB</color>
+    <color name="kleos_blue_light">#60A5FA</color>
+    <color name="kleos_blue_dark">#1E40AF</color>
+    <color name="kleos_blue_gradient_start">#3B82F6</color>
+    <color name="kleos_blue_gradient_end">#8B5CF6</color>
+    
+    <!-- Современная темная цветовая схема 2025 -->
+    <color name="dark_background">#0A0E1A</color>
+    <color name="dark_surface">#151B2E</color>
+    <color name="dark_surface_variant">#1E293B</color>
+    <color name="dark_surface_elevated">#252F42</color>
+    <color name="dark_on_surface">#F8FAFC</color>
+    <color name="dark_on_surface_variant">#CBD5E1</color>
+    <color name="dark_outline">#334155</color>
+    <color name="dark_outline_variant">#475569</color>
+    
+    <!-- Glassmorphism цвета -->
+    <color name="glass_background">#20FFFFFF</color>
+    <color name="glass_border">#30FFFFFF</color>
+    <color name="glass_shadow">#40000000</color>
+    
+    <!-- Акцентные градиенты -->
+    <color name="gradient_purple">#8B5CF6</color>
+    <color name="gradient_blue">#3B82F6</color>
+    <color name="gradient_cyan">#06B6D4</color>
+    
+    <!-- Legacy colors для совместимости -->
     <color name="kleos_yellow">#FFD600</color>
-    <color name="faq_card_bg">#FFF8E1</color>
-    <color name="faq_chip_bg">#E3F2FD</color>
+    <color name="faq_card_bg">#1E293B</color>
+    <color name="faq_chip_bg">#334155</color>
+    
     <!-- Ripple/hover color (20% opacity of primary blue) -->
-    <color name="kleos_blue_ripple">#332B5DBA</color>
+    <color name="kleos_blue_ripple">#332563EB</color>
 </resources>
