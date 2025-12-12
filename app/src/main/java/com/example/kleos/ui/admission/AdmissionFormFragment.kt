@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.textfield.TextInputEditText
@@ -125,15 +126,36 @@ class AdmissionFormFragment : Fragment() {
             binding.emailEditText,
             binding.passportExpiryEditText,
             binding.programEditText,
-            binding.commentEditText
+            binding.commentEditText,
+            binding.placeOfBirthEditText,
+            binding.nationalityEditText,
+            binding.passportNumberEditText,
+            binding.passportIssueEditText,
+            binding.visaCityEditText
         )
         
         editTexts.forEach { editText ->
             editText.setOnFocusChangeListener { v, hasFocus ->
-                if (hasFocus && isAdded) {
-                    val parent = v.parent
-                    if (parent is View) {
-                        AnimationUtils.pulse(parent, 200)
+                if (!isAdded) return@setOnFocusChangeListener
+                
+                val parent = v.parent
+                if (parent is View) {
+                    if (hasFocus) {
+                        // Плавное увеличение при фокусе
+                        parent.animate()
+                            .scaleX(1.02f)
+                            .scaleY(1.02f)
+                            .setDuration(300)
+                            .setInterpolator(DecelerateInterpolator())
+                            .start()
+                    } else {
+                        // Плавное уменьшение при потере фокуса
+                        parent.animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(300)
+                            .setInterpolator(DecelerateInterpolator())
+                            .start()
                     }
                 }
             }

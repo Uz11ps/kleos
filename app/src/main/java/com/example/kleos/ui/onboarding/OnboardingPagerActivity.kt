@@ -11,6 +11,7 @@ import com.example.kleos.R
 import com.example.kleos.databinding.ActivityOnboardingPagerBinding
 import com.google.android.material.tabs.TabLayoutMediator
 import com.example.kleos.ui.language.t
+import android.view.animation.DecelerateInterpolator
 
 data class OnboardingPage(
     val imageRes: Int,
@@ -58,7 +59,11 @@ class OnboardingPagerActivity : AppCompatActivity() {
         }
         // Переносим инициализацию индикатора и первичный апдейт на следующую петлю
         binding.pager.post {
-            TabLayoutMediator(binding.indicator, binding.pager) { _, _ -> }.attach()
+            // Индикаторы скрыты, но TabLayoutMediator нужен для синхронизации
+            TabLayoutMediator(binding.indicator, binding.pager) { tab, _ -> 
+                tab.text = ""
+            }.attach()
+            
             updateControls(0)
         }
 

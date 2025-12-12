@@ -143,4 +143,17 @@
     <style name="ThemeOverlay.Kleos.TextInputLayout" parent="ThemeOverlay.MaterialComponents">
         <item name="colorPrimary">@color/kleos_blue</item>
     </style>
+    
+    <!-- Стиль для индикаторов онбординга -->
+    <style name="Widget.Kleos.TabLayout.Onboarding" parent="Widget.MaterialComponents.TabLayout">
+        <item name="tabIndicatorHeight">0dp</item>
+        <item name="tabIndicator">@null</item>
+        <item name="tabGravity">center</item>
+        <item name="tabPaddingStart">4dp</item>
+        <item name="tabPaddingEnd">4dp</item>
+        <item name="tabMinWidth">8dp</item>
+        <item name="tabContentStart">0dp</item>
+        <item name="tabBackground">@drawable/dot_indicator_selector</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
 </resources>
