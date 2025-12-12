@@ -30,24 +30,12 @@ app.use(morgan('dev'));
 // Отключаем ETag только для админ-роутов
 app.use((req, res, next) => {
   if (req.path.startsWith('/admin')) {
-    // Отключаем автоматическое добавление ETag для админ-роутов
-    res.setHeader('ETag', '');
+    // Устанавливаем заголовки для отключения кэширования
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, private',
       'Pragma': 'no-cache',
       'Expires': '0'
     });
-    // Переопределяем send для гарантированного удаления ETag
-    const originalSend = res.send.bind(res);
-    res.send = function(body: any) {
-      res.removeHeader('ETag');
-      res.set({
-        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      });
-      return originalSend(body);
-    };
   }
   next();
 });

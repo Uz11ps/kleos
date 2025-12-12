@@ -149,17 +149,6 @@ async function adminLayout(opts: {
 </html>`;
 }
 
-// Middleware для отключения кэширования в админ-панели
-function noCacheMiddleware(req: any, res: any, next: any) {
-  res.set({
-    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-    'ETag': false
-  });
-  next();
-}
-
 function adminAuthMiddleware(req: any, res: any, next: any) {
   const token = req.cookies?.admin_token;
   if (!token) {
@@ -172,6 +161,17 @@ function adminAuthMiddleware(req: any, res: any, next: any) {
     res.clearCookie('admin_token', { httpOnly: true, sameSite: 'lax' });
     return res.redirect('/admin/login');
   }
+}
+
+// Helper для отправки ответов админ-панели с отключенным кэшированием
+function sendAdminResponse(res: any, html: string) {
+  res.removeHeader('ETag');
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.send(html);
 }
 
 router.use(cookieParser());
@@ -207,7 +207,7 @@ router.get('/admin', async (req, res) => {
       </div>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - Login', active: '', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Login', active: '', body }));
 });
 
 // Handle login
@@ -319,7 +319,7 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
       });
     </script>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - Users', active: 'users', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Users', active: 'users', body }));
 });
 
 // Update user
@@ -400,7 +400,7 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
       </div>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - Partners', active: 'partners', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Partners', active: 'partners', body }));
 });
 
 router.post('/admin/partners', adminAuthMiddleware, upload.single('logoFile'), async (req: any, res) => {
@@ -500,7 +500,7 @@ router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
       </div>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - Admissions', active: 'admissions', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Admissions', active: 'admissions', body }));
 });
 
 // Accept admission: set status=done, optionally assign studentId; if linked userId exists — make role=student
@@ -567,7 +567,7 @@ router.get('/admin/admissions/:id/view', adminAuthMiddleware, async (req, res) =
       </div>
     </div>
   `;
-  res.send(await adminLayout({ title: `Kleos Admin - Admission ${id}`, active: 'admissions', body }));
+  sendAdminResponse(res, await adminLayout({ title: `Kleos Admin - Admission ${id}`, active: 'admissions', body }));
 });
 
 router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
@@ -587,7 +587,7 @@ router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
       <ul style="margin-top:12px">${items || '<li class="muted">Нет чатов</li>'}</ul>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
 });
 
 router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
@@ -607,7 +607,7 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
       </form>
     </div>
   `;
-  res.send(await adminLayout({ title: `Kleos Admin - Chat ${chatId}`, active: 'chats', body }));
+  sendAdminResponse(res, await adminLayout({ title: `Kleos Admin - Chat ${chatId}`, active: 'chats', body }));
 });
 
 router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
@@ -711,7 +711,7 @@ router.get('/admin/i18n', adminAuthMiddleware, async (_req, res) => {
       </form>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - I18n', active: 'i18n', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - I18n', active: 'i18n', body }));
 });
 
 router.post('/admin/i18n/save-bulk', adminAuthMiddleware, async (req, res) => {
@@ -806,7 +806,7 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
       </div>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - News', active: 'news', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - News', active: 'news', body }));
 });
 
 // Programs UI
@@ -891,7 +891,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
       </div>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - Programs', active: 'programs', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Programs', active: 'programs', body }));
 });
 
 router.post('/admin/programs/create', adminAuthMiddleware, async (req, res) => {
@@ -1042,7 +1042,7 @@ router.get('/admin/gallery', adminAuthMiddleware, async (_req, res) => {
       </div>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - Gallery', active: 'gallery', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Gallery', active: 'gallery', body }));
 });
 
 router.post('/admin/gallery/create', adminAuthMiddleware, async (req: any, res: any) => {
@@ -1126,7 +1126,7 @@ router.get('/admin/universities', adminAuthMiddleware, async (_req, res) => {
       </div>
     </div>
   `;
-  res.send(await adminLayout({ title: 'Kleos Admin - Universities', active: 'universities', body }));
+  sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Universities', active: 'universities', body }));
 });
 
 router.post('/admin/universities/create', adminAuthMiddleware, async (req: any, res: any) => {
