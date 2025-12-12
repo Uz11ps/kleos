@@ -149,6 +149,17 @@ async function adminLayout(opts: {
 </html>`;
 }
 
+// Middleware для отключения кэширования в админ-панели
+function noCacheMiddleware(req: any, res: any, next: any) {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'ETag': false
+  });
+  next();
+}
+
 function adminAuthMiddleware(req: any, res: any, next: any) {
   const token = req.cookies?.admin_token;
   if (!token) {
@@ -164,6 +175,19 @@ function adminAuthMiddleware(req: any, res: any, next: any) {
 }
 
 router.use(cookieParser());
+
+// Отключаем кэширование для всех админ-роутов
+router.use('/admin', (req, res, next) => {
+  // Отключаем ETag перед установкой заголовков
+  res.setHeader('ETag', '');
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Last-Modified': new Date().toUTCString()
+  });
+  next();
+});
 
 // Redirect root to admin
 router.get('/', (_req, res) => {
