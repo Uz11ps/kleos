@@ -21,77 +21,118 @@
             android:paddingBottom="16dp"/>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Search"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:hint="@string/filter_search_program"
-            app:hintTextColor="@color/dark_on_surface_variant"
-            app:boxStrokeColor="@color/dark_outline">
+            app:startIconDrawable="@android:drawable/ic_menu_search"
+            app:startIconTint="@color/kleos_blue"
+            app:expandedHintEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/filterQueryEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="16sp"
                 android:textColor="@color/dark_on_surface"
-                android:textColorHint="@color/dark_on_surface_variant"/>
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:fontFamily="sans-serif"
+                android:paddingStart="4dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:minHeight="56dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp"
             android:hint="@string/filter_language"
-            app:hintTextColor="@color/dark_on_surface_variant"
-            app:boxStrokeColor="@color/dark_outline">
+            app:startIconDrawable="@android:drawable/ic_menu_sort_by_size"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/filterLanguageEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="16sp"
                 android:textColor="@color/dark_on_surface"
-                android:textColorHint="@color/dark_on_surface_variant"/>
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:fontFamily="sans-serif"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp"
             android:hint="@string/filter_education_level"
-            app:hintTextColor="@color/dark_on_surface_variant"
-            app:boxStrokeColor="@color/dark_outline">
+            app:startIconDrawable="@android:drawable/ic_menu_sort_by_size"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/filterLevelEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="16sp"
                 android:textColor="@color/dark_on_surface"
-                android:textColorHint="@color/dark_on_surface_variant"/>
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:fontFamily="sans-serif"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp"
             android:hint="@string/filter_university"
-            app:hintTextColor="@color/dark_on_surface_variant"
-            app:boxStrokeColor="@color/dark_outline">
+            app:startIconDrawable="@android:drawable/ic_menu_mylocation"
+            app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/filterUniversityEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="16sp"
                 android:textColor="@color/dark_on_surface"
-                android:textColorHint="@color/dark_on_surface_variant"/>
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:fontFamily="sans-serif"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/searchButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
+            style="@style/Widget.Kleos.Button.Rounded"
+            android:backgroundTint="@color/kleos_blue"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
             android:text="Найти"/>
 
         <androidx.recyclerview.widget.RecyclerView

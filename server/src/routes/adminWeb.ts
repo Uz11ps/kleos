@@ -195,64 +195,88 @@ async function adminLayout(opts: {
 
       .form-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
       
+      .input-group{
+        display:flex;flex-direction:column;gap:6px;margin-bottom:16px;
+      }
+      
+      .input-group label{
+        display:block;
+        font-size:13px;
+        font-weight:500;
+        color:var(--text);
+        margin-bottom:4px;
+      }
+      
+      .input-group label.required::after{
+        content:" *";
+        color:var(--danger);
+      }
+      
       input,select,textarea{
         background:#0c1330;
-        border:1px solid var(--border);
-        border-width:1px;
+        border:2px solid var(--border);
         color:var(--text);
-        padding:12px 16px;
-        border-radius:10px;
+        padding:14px 18px;
+        border-radius:12px;
         outline:none;
         min-width:0;
-        font-size:14px;
-        transition:border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                   box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                   background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size:15px;
+        transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-sizing:border-box;
         vertical-align:top;
+        width:100%;
       }
       
       input:focus,select:focus,textarea:focus{
         border-color:var(--accent);
-        border-width:1px;
-        box-shadow:0 0 0 3px rgba(37,99,235,0.15),
-                   0 2px 8px rgba(37,99,235,0.1);
+        box-shadow:0 0 0 4px rgba(37,99,235,0.15),
+                   0 4px 12px rgba(37,99,235,0.2);
         outline:none;
         background:#0d1432;
+        transform:translateY(-1px);
       }
       
       input:hover:not(:focus),select:hover:not(:focus),textarea:hover:not(:focus){
-        border-color:rgba(37,99,235,0.4);
+        border-color:rgba(37,99,235,0.5);
         background:#0d1431;
       }
       
       input::placeholder,textarea::placeholder{
         color:var(--muted);
-        opacity:0.6;
+        opacity:0.7;
         transition:opacity 0.3s ease;
       }
       
       input:focus::placeholder,textarea:focus::placeholder{
-        opacity:0.4;
+        opacity:0.5;
       }
       
-      textarea{resize:vertical;min-height:100px}
-      
-      label{
-        display:block;
-        margin:8px 0 6px 0;
-        font-size:14px;
-        font-weight:500;
-        color:var(--text);
-        transition:color 0.3s ease;
+      input:disabled{
+        opacity:0.6;
+        cursor:not-allowed;
+        background:#0a1028;
       }
       
-      form:has(input:focus) label,
-      form:has(select:focus) label,
-      form:has(textarea:focus) label,
-      div:has(input:focus) > label,
-      div:has(select:focus) > label,
-      div:has(textarea:focus) > label{
+      textarea{resize:vertical;min-height:120px;font-family:inherit}
+      
+      select{
+        cursor:pointer;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat:no-repeat;
+        background-position:right 14px center;
+        padding-right:40px;
+        appearance:none;
+      }
+      
+      .form-row .input-group{
+        flex:1;
+        min-width:200px;
+        margin-bottom:0;
+      }
+      
+      form:has(input:focus) .input-group label,
+      form:has(select:focus) .input-group label,
+      form:has(textarea:focus) .input-group label{
         color:var(--accent-2);
       }
 
@@ -416,38 +440,82 @@ router.get('/admin/logout', (req, res) => {
 // Users list
 router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
   const users = await User.find().sort({ createdAt: -1 }).lean();
-  const rows = users.map(u => `
+  const rows = users.map(u => {
+    const userId = (u as any).userId || 0;
+    return `
     <tr>
-      <td>${u._id}</td>
+      <td style="vertical-align:top;padding-top:20px;">
+        <div style="font-weight:600;color:var(--accent);font-size:18px;">ID: ${userId}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">${u._id}</div>
+      </td>
       <td>
-        <form method="post" action="/admin/users/${u._id}">
-          <input name="fullName" value="${(u.fullName || '').toString().replace(/"/g, '&quot;')}" />
-          <input name="email" value="${(u.email || '').toString().replace(/"/g, '&quot;')}" disabled />
-          <select name="role">
-            <option value="student"${u.role === 'student' ? ' selected' : ''}>student</option>
-            <option value="admin"${u.role === 'admin' ? ' selected' : ''}>admin</option>
-          </select>
-          <input name="studentId" placeholder="Student ID" value="${(u as any).studentId || ''}" />
-          <input name="phone" placeholder="Phone" value="${(u as any).phone || ''}" />
-          <input name="course" placeholder="Course" value="${(u as any).course || ''}" />
-          <input name="speciality" placeholder="Speciality" value="${(u as any).speciality || ''}" />
-          <input name="status" placeholder="Status" value="${(u as any).status || ''}" />
-          <input name="university" placeholder="University" value="${(u as any).university || ''}" />
-          <input name="payment" placeholder="Payment" value="${(u as any).payment || ''}" />
-          <input name="penalties" placeholder="Penalties" value="${(u as any).penalties || ''}" />
-          <input name="notes" placeholder="Notes" value="${(u as any).notes || ''}" />
-          <label style="display:inline-flex;align-items:center;gap:6px">
-            <input type="checkbox" name="emailVerified" ${u.emailVerified ? 'checked' : ''} />
-            Verified
-          </label>
-          <button class="btn primary" type="submit">Save</button>
-        </form>
-        <form method="post" action="/admin/users/${u._id}/delete" onsubmit="return confirm('Delete this user?')">
-          <button class="btn danger" type="submit" style="margin-top:6px;">Delete</button>
+        <form method="post" action="/admin/users/${u._id}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+          <div class="input-group">
+            <label class="required">Полное имя</label>
+            <input name="fullName" value="${(u.fullName || '').toString().replace(/"/g, '&quot;')}" required />
+          </div>
+          <div class="input-group">
+            <label>Email</label>
+            <input name="email" value="${(u.email || '').toString().replace(/"/g, '&quot;')}" disabled />
+          </div>
+          <div class="input-group">
+            <label class="required">Роль</label>
+            <select name="role">
+              <option value="student"${u.role === 'student' ? ' selected' : ''}>Студент</option>
+              <option value="admin"${u.role === 'admin' ? ' selected' : ''}>Администратор</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>ID студента</label>
+            <input name="studentId" placeholder="Введите ID студента" value="${(u as any).studentId || ''}" />
+          </div>
+          <div class="input-group">
+            <label>Телефон</label>
+            <input name="phone" placeholder="+7 (999) 999-99-99" value="${(u as any).phone || ''}" />
+          </div>
+          <div class="input-group">
+            <label>Курс</label>
+            <input name="course" placeholder="Введите курс" value="${(u as any).course || ''}" />
+          </div>
+          <div class="input-group">
+            <label>Специальность</label>
+            <input name="speciality" placeholder="Введите специальность" value="${(u as any).speciality || ''}" />
+          </div>
+          <div class="input-group">
+            <label>Статус</label>
+            <input name="status" placeholder="Введите статус" value="${(u as any).status || ''}" />
+          </div>
+          <div class="input-group">
+            <label>Университет</label>
+            <input name="university" placeholder="Введите университет" value="${(u as any).university || ''}" />
+          </div>
+          <div class="input-group">
+            <label>Оплата</label>
+            <input name="payment" placeholder="Информация об оплате" value="${(u as any).payment || ''}" />
+          </div>
+          <div class="input-group">
+            <label>Штрафы</label>
+            <input name="penalties" placeholder="Информация о штрафах" value="${(u as any).penalties || ''}" />
+          </div>
+          <div class="input-group" style="grid-column:1/-1;">
+            <label>Заметки</label>
+            <textarea name="notes" placeholder="Дополнительные заметки о пользователе">${(u as any).notes || ''}</textarea>
+          </div>
+          <div class="input-group" style="grid-column:1/-1;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="emailVerified" ${u.emailVerified ? 'checked' : ''} style="width:auto;margin:0;" />
+              <span>Email подтвержден</span>
+            </label>
+          </div>
+          <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;">
+            <button class="btn primary" type="submit">💾 Сохранить изменения</button>
+            <button class="btn danger" type="button" onclick="if(confirm('Вы уверены, что хотите удалить этого пользователя?')){const f=document.createElement('form');f.method='post';f.action='/admin/users/${u._id}/delete';document.body.appendChild(f);f.submit();}">🗑️ Удалить</button>
+          </div>
         </form>
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   const body = `
     <div class="card">
@@ -542,44 +610,92 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
   const partners = await Partner.find().sort({ order: 1, createdAt: -1 }).lean();
   const items = partners.map(p => `
     <tr>
-      <td>${p._id}</td>
+      <td style="vertical-align:top;padding-top:20px;">
+        <div style="font-weight:600;color:var(--accent);font-size:16px;">${p._id}</div>
+      </td>
       <td>
-        <form method="post" action="/admin/partners/${p._id}" enctype="multipart/form-data">
-          <input name="name" value="${(p.name || '').toString().replace(/"/g, '&quot;')}" />
-          <input name="description" value="${(p.description || '').toString().replace(/"/g, '&quot;')}" />
-          <input name="logoUrl" placeholder="Logo URL (optional)" value="${(p.logoUrl || '').toString().replace(/"/g, '&quot;')}" />
-          <input type="file" name="logoFile" accept="image/*" />
-          <input name="url" placeholder="Site URL" value="${(p.url || '').toString().replace(/"/g, '&quot;')}" />
-          <input name="order" type="number" value="${p.order || 0}" />
-          <label><input type="checkbox" name="active" ${p.active ? 'checked' : ''}/> active</label>
-          <button class="btn primary" type="submit">Save</button>
-        </form>
-        <form method="post" action="/admin/partners/${p._id}/delete" onsubmit="return confirm('Delete partner?')">
-          <button class="btn danger" type="submit" style="margin-top:6px;">Delete</button>
+        <form method="post" action="/admin/partners/${p._id}" enctype="multipart/form-data" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+          <div class="input-group">
+            <label class="required">Название партнера</label>
+            <input name="name" value="${(p.name || '').toString().replace(/"/g, '&quot;')}" required />
+          </div>
+          <div class="input-group">
+            <label>Описание</label>
+            <textarea name="description" placeholder="Описание партнера">${(p.description || '').toString().replace(/</g,'&lt;')}</textarea>
+          </div>
+          <div class="input-group">
+            <label>URL логотипа</label>
+            <input name="logoUrl" placeholder="https://example.com/logo.png" value="${(p.logoUrl || '').toString().replace(/"/g, '&quot;')}" />
+          </div>
+          <div class="input-group">
+            <label>Загрузить логотип</label>
+            <input type="file" name="logoFile" accept="image/*" style="padding:10px;" />
+          </div>
+          <div class="input-group">
+            <label>Сайт партнера</label>
+            <input name="url" placeholder="https://example.com" value="${(p.url || '').toString().replace(/"/g, '&quot;')}" />
+          </div>
+          <div class="input-group">
+            <label>Порядок сортировки</label>
+            <input name="order" type="number" value="${p.order || 0}" />
+          </div>
+          <div class="input-group" style="grid-column:1/-1;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="active" ${p.active ? 'checked' : ''} style="width:auto;margin:0;" />
+              <span>Активен</span>
+            </label>
+          </div>
+          <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;">
+            <button class="btn primary" type="submit">💾 Сохранить</button>
+            <button class="btn danger" type="button" onclick="if(confirm('Удалить партнера?')){const f=document.createElement('form');f.method='post';f.action='/admin/partners/${p._id}/delete';document.body.appendChild(f);f.submit();}">🗑️ Удалить</button>
+          </div>
         </form>
       </td>
     </tr>`).join('');
   const body = `
     <div class="grid cols-2">
       <div class="card">
-        <h2>Add partner</h2>
-        <form method="post" action="/admin/partners" class="form-row" style="margin-top:10px" enctype="multipart/form-data">
-          <input name="name" placeholder="Name"/>
-          <input name="description" placeholder="Description"/>
-          <input name="logoUrl" placeholder="Logo URL (optional)"/>
-          <input type="file" name="logoFile" accept="image/*" />
-          <input name="url" placeholder="Site URL"/>
-          <input name="order" type="number" value="0" style="max-width:120px"/>
-          <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="active" checked/> active</label>
-          <button class="btn primary" type="submit">Create</button>
+        <h2>➕ Добавить партнера</h2>
+        <form method="post" action="/admin/partners" enctype="multipart/form-data" style="margin-top:16px;">
+          <div class="input-group">
+            <label class="required">Название партнера</label>
+            <input name="name" placeholder="Введите название" required />
+          </div>
+          <div class="input-group">
+            <label>Описание</label>
+            <textarea name="description" placeholder="Описание партнера"></textarea>
+          </div>
+          <div class="input-group">
+            <label>URL логотипа</label>
+            <input name="logoUrl" placeholder="https://example.com/logo.png" />
+          </div>
+          <div class="input-group">
+            <label>Загрузить логотип</label>
+            <input type="file" name="logoFile" accept="image/*" style="padding:10px;" />
+          </div>
+          <div class="input-group">
+            <label>Сайт партнера</label>
+            <input name="url" placeholder="https://example.com" />
+          </div>
+          <div class="input-group">
+            <label>Порядок сортировки</label>
+            <input name="order" type="number" value="0" />
+          </div>
+          <div class="input-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="active" checked style="width:auto;margin:0;" />
+              <span>Активен</span>
+            </label>
+          </div>
+          <button class="btn primary" type="submit" style="margin-top:8px;">✨ Создать партнера</button>
         </form>
       </div>
       <div class="card">
-        <h2>All partners</h2>
-        <div class="table-wrap" style="margin-top:12px">
+        <h2>🤝 Все партнеры</h2>
+        <div class="table-wrap" style="margin-top:16px">
           <table>
-            <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
-            <tbody>${items}</tbody>
+            <thead><tr><th style="width:200px">ID</th><th>Данные</th></tr></thead>
+            <tbody>${items || '<tr><td colspan="2" class="muted" style="text-align:center;padding:40px;">Нет партнеров</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -640,31 +756,56 @@ router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
     const status = a.status || 'new';
     const isProcessed = status === 'done' || status === 'rejected';
     const statusColor = status === 'done' ? '#10b981' : status === 'rejected' ? '#ef4444' : '#3b82f6';
+    const statusText = status === 'done' ? 'Принята' : status === 'rejected' ? 'Отклонена' : status === 'processing' ? 'В обработке' : 'Новая';
     return `
     <tr>
-      <td>${a._id}</td>
+      <td style="vertical-align:top;padding-top:20px;">
+        <div style="font-weight:600;color:var(--accent);font-size:16px;">${a._id}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">${new Date((a as any).createdAt).toLocaleString('ru-RU')}</div>
+      </td>
       <td>
-        <div style="margin-bottom:8px">
-          <div><b>${((a as any).lastName || '')} ${((a as any).firstName || '')} ${((a as any).patronymic || '')}</b></div>
-          <div>Email: ${a.email} | Phone: ${a.phone}</div>
-          <div>Program: ${a.program}</div>
-          ${a.comment ? `<div class="muted">Comment: ${(a.comment as string).toString().replace(/</g,'&lt;')}</div>` : ''}
-          <div class="muted">Status: <span style="color:${statusColor};font-weight:600">${status}</span>${(a as any).studentId ? ` | Student ID: ${(a as any).studentId}` : ''}${(a as any).userId ? ` | userId: ${(a as any).userId}` : ''}</div>
+        <div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">ФИО</div>
+              <div style="font-weight:600;font-size:16px;">${((a as any).lastName || '')} ${((a as any).firstName || '')} ${((a as any).patronymic || '')}</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Email</div>
+              <div>${a.email || '-'}</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Телефон</div>
+              <div>${a.phone || '-'}</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Программа</div>
+              <div style="font-weight:500;">${a.program || '-'}</div>
+            </div>
+          </div>
+          ${a.comment ? `<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Комментарий</div>
+            <div>${(a.comment as string).toString().replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+          </div>` : ''}
+          <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <div style="padding:6px 12px;background:rgba(${status === 'done' ? '16,185,129' : status === 'rejected' ? '239,68,68' : '59,130,246'},0.15);border-radius:8px;border:1px solid ${statusColor};">
+              <span style="color:${statusColor};font-weight:600;">${statusText}</span>
+            </div>
+            ${(a as any).studentId ? `<div style="font-size:12px;color:var(--muted);">ID студента: <span style="color:var(--text);font-weight:500;">${(a as any).studentId}</span></div>` : ''}
+          </div>
         </div>
-        <div style="margin:6px 0">
-          <a class="btn" href="/admin/admissions/${a._id}/view">Подробнее</a>
-        </div>
-        ${!isProcessed ? `
-        <div class="form-row">
-          <form method="post" action="/admin/admissions/${a._id}/accept" class="form-row">
-            <input name="studentId" placeholder="Student ID" value="${(a as any).studentId || ''}" />
-            <button class="btn primary" type="submit">Принять</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a class="btn" href="/admin/admissions/${a._id}/view">📄 Подробнее</a>
+          ${!isProcessed ? `
+          <form method="post" action="/admin/admissions/${a._id}/accept" style="display:flex;gap:8px;flex:1;min-width:300px;">
+            <input name="studentId" placeholder="ID студента (опционально)" value="${(a as any).studentId || ''}" style="flex:1;min-width:150px;" />
+            <button class="btn primary" type="submit">✅ Принять</button>
           </form>
-          <form method="post" action="/admin/admissions/${a._id}/reject" onsubmit="return confirm('Отклонить заявку?')" style="margin-left:8px">
-            <button class="btn danger" type="submit">Отклонить</button>
+          <form method="post" action="/admin/admissions/${a._id}/reject" onsubmit="return confirm('Отклонить заявку?')" style="margin-left:0;">
+            <button class="btn danger" type="submit">❌ Отклонить</button>
           </form>
+          ` : ''}
         </div>
-        ` : ''}
       </td>
     </tr>`;
   }).join('');
@@ -764,12 +905,26 @@ router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
 
 // Chats simple UI (uses public chats endpoints)
 router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
-  const chats = await Chat.find().sort({ lastMessageAt: -1 }).limit(200).lean();
-  const items = chats.map(c => `<li><a href="/admin/chats/${c._id}">${c._id} (user ${c.userId})</a></li>`).join('');
+  const chats = await Chat.find().populate('userId', 'userId fullName email').sort({ lastMessageAt: -1 }).limit(200).lean();
+  const items = chats.map(c => {
+    const user = (c as any).userId;
+    const userId = user?.userId || 0; // ID пользователя или 0 для гостей
+    const userName = user?.fullName || 'Гость';
+    const userEmail = user?.email || '';
+    return `<div class="chat-item" style="padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--card);transition:all 0.2s ease;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:600;color:var(--accent);font-size:16px;">ID: ${userId}</div>
+          <div style="color:var(--text);margin-top:4px;">${userName}${userEmail ? ` (${userEmail})` : ''}</div>
+        </div>
+        <a href="/admin/chats/${c._id}" class="btn primary" style="text-decoration:none;">Открыть</a>
+      </div>
+    </div>`;
+  }).join('');
   const body = `
     <div class="card">
-      <h2>Chats</h2>
-      <ul style="margin-top:12px">${items || '<li class="muted">Нет чатов</li>'}</ul>
+      <h2>💬 Чаты поддержки</h2>
+      <div style="margin-top:16px">${items || '<div class="muted" style="padding:20px;text-align:center;">Нет активных чатов</div>'}</div>
     </div>
   `;
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
@@ -777,22 +932,51 @@ router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
 
 router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
   const chatId = req.params.id;
+  const chat = await Chat.findById(chatId).populate('userId', 'userId fullName email').lean();
+  if (!chat) return res.status(404).send('Chat not found');
+  const user = (chat as any).userId;
+  const userId = user?.userId || 0;
+  const userName = user?.fullName || 'Гость';
+  const userEmail = user?.email || '';
+  
   // Помечаем все сообщения от студентов в этом чате как прочитанные
   await Message.updateMany({ chatId, senderRole: 'student' }, { isReadByAdmin: true });
   const msgs = await Message.find({ chatId }).sort({ createdAt: 1 }).lean();
-  const list = msgs.map(m => `<div><b>${m.senderRole}:</b> ${String(m.text || '').replace(/</g,'&lt;')}</div>`).join('');
+  const list = msgs.map(m => {
+    const senderName = m.senderRole === 'admin' ? 'Администратор' : m.senderRole === 'student' ? userName : 'Система';
+    const senderColor = m.senderRole === 'admin' ? 'var(--accent)' : m.senderRole === 'student' ? 'var(--text)' : 'var(--muted)';
+    return `<div style="padding:12px;margin-bottom:8px;border-left:3px solid ${senderColor};background:var(--card);border-radius:6px;">
+      <div style="font-weight:600;color:${senderColor};margin-bottom:4px;">${senderName}</div>
+      <div style="color:var(--text);white-space:pre-wrap;">${String(m.text || '').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;">${new Date((m as any).createdAt).toLocaleString('ru-RU')}</div>
+    </div>`;
+  }).join('');
   const body = `
     <div class="card">
-      <div><a href="/admin/chats">&larr; Back</a></div>
-      <h3 style="margin-top:8px">Chat ${chatId}</h3>
-      <div class="card" style="margin-top:10px;height:400px;overflow:auto;">${list || '<div class="muted">Пока нет сообщений</div>'}</div>
-      <form method="post" action="/admin/chats/${chatId}/send" class="form-row" style="margin-top:10px">
-        <input name="text" placeholder="Message" style="flex:1;min-width:180px"/>
-        <button class="btn primary" type="submit">Send</button>
+      <div style="margin-bottom:16px;"><a href="/admin/chats" class="btn">&larr; Назад к списку</a></div>
+      <div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;">
+        <div style="font-size:20px;font-weight:600;color:var(--accent);margin-bottom:8px;">ID пользователя: ${userId}</div>
+        <div style="color:var(--text);margin-bottom:4px;">Имя: ${userName}</div>
+        ${userEmail ? `<div style="color:var(--muted);">Email: ${userEmail}</div>` : ''}
+      </div>
+      <h3 style="margin-bottom:16px;">Сообщения</h3>
+      <div class="card" style="height:500px;overflow-y:auto;padding:16px;background:var(--bg);">${list || '<div class="muted" style="text-align:center;padding:40px;">Пока нет сообщений</div>'}</div>
+      <form method="post" action="/admin/chats/${chatId}/send" style="margin-top:16px;">
+        <div style="display:flex;gap:10px;">
+          <input name="text" placeholder="Введите сообщение..." style="flex:1;min-width:200px;" required/>
+          <button class="btn primary" type="submit">Отправить</button>
+        </div>
       </form>
     </div>
+    <script>
+      // Автопрокрутка вниз при загрузке
+      window.addEventListener('load', function() {
+        const messagesDiv = document.querySelector('.card[style*="height:500px"]');
+        if (messagesDiv) messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+    </script>
   `;
-  sendAdminResponse(res, await adminLayout({ title: `Kleos Admin - Chat ${chatId}`, active: 'chats', body }));
+  sendAdminResponse(res, await adminLayout({ title: `Kleos Admin - Chat (ID: ${userId})`, active: 'chats', body }));
 });
 
 router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
@@ -1006,35 +1190,76 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
   const universityOptions = universities.map(u => `<option value="${u._id}">${u.name}</option>`).join('');
   const rows = list.map(p => {
     const currentUnivId = (p as any).universityId?.toString() || '';
+    const levelText = p.level === 'bachelor' ? 'Бакалавриат' : p.level === 'master' ? 'Магистратура' : p.level === 'phd' ? 'Аспирантура' : p.level === 'foundation' ? 'Подготовительный' : 'Другое';
+    const langText = p.language === 'ru' ? 'Русский' : p.language === 'en' ? 'Английский' : 'Китайский';
     return `
     <tr>
-      <td>${p._id}</td>
+      <td style="vertical-align:top;padding-top:20px;">
+        <div style="font-weight:600;color:var(--accent);font-size:16px;">${p._id}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">${p.active ? '<span style="color:#10b981;">✓ Активна</span>' : '<span style="color:var(--muted);">✗ Неактивна</span>'}</div>
+      </td>
       <td>
-        <form method="post" action="/admin/programs/${p._id}">
-          <div class="form-row" style="margin-bottom:6px">
-            <input name="title" value="${(p.title || '').toString().replace(/"/g,'&quot;')}" placeholder="Title"/>
-            <input name="slug" value="${(p.slug || '').toString().replace(/"/g,'&quot;')}" placeholder="Slug"/>
+        <form method="post" action="/admin/programs/${p._id}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+          <div class="input-group">
+            <label class="required">Название программы</label>
+            <input name="title" value="${(p.title || '').toString().replace(/"/g,'&quot;')}" placeholder="Введите название" required />
+          </div>
+          <div class="input-group">
+            <label class="required">Slug (URL)</label>
+            <input name="slug" value="${(p.slug || '').toString().replace(/"/g,'&quot;')}" placeholder="program-slug" required />
+          </div>
+          <div class="input-group">
+            <label class="required">Язык</label>
             <select name="language">
-              ${['ru','en','zh'].map(l=>`<option value="${l}" ${p.language===l?'selected':''}>${l}</option>`).join('')}
+              ${['ru','en','zh'].map(l=>`<option value="${l}" ${p.language===l?'selected':''}>${l === 'ru' ? 'Русский' : l === 'en' ? 'Английский' : 'Китайский'}</option>`).join('')}
             </select>
+          </div>
+          <div class="input-group">
+            <label class="required">Уровень</label>
             <select name="level">
-              ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l}</option>`).join('')}
+              ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l === 'bachelor' ? 'Бакалавриат' : l === 'master' ? 'Магистратура' : l === 'phd' ? 'Аспирантура' : l === 'foundation' ? 'Подготовительный' : 'Другое'}</option>`).join('')}
             </select>
-            <select name="universityId" style="min-width:200px">
-              <option value="">-- Select University --</option>
+          </div>
+          <div class="input-group">
+            <label>Университет</label>
+            <select name="universityId">
+              <option value="">-- Выберите университет --</option>
               ${universities.map(u => `<option value="${u._id}" ${currentUnivId === u._id.toString() ? 'selected' : ''}>${u.name}</option>`).join('')}
             </select>
-            <input name="university" value="${(p.university||'').toString().replace(/"/g,'&quot;')}" placeholder="University (legacy)"/>
-            <input type="number" name="tuition" value="${p.tuition || 0}" placeholder="Tuition"/>
-            <input type="number" name="durationMonths" value="${p.durationMonths || 0}" placeholder="Duration, months"/>
-            <input name="imageUrl" value="${(p.imageUrl||'').toString().replace(/"/g,'&quot;')}" placeholder="Image URL"/>
-            <input type="number" name="order" value="${p.order || 0}" placeholder="Order"/>
-            <label><input type="checkbox" name="active" ${p.active ? 'checked' : ''}/> active</label>
           </div>
-          <textarea name="description" rows="3" style="width:100%" placeholder="Description">${(p.description || '').toString().replace(/</g,'&lt;')}</textarea>
-          <div style="margin-top:6px">
-            <button class="btn primary" type="submit">Save</button>
-            <button class="btn danger" formaction="/admin/programs/${p._id}/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
+          <div class="input-group">
+            <label>Университет (legacy)</label>
+            <input name="university" value="${(p.university||'').toString().replace(/"/g,'&quot;')}" placeholder="Название университета" />
+          </div>
+          <div class="input-group">
+            <label>Стоимость обучения</label>
+            <input type="number" name="tuition" value="${p.tuition || 0}" placeholder="0" min="0" />
+          </div>
+          <div class="input-group">
+            <label>Длительность (месяцы)</label>
+            <input type="number" name="durationMonths" value="${p.durationMonths || 0}" placeholder="0" min="0" />
+          </div>
+          <div class="input-group">
+            <label>URL изображения</label>
+            <input name="imageUrl" value="${(p.imageUrl||'').toString().replace(/"/g,'&quot;')}" placeholder="https://example.com/image.jpg" />
+          </div>
+          <div class="input-group">
+            <label>Порядок сортировки</label>
+            <input type="number" name="order" value="${p.order || 0}" placeholder="0" />
+          </div>
+          <div class="input-group" style="grid-column:1/-1;">
+            <label>Описание программы</label>
+            <textarea name="description" rows="4" placeholder="Подробное описание программы">${(p.description || '').toString().replace(/</g,'&lt;')}</textarea>
+          </div>
+          <div class="input-group" style="grid-column:1/-1;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="active" ${p.active ? 'checked' : ''} style="width:auto;margin:0;" />
+              <span>Программа активна</span>
+            </label>
+          </div>
+          <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;">
+            <button class="btn primary" type="submit">💾 Сохранить</button>
+            <button class="btn danger" type="button" onclick="if(confirm('Удалить программу?')){const f=document.createElement('form');f.method='post';f.action='/admin/programs/${p._id}/delete';document.body.appendChild(f);f.submit();}">🗑️ Удалить</button>
           </div>
         </form>
       </td>
@@ -1051,22 +1276,67 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           <a class="btn" href="/admin/programs">Reset</a>
         </form>
       </div>
-      <form method="post" action="/admin/programs/create" class="form-row">
-        <input name="title" placeholder="Title" style="min-width:220px"/>
-        <input name="slug" placeholder="Slug"/>
-        <select name="language">${['ru','en','zh'].map(l=>`<option value="${l}">${l}</option>`).join('')}</select>
-        <select name="level">${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}">${l}</option>`).join('')}</select>
-        <select name="universityId" style="min-width:200px">
-          <option value="">-- Select University --</option>
-          ${universityOptions}
-        </select>
-        <input name="university" placeholder="University (legacy)"/>
-        <input type="number" name="tuition" placeholder="Tuition"/>
-        <input type="number" name="durationMonths" placeholder="Duration, months"/>
-        <input name="imageUrl" placeholder="Image URL"/>
-        <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" checked/> active</label>
-        <input type="number" name="order" value="0" placeholder="Order"/>
-        <button class="btn primary" type="submit">Create</button>
+      <form method="post" action="/admin/programs/create" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+        <div class="input-group">
+          <label class="required">Название программы</label>
+          <input name="title" placeholder="Введите название" required />
+        </div>
+        <div class="input-group">
+          <label class="required">Slug (URL)</label>
+          <input name="slug" placeholder="program-slug" required />
+        </div>
+        <div class="input-group">
+          <label class="required">Язык</label>
+          <select name="language">
+            ${['ru','en','zh'].map(l=>`<option value="${l}">${l === 'ru' ? 'Русский' : l === 'en' ? 'Английский' : 'Китайский'}</option>`).join('')}
+          </select>
+        </div>
+        <div class="input-group">
+          <label class="required">Уровень</label>
+          <select name="level">
+            ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}">${l === 'bachelor' ? 'Бакалавриат' : l === 'master' ? 'Магистратура' : l === 'phd' ? 'Аспирантура' : l === 'foundation' ? 'Подготовительный' : 'Другое'}</option>`).join('')}
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Университет</label>
+          <select name="universityId">
+            <option value="">-- Выберите университет --</option>
+            ${universityOptions}
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Университет (legacy)</label>
+          <input name="university" placeholder="Название университета" />
+        </div>
+        <div class="input-group">
+          <label>Стоимость обучения</label>
+          <input type="number" name="tuition" placeholder="0" min="0" value="0" />
+        </div>
+        <div class="input-group">
+          <label>Длительность (месяцы)</label>
+          <input type="number" name="durationMonths" placeholder="0" min="0" value="0" />
+        </div>
+        <div class="input-group">
+          <label>URL изображения</label>
+          <input name="imageUrl" placeholder="https://example.com/image.jpg" />
+        </div>
+        <div class="input-group">
+          <label>Порядок сортировки</label>
+          <input type="number" name="order" value="0" placeholder="0" />
+        </div>
+        <div class="input-group" style="grid-column:1/-1;">
+          <label>Описание программы</label>
+          <textarea name="description" rows="4" placeholder="Подробное описание программы"></textarea>
+        </div>
+        <div class="input-group" style="grid-column:1/-1;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" name="active" checked style="width:auto;margin:0;" />
+            <span>Программа активна</span>
+          </label>
+        </div>
+        <div style="grid-column:1/-1;">
+          <button class="btn primary" type="submit">✨ Создать программу</button>
+        </div>
       </form>
       <div class="table-wrap" style="margin-top:12px">
         <table>

@@ -36,6 +36,11 @@ class SlideshowFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Устанавливаем подсказку с обрезкой текста для длинного hint
+        val searchHint = getString(com.example.kleos.R.string.filter_search_program)
+        val parentLayout = binding.filterQueryEditText.parent?.parent as? com.google.android.material.textfield.TextInputLayout
+        parentLayout?.hint = searchHint
+        
         // Анимации появления элементов
         val filterQueryEditText = binding.filterQueryEditText
         val parentView = filterQueryEditText.parent as? View

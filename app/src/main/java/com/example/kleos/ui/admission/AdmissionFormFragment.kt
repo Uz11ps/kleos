@@ -62,7 +62,6 @@ class AdmissionFormFragment : Fragment() {
                 binding.firstNameEditText,
                 binding.lastNameEditText,
                 binding.patronymicEditText,
-                binding.placeOfBirthEditText,
                 binding.dateOfBirthEditText,
                 binding.nationalityEditText,
                 binding.passportNumberEditText,
@@ -127,7 +126,6 @@ class AdmissionFormFragment : Fragment() {
             binding.passportExpiryEditText,
             binding.programEditText,
             binding.commentEditText,
-            binding.placeOfBirthEditText,
             binding.nationalityEditText,
             binding.passportNumberEditText,
             binding.passportIssueEditText,
@@ -173,7 +171,6 @@ class AdmissionFormFragment : Fragment() {
             val phone = binding.phoneEditText.text?.toString().orEmpty()
             val email = binding.emailEditText.text?.toString().orEmpty()
             val dateOfBirth = binding.dateOfBirthEditText.text?.toString()
-            val placeOfBirth = binding.placeOfBirthEditText.text?.toString()
             val nationality = binding.nationalityEditText.text?.toString()
             val passportNumber = binding.passportNumberEditText.text?.toString()
             val passportIssue = binding.passportIssueEditText.text?.toString()
@@ -205,7 +202,7 @@ class AdmissionFormFragment : Fragment() {
                 phone = phone,
                 email = email,
                 dateOfBirth = dateOfBirth,
-                placeOfBirth = placeOfBirth,
+                placeOfBirth = null,
                 nationality = nationality,
                 passportNumber = passportNumber,
                 passportIssue = passportIssue,

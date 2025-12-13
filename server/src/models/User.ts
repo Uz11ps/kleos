@@ -8,6 +8,8 @@ const userSchema = new Schema({
   emailVerified: { type: Boolean, default: false, index: true },
   emailVerifyToken: { type: String, index: true, sparse: true },
   emailVerifyExpires: { type: Date },
+  // Уникальный числовой ID пользователя (0 для гостей, уникальный для зарегистрированных)
+  userId: { type: Number, index: true, unique: true, sparse: true },
   // Admin-editable student profile fields (optional)
   studentId: { type: String, index: true, sparse: true },
   phone: { type: String },

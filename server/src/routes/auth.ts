@@ -134,6 +134,11 @@ router.post('/verify/consume', async (req, res) => {
   if (!token) return res.status(400).json({ error: 'missing_token' });
   const user = await User.findOne({ emailVerifyToken: token, emailVerifyExpires: { $gt: new Date() } });
   if (!user) return res.status(400).json({ error: 'invalid_or_expired' });
+  // Присваиваем userId только при первой верификации (если его еще нет)
+  if (!user.userId) {
+    const userId = await generateUniqueUserId();
+    user.userId = userId;
+  }
   user.emailVerified = true;
   user.emailVerifyToken = undefined as any;
   user.emailVerifyExpires = undefined as any;
@@ -191,6 +196,29 @@ router.post('/verify/consume', async (req, res) => {
   return res.json({ token: jwtToken, user: { id: user._id, fullName: user.fullName, email: user.email, role: user.role } });
 });
 
+// Функция для генерации уникального числового ID пользователя
+async function generateUniqueUserId(): Promise<number> {
+  let userId: number;
+  let exists = true;
+  // Генерируем ID начиная с 1000 (0 зарезервирован для гостей)
+  let attempts = 0;
+  while (exists && attempts < 100) {
+    userId = 1000 + Math.floor(Math.random() * 8999999); // ID от 1000 до 8999999
+    const existing = await User.findOne({ userId });
+    if (!existing) {
+      exists = false;
+    } else {
+      attempts++;
+    }
+  }
+  if (exists) {
+    // Если не удалось найти свободный случайный ID, используем последовательный
+    const maxUser = await User.findOne({ userId: { $exists: true } }).sort({ userId: -1 });
+    userId = maxUser?.userId ? maxUser.userId + 1 : 1000;
+  }
+  return userId!;
+}
+
 router.post('/register', async (req, res) => {
   try {
     const { fullName, email, password } = registerSchema.parse(req.body);
@@ -199,6 +227,7 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const verifyToken = crypto.randomBytes(32).toString('hex');
     const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // userId присваивается только после верификации email
     const user = await User.create({ fullName, email, passwordHash, emailVerifyToken: verifyToken, emailVerifyExpires: verifyExpires, emailVerified: false });
     const base = process.env.PUBLIC_BASE_URL || `https://${req.get('host')}`;
     const webLink = `${base}/auth/verify?token=${verifyToken}`;

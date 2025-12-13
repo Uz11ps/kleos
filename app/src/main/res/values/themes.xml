@@ -144,6 +144,42 @@
         <item name="colorPrimary">@color/kleos_blue</item>
     </style>
     
+    <!-- Theme overlay для инпутов с постоянно светлым бордером -->
+    <style name="ThemeOverlay.Kleos.TextInputLayout.LightBorder" parent="ThemeOverlay.MaterialComponents">
+        <item name="colorPrimary">@color/dark_outline</item>
+    </style>
+    
+    <!-- Стиль для инпута программы с постоянно светлым бордером -->
+    <style name="Widget.Kleos.TextInputLayout.OutlinedBox.LightBorder" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.Kleos.TextInputLayout.LightBorder</item>
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+        <item name="boxStrokeWidth">2dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxStrokeColor">@color/dark_outline</item>
+        <item name="hintTextColor">@color/dark_on_surface_variant</item>
+        <item name="hintEnabled">true</item>
+        <item name="hintAnimationEnabled">true</item>
+        <item name="boxBackgroundColor">@color/dark_surface</item>
+        <item name="boxBackgroundMode">outline</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+    </style>
+    
+    <!-- Единый стиль для всех TextInputEditText в форме заявки -->
+    <style name="Widget.Kleos.TextInputEditText.Unified" parent="Widget.MaterialComponents.TextInputEditText.OutlinedBox">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/dark_on_surface</item>
+        <item name="android:textColorHint">@color/dark_on_surface_variant</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+    
     <!-- Стиль для индикаторов онбординга -->
     <style name="Widget.Kleos.TabLayout.Onboarding" parent="Widget.MaterialComponents.TabLayout">
         <item name="tabIndicatorHeight">0dp</item>
@@ -155,5 +191,18 @@
         <item name="tabContentStart">0dp</item>
         <item name="tabBackground">@drawable/dot_indicator_selector</item>
         <item name="android:background">@android:color/transparent</item>
+    </style>
+    
+    <!-- Стиль для инпута поиска с длинной подсказкой -->
+    <style name="Widget.Kleos.TextInputLayout.OutlinedBox.Search" parent="Widget.Kleos.TextInputLayout.OutlinedBox.Modern">
+        <item name="hintTextAppearance">@style/TextAppearance.Kleos.Hint.Small</item>
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
+    </style>
+    
+    <!-- Уменьшенный размер подсказки -->
+    <style name="TextAppearance.Kleos.Hint.Small" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/dark_on_surface_variant</item>
     </style>
 </resources>

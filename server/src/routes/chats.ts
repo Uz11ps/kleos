@@ -20,18 +20,22 @@ const Message = (mongoose.models.Message as any) || model('Message', MessageSche
 
 const router = Router();
 
-router.post('/', auth(), async (req, res) => {
-  const userId = (req as any).auth?.uid;
-  let chat = await Chat.findOne({ userId, status: 'open' });
+router.post('/', auth(undefined, true), async (req, res) => {
+  // Для гостей userId = null (будет отображаться как ID 0)
+  // Для зарегистрированных пользователей userId берется из токена
+  const authData = (req as any).auth;
+  const userId = authData?.uid || null;
+  let chat = await Chat.findOne({ userId: userId || null, status: 'open' });
   if (!chat) {
-    chat = await Chat.create({ userId, status: 'open', lastMessageAt: new Date() });
+    chat = await Chat.create({ userId: userId || null, status: 'open', lastMessageAt: new Date() });
   }
   res.status(201).json({ id: chat._id });
 });
 
-router.get('/', auth(), async (req, res) => {
-  const userId = (req as any).auth?.uid;
-  const chats = await Chat.find({ userId }).sort({ updatedAt: -1 });
+router.get('/', auth(undefined, true), async (req, res) => {
+  const authData = (req as any).auth;
+  const userId = authData?.uid || null;
+  const chats = await Chat.find({ userId: userId || null }).sort({ updatedAt: -1 });
   res.json(chats.map(c => ({ id: c._id, status: c.status, lastMessageAt: c.lastMessageAt })));
 });
 
@@ -48,10 +52,13 @@ router.get('/:id/messages', auth(), async (req, res) => {
 
 const sendSchema = z.object({ text: z.string().min(1) });
 
-router.post('/:id/messages', auth(), async (req, res) => {
+router.post('/:id/messages', auth(undefined, true), async (req, res) => {
   const { text } = sendSchema.parse(req.body);
-  const isAdmin = ((req as any).auth?.role) === 'admin';
-  const msg = await Message.create({ chatId: req.params.id, senderRole: isAdmin ? 'admin' : 'student', text });
+  const authData = (req as any).auth;
+  const isAdmin = authData?.role === 'admin';
+  // Если пользователь не авторизован (гость), отправляем от имени студента
+  const senderRole = isAdmin ? 'admin' : 'student';
+  const msg = await Message.create({ chatId: req.params.id, senderRole, text });
   await Chat.updateOne({ _id: req.params.id }, { lastMessageAt: new Date() });
   res.status(201).json({ id: msg._id });
 });
