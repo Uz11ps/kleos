@@ -60,6 +60,29 @@ router.post('/:id/messages', auth(undefined, true), async (req, res) => {
   const senderRole = isAdmin ? 'admin' : 'student';
   const msg = await Message.create({ chatId: req.params.id, senderRole, text });
   await Chat.updateOne({ _id: req.params.id }, { lastMessageAt: new Date() });
+  
+  // Отправка push-уведомления пользователю о новом сообщении от администратора
+  if (isAdmin) {
+    try {
+      const chat = await Chat.findById(req.params.id).lean();
+      const userId = (chat as any)?.userId;
+      if (userId) {
+        const { sendPushToUser } = await import('../utils/pushNotifications.js');
+        // Обрезаем текст сообщения для уведомления (первые 100 символов)
+        const notificationText = text.length > 100 ? text.substring(0, 100) + '...' : text;
+        await sendPushToUser(
+          userId.toString(),
+          'Новое сообщение от администратора',
+          notificationText,
+          { type: 'admin_message', chatId: req.params.id }
+        );
+      }
+    } catch (e: any) {
+      console.error('Error sending push notification for admin message:', e);
+      // Не прерываем процесс из-за ошибки отправки уведомления
+    }
+  }
+  
   res.status(201).json({ id: msg._id });
 });
 

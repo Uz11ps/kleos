@@ -906,10 +906,11 @@ router.post('/admin/admissions/:id/accept', adminAuthMiddleware, async (req: any
       // Отправка push-уведомления пользователю о принятии заявки
       try {
         const { sendPushToUser } = await import('../utils/pushNotifications.js');
+        const programName = (adm as any).program || 'программу';
         await sendPushToUser(
           uid.toString(),
-          'Заявка принята',
-          'Ваша заявка на поступление была принята. Теперь вы студент!',
+          'Ваша заявка принята!',
+          `Поздравляем с поступлением! Ваша заявка на программу "${programName}" была принята. Теперь вы студент!`,
           { type: 'admission_accepted', admissionId: id }
         );
       } catch (e: any) {
@@ -1088,6 +1089,26 @@ router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
   if (text.length > 0) {
     await Message.create({ chatId, senderRole: 'admin', text });
     await Chat.updateOne({ _id: chatId }, { lastMessageAt: new Date() });
+    
+    // Отправка push-уведомления пользователю о новом сообщении от администратора
+    try {
+      const chat = await Chat.findById(chatId).lean();
+      const userId = (chat as any)?.userId;
+      if (userId) {
+        const { sendPushToUser } = await import('../utils/pushNotifications.js');
+        // Обрезаем текст сообщения для уведомления (первые 100 символов)
+        const notificationText = text.length > 100 ? text.substring(0, 100) + '...' : text;
+        await sendPushToUser(
+          userId.toString(),
+          'Новое сообщение от администратора',
+          notificationText,
+          { type: 'admin_message', chatId: chatId.toString() }
+        );
+      }
+    } catch (e: any) {
+      console.error('Error sending push notification for admin message:', e);
+      // Не прерываем процесс из-за ошибки отправки уведомления
+    }
   }
   res.redirect(`/admin/chats/${chatId}`);
 });
