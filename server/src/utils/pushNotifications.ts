@@ -5,12 +5,19 @@ import { User } from '../models/User.js';
  * Поддерживает как Legacy API (через Server Key), так и новый метод (через OAuth2)
  */
 async function sendPushNotification(fcmToken: string, title: string, body: string, data?: Record<string, string>): Promise<boolean> {
+  if (!fcmToken || fcmToken.trim() === '') {
+    console.error('FCM token is empty or invalid');
+    return false;
+  }
+  
   const serverKey = process.env.FCM_SERVER_KEY;
   const projectId = process.env.FCM_PROJECT_ID || 'kleos-8e95f'; // Из google-services.json
   
+  console.log(`Attempting to send push notification. Method: ${serverKey ? 'Legacy' : 'OAuth2'}, Project ID: ${projectId}`);
+  
   // Используем новый метод через OAuth2, если Server Key не указан
   if (!serverKey) {
-    console.warn('FCM_SERVER_KEY not configured, trying OAuth2 method...');
+    console.log('FCM_SERVER_KEY not configured, using OAuth2 method...');
     return await sendPushNotificationOAuth2(fcmToken, title, body, data, projectId);
   }
 
@@ -147,16 +154,19 @@ async function getAccessToken(): Promise<string | null> {
  */
 async function sendPushNotificationOAuth2(fcmToken: string, title: string, body: string, data?: Record<string, string>, projectId?: string): Promise<boolean> {
   if (!projectId) {
-    console.warn('FCM_PROJECT_ID not configured, skipping push notification');
+    console.error('FCM_PROJECT_ID not configured, skipping push notification');
     return false;
   }
 
+  console.log(`Getting access token for project ${projectId}...`);
   // Получаем access token через Service Account
   const accessToken = await getAccessToken();
   if (!accessToken) {
-    console.warn('Failed to get access token, skipping push notification');
+    console.error('Failed to get access token, skipping push notification. Check FCM_SERVICE_ACCOUNT_PATH or FCM_SERVICE_ACCOUNT_JSON');
     return false;
   }
+  
+  console.log('Access token obtained successfully');
 
   try {
     // Используем новый FCM v1 API endpoint согласно документации Firebase
@@ -200,17 +210,22 @@ async function sendPushNotificationOAuth2(fcmToken: string, title: string, body:
 
     if (!response.ok) {
       const text = await response.text();
-      console.error('FCM v1 API error:', response.status, text);
+      console.error(`FCM v1 API error: ${response.status} ${response.statusText}`);
+      console.error('Response body:', text);
       
       // Если токен невалидный, удаляем его из базы
       if (response.status === 404 || response.status === 400) {
         try {
           const errorData = JSON.parse(text);
-          if (errorData.error?.message?.includes('Invalid') || errorData.error?.message?.includes('not found')) {
+          const errorMessage = errorData.error?.message || '';
+          console.error('FCM error details:', errorMessage);
+          
+          if (errorMessage.includes('Invalid') || errorMessage.includes('not found') || errorMessage.includes('registration')) {
+            console.log(`Removing invalid FCM token from database`);
             await User.updateOne({ fcmToken }, { $unset: { fcmToken: 1 } });
           }
-        } catch {
-          // Игнорируем ошибки парсинга
+        } catch (e) {
+          console.error('Failed to parse error response:', e);
         }
       }
       
@@ -218,11 +233,15 @@ async function sendPushNotificationOAuth2(fcmToken: string, title: string, body:
     }
 
     const result = await response.json();
+    console.log('FCM v1 API response:', JSON.stringify(result));
+    
     if (result.name) {
       // Успешная отправка (v1 API возвращает объект с полем 'name')
+      console.log('Push notification sent successfully, message name:', result.name);
       return true;
     }
 
+    console.warn('Unexpected FCM response format:', result);
     return false;
   } catch (error: any) {
     console.error('Error sending push notification (OAuth2):', error);
@@ -262,10 +281,31 @@ export async function sendPushToAll(title: string, body: string, data?: Record<s
   const batchSize = 10;
   for (let i = 0; i < users.length; i += batchSize) {
     const batch = users.slice(i, i + batchSize);
-    const results = await Promise.all(
-      batch.map(user => sendPushNotification((user as any).fcmToken, title, body, data))
+    const results = await Promise.allSettled(
+      batch.map(async (user) => {
+        const token = (user as any).fcmToken;
+        const email = (user as any).email || 'unknown';
+        console.log(`Sending notification to user ${email}, token: ${token?.substring(0, 20)}...`);
+        try {
+          const result = await sendPushNotification(token, title, body, data);
+          if (!result) {
+            console.error(`Failed to send notification to user ${email}`);
+          }
+          return result;
+        } catch (error: any) {
+          console.error(`Error sending notification to user ${email}:`, error.message);
+          return false;
+        }
+      })
     );
-    successCount += results.filter(r => r).length;
+    successCount += results.filter(r => r.status === 'fulfilled' && r.value === true).length;
+    
+    // Логируем ошибки
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to send notification to user ${batch[index].email || 'unknown'}:`, result.reason);
+      }
+    });
   }
 
   console.log(`Sent push notifications: ${successCount}/${users.length} successful`);

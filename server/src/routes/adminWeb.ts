@@ -1706,7 +1706,16 @@ router.post('/admin/news/:id/send-notification', adminAuthMiddleware, async (req
     
     // Проверяем количество пользователей с токенами перед отправкой
     const usersWithTokens = await User.countDocuments({ fcmToken: { $exists: true, $ne: null, $ne: '' } });
-    console.log(`Sending notification to ${usersWithTokens} users with FCM tokens`);
+    console.log(`[Admin] Sending notification to ${usersWithTokens} users with FCM tokens`);
+    
+    // Проверяем конфигурацию FCM
+    const hasServiceAccount = !!(process.env.FCM_SERVICE_ACCOUNT_PATH || process.env.FCM_SERVICE_ACCOUNT_JSON);
+    const hasServerKey = !!process.env.FCM_SERVER_KEY;
+    console.log(`[Admin] FCM configuration: Service Account=${hasServiceAccount}, Server Key=${hasServerKey}`);
+    
+    if (!hasServiceAccount && !hasServerKey) {
+      console.error('[Admin] FCM not configured! Set FCM_SERVICE_ACCOUNT_PATH or FCM_SERVICE_ACCOUNT_JSON or FCM_SERVER_KEY');
+    }
     
     const count = await sendPushToAll(
       'Новая новость',
@@ -1714,9 +1723,11 @@ router.post('/admin/news/:id/send-notification', adminAuthMiddleware, async (req
       { newsId: news._id.toString(), type: 'news' }
     );
     
+    console.log(`[Admin] Notification send completed: ${count}/${usersWithTokens} successful`);
+    
     res.json({ ok: true, count, totalUsersWithTokens: usersWithTokens });
   } catch (e: any) {
-    console.error('Error sending notification:', e);
+    console.error('[Admin] Error sending notification:', e);
     res.status(500).json({ ok: false, error: e?.message || 'unknown' });
   }
 });
