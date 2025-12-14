@@ -86,6 +86,12 @@ async function getAccessToken(): Promise<string | null> {
     if (fs.existsSync(serviceAccountPath)) {
       console.log(`[OAuth2] Loading service account from file using GoogleAuth: ${serviceAccountPath}`);
       try {
+        // Читаем файл для проверки
+        const fileContent = fs.readFileSync(serviceAccountPath, 'utf-8');
+        const fileData = JSON.parse(fileContent);
+        console.log(`[OAuth2] File loaded: project_id=${fileData.project_id}, client_email=${fileData.client_email}`);
+        console.log(`[OAuth2] Key ID from file: ${fileData.private_key_id}`);
+        
         auth = new GoogleAuth({
           keyFile: serviceAccountPath,
           scopes: ['https://www.googleapis.com/auth/firebase.messaging']
@@ -93,6 +99,7 @@ async function getAccessToken(): Promise<string | null> {
         console.log(`[OAuth2] GoogleAuth initialized successfully from file`);
       } catch (fileError: any) {
         console.error(`[OAuth2] Error initializing GoogleAuth from file:`, fileError.message);
+        console.error(`[OAuth2] File error stack:`, fileError.stack);
         // Продолжаем попытку с переменной окружения
       }
     }
@@ -130,13 +137,23 @@ async function getAccessToken(): Promise<string | null> {
     
     console.log(`[OAuth2] Getting access token using GoogleAuth...`);
     console.log(`[OAuth2] Server time: ${new Date().toISOString()}`);
+    console.log(`[OAuth2] Server timezone offset: ${new Date().getTimezoneOffset()} minutes`);
     
     const client = await auth.getClient();
     
     // Проверяем тип клиента
     console.log(`[OAuth2] Client type: ${client.constructor.name}`);
     
-    const accessToken = await client.getAccessToken();
+    // Пробуем получить access token с более подробным логированием
+    let accessToken;
+    try {
+      accessToken = await client.getAccessToken();
+    } catch (tokenError: any) {
+      console.error(`[OAuth2] Error getting access token:`, tokenError.message);
+      console.error(`[OAuth2] Error code:`, tokenError.code);
+      console.error(`[OAuth2] Error response:`, tokenError.response?.data || tokenError.response);
+      throw tokenError;
+    }
     
     if (!accessToken.token) {
       console.error('[OAuth2] Failed to get access token - token is empty');
