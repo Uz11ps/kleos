@@ -1289,8 +1289,8 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
             </select>
           </div>
           <div class="input-group">
-            <label>Университет</label>
-            <select name="universityId">
+            <label class="required">Университет</label>
+            <select name="universityId" required>
               <option value="">-- Выберите университет --</option>
               ${universities.map(u => `<option value="${u._id}" ${currentUnivId === u._id.toString() ? 'selected' : ''}>${u.name}</option>`).join('')}
             </select>
@@ -1346,68 +1346,107 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           <a class="btn" href="/admin/programs">Reset</a>
         </form>
       </div>
-      <form method="post" action="/admin/programs/create" enctype="multipart/form-data" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
-        <div class="input-group">
-          <label class="required">Название программы</label>
-          <input name="title" placeholder="Введите название" required />
+      <form method="post" action="/admin/programs/create" enctype="multipart/form-data" id="programCreateForm">
+        <div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,rgba(37,99,235,0.1),rgba(14,165,233,0.1));border:2px solid var(--accent);">
+          <h3 style="margin-top:0;color:var(--accent);">🏛️ Шаг 1: Выберите университет</h3>
+          <div class="input-group">
+            <label class="required" style="font-size:16px;font-weight:600;">Университет</label>
+            <select name="universityId" id="universitySelect" required style="min-width:300px;font-size:16px;padding:14px;">
+              <option value="">-- Выберите университет --</option>
+              ${universityOptions}
+            </select>
+          </div>
+          <div id="universityInfo" style="margin-top:16px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;display:none;">
+            <div id="universityDetails" style="font-size:15px;"></div>
+          </div>
         </div>
-        <div class="input-group">
-          <label class="required">Slug (URL)</label>
-          <input name="slug" placeholder="program-slug" required />
-        </div>
-        <div class="input-group">
-          <label class="required">Язык</label>
-          <select name="language">
-            ${['ru','en','zh'].map(l=>`<option value="${l}">${l === 'ru' ? 'Русский' : l === 'en' ? 'Английский' : 'Китайский'}</option>`).join('')}
-          </select>
-        </div>
-        <div class="input-group">
-          <label class="required">Уровень</label>
-          <select name="level">
-            ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}">${l === 'bachelor' ? 'Бакалавриат' : l === 'master' ? 'Магистратура' : l === 'phd' ? 'Аспирантура' : l === 'foundation' ? 'Подготовительный' : 'Другое'}</option>`).join('')}
-          </select>
-        </div>
-        <div class="input-group">
-          <label>Университет</label>
-          <select name="universityId">
-            <option value="">-- Выберите университет --</option>
-            ${universityOptions}
-          </select>
-        </div>
-        <div class="input-group">
-          <label>Университет (legacy)</label>
-          <input name="university" placeholder="Название университета" />
-        </div>
-        <div class="input-group">
-          <label>Стоимость обучения</label>
-          <input type="number" name="tuition" placeholder="0" min="0" value="0" />
-        </div>
-        <div class="input-group">
-          <label>Длительность (месяцы)</label>
-          <input type="number" name="durationMonths" placeholder="0" min="0" value="0" />
-        </div>
-        <div class="input-group">
-          <label>Изображение программы</label>
-          <input type="file" name="imageFile" accept="image/*" />
-        </div>
-        <div class="input-group">
-          <label>Порядок сортировки</label>
-          <input type="number" name="order" value="0" placeholder="0" />
-        </div>
-        <div class="input-group" style="grid-column:1/-1;">
-          <label>Описание программы</label>
-          <textarea name="description" rows="4" placeholder="Подробное описание программы"></textarea>
-        </div>
-        <div class="input-group" style="grid-column:1/-1;">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-            <input type="checkbox" name="active" checked style="width:auto;margin:0;" />
-            <span>Программа активна</span>
-          </label>
-        </div>
-        <div style="grid-column:1/-1;">
-          <button class="btn primary" type="submit">✨ Создать программу</button>
+        <div class="card" id="programFields" style="display:none;">
+          <h3 style="margin-top:0;">📝 Шаг 2: Заполните данные программы</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+            <div class="input-group">
+              <label class="required">Название программы</label>
+              <input name="title" placeholder="Введите название" required />
+            </div>
+            <div class="input-group">
+              <label class="required">Slug (URL)</label>
+              <input name="slug" placeholder="program-slug" required />
+            </div>
+            <div class="input-group">
+              <label class="required">Язык</label>
+              <select name="language">
+                ${['ru','en','zh'].map(l=>`<option value="${l}">${l === 'ru' ? 'Русский' : l === 'en' ? 'Английский' : 'Китайский'}</option>`).join('')}
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="required">Уровень</label>
+              <select name="level">
+                ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}">${l === 'bachelor' ? 'Бакалавриат' : l === 'master' ? 'Магистратура' : l === 'phd' ? 'Аспирантура' : l === 'foundation' ? 'Подготовительный' : 'Другое'}</option>`).join('')}
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Университет (legacy)</label>
+              <input name="university" placeholder="Название университета" />
+            </div>
+            <div class="input-group">
+              <label>Стоимость обучения</label>
+              <input type="number" name="tuition" placeholder="0" min="0" value="0" />
+            </div>
+            <div class="input-group">
+              <label>Длительность (месяцы)</label>
+              <input type="number" name="durationMonths" placeholder="0" min="0" value="0" />
+            </div>
+            <div class="input-group">
+              <label>Изображение программы</label>
+              <input type="file" name="imageFile" accept="image/*" />
+            </div>
+            <div class="input-group">
+              <label>Порядок сортировки</label>
+              <input type="number" name="order" value="0" placeholder="0" />
+            </div>
+            <div class="input-group" style="grid-column:1/-1;">
+              <label>Описание программы</label>
+              <textarea name="description" rows="4" placeholder="Подробное описание программы"></textarea>
+            </div>
+            <div class="input-group" style="grid-column:1/-1;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" name="active" checked style="width:auto;margin:0;" />
+                <span>Программа активна</span>
+              </label>
+            </div>
+            <div style="grid-column:1/-1;">
+              <button class="btn primary" type="submit">✨ Создать программу</button>
+            </div>
+          </div>
         </div>
       </form>
+      <script>
+        (function() {
+          const universitySelect = document.getElementById('universitySelect');
+          const programFields = document.getElementById('programFields');
+          const universityInfo = document.getElementById('universityInfo');
+          const universityDetails = document.getElementById('universityDetails');
+          const universities = ${JSON.stringify(universities.map(u => ({ id: u._id.toString(), name: u.name, city: u.city || '', country: u.country || 'Russia' })))};
+          
+          universitySelect.addEventListener('change', function() {
+            const selectedId = this.value;
+            if (selectedId) {
+              const university = universities.find(u => u.id === selectedId);
+              if (university) {
+                universityDetails.innerHTML = \`
+                  <div style="font-weight:600;font-size:18px;color:var(--accent);margin-bottom:8px;">\${university.name}</div>
+                  <div style="color:var(--muted);font-size:14px;">📍 \${university.city ? university.city + ', ' : ''}\${university.country}</div>
+                \`;
+                universityInfo.style.display = 'block';
+                programFields.style.display = 'block';
+                programFields.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }
+            } else {
+              universityInfo.style.display = 'none';
+              programFields.style.display = 'none';
+            }
+          });
+        })();
+      </script>
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
@@ -1420,58 +1459,97 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
 });
 
 router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('imageFile'), async (req, res) => {
-  const { Program } = await import('../models/Program.js');
-  const schema = z.object({
-    title: z.string().min(1),
-    slug: z.string().min(1),
-    language: z.enum(['ru','en','zh']).optional().default('en'),
-    level: z.enum(['bachelor','master','phd','foundation','other']).optional().default('other'),
-    university: z.string().optional().default(''),
-    universityId: z.string().optional(),
-    tuition: z.coerce.number().optional().default(0),
-    durationMonths: z.coerce.number().optional().default(0),
-    active: z.string().optional(),
-    order: z.coerce.number().optional().default(0),
-    description: z.string().optional().default('')
-  });
-  const d = schema.parse(req.body);
-  const base = process.env.PUBLIC_BASE_URL || '';
-  const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
-  await Program.create({
-    title: d.title, slug: d.slug, language: d.language, level: d.level,
-    university: d.university, universityId: d.universityId || undefined,
-    tuition: d.tuition, durationMonths: d.durationMonths,
-    imageUrl: imageUrl, active: d.active === 'on', order: d.order, description: d.description || ''
-  });
-  res.redirect('/admin/programs');
+  try {
+    const { Program } = await import('../models/Program.js');
+    const { University } = await import('../models/University.js');
+    const schema = z.object({
+      title: z.string().min(1),
+      slug: z.string().min(1),
+      language: z.enum(['ru','en','zh']).optional().default('en'),
+      level: z.enum(['bachelor','master','phd','foundation','other']).optional().default('other'),
+      university: z.string().optional().default(''),
+      universityId: z.string().min(1, 'Университет обязателен для выбора'),
+      tuition: z.coerce.number().optional().default(0),
+      durationMonths: z.coerce.number().optional().default(0),
+      active: z.string().optional(),
+      order: z.coerce.number().optional().default(0),
+      description: z.string().optional().default('')
+    });
+    const d = schema.parse(req.body);
+    
+    // Проверяем, что университет существует
+    const university = await University.findById(d.universityId);
+    if (!university) {
+      return res.status(400).send('Выбранный университет не найден. <a href="/admin/programs">Вернуться назад</a>');
+    }
+    
+    const base = process.env.PUBLIC_BASE_URL || '';
+    const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
+    await Program.create({
+      title: d.title, slug: d.slug, language: d.language, level: d.level,
+      university: d.university || university.name, universityId: d.universityId,
+      tuition: d.tuition, durationMonths: d.durationMonths,
+      imageUrl: imageUrl, active: d.active === 'on', order: d.order, description: d.description || ''
+    });
+    res.redirect('/admin/programs');
+  } catch (e: any) {
+    if (e instanceof ZodError) {
+      const errors = e.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+      return res.status(400).send(`Ошибка валидации: ${errors}. <a href="/admin/programs">Вернуться назад</a>`);
+    }
+    throw e;
+  }
 });
 
 router.post('/admin/programs/:id', adminAuthMiddleware, uploadImages.single('imageFile'), async (req, res) => {
-  const { Program } = await import('../models/Program.js');
-  const schema = z.object({
-    title: z.string().optional(),
-    slug: z.string().optional(),
-    description: z.string().optional(),
-    language: z.enum(['ru','en','zh']).optional(),
-    level: z.enum(['bachelor','master','phd','foundation','other']).optional(),
-    university: z.string().optional(),
-    universityId: z.string().optional(),
-    tuition: z.coerce.number().optional(),
-    durationMonths: z.coerce.number().optional(),
-    active: z.string().optional(),
-    order: z.coerce.number().optional()
-  });
-  const d = schema.parse(req.body);
-  const update: any = { ...d };
-  if ('active' in d) update.active = d.active === 'on';
-  if (d.universityId === '') update.universityId = null;
-  else if (d.universityId) update.universityId = d.universityId;
-  if (req.file) {
-    const base = process.env.PUBLIC_BASE_URL || '';
-    update.imageUrl = `${base}/uploads/images/${req.file.filename}`;
+  try {
+    const { Program } = await import('../models/Program.js');
+    const { University } = await import('../models/University.js');
+    const schema = z.object({
+      title: z.string().optional(),
+      slug: z.string().optional(),
+      description: z.string().optional(),
+      language: z.enum(['ru','en','zh']).optional(),
+      level: z.enum(['bachelor','master','phd','foundation','other']).optional(),
+      university: z.string().optional(),
+      universityId: z.string().min(1, 'Университет обязателен').optional(),
+      tuition: z.coerce.number().optional(),
+      durationMonths: z.coerce.number().optional(),
+      active: z.string().optional(),
+      order: z.coerce.number().optional()
+    });
+    const d = schema.parse(req.body);
+    const update: any = { ...d };
+    if ('active' in d) update.active = d.active === 'on';
+    
+    // Если universityId указан, проверяем его существование и не позволяем удалить привязку
+    if (d.universityId !== undefined) {
+      if (d.universityId === '') {
+        return res.status(400).send('Нельзя удалить привязку программы к университету. Программа должна быть привязана к университету. <a href="/admin/programs">Вернуться назад</a>');
+      }
+      const university = await University.findById(d.universityId);
+      if (!university) {
+        return res.status(400).send('Выбранный университет не найден. <a href="/admin/programs">Вернуться назад</a>');
+      }
+      update.universityId = d.universityId;
+      if (!update.university) {
+        update.university = university.name;
+      }
+    }
+    
+    if (req.file) {
+      const base = process.env.PUBLIC_BASE_URL || '';
+      update.imageUrl = `${base}/uploads/images/${req.file.filename}`;
+    }
+    await Program.updateOne({ _id: req.params.id }, update);
+    res.redirect('/admin/programs');
+  } catch (e: any) {
+    if (e instanceof ZodError) {
+      const errors = e.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+      return res.status(400).send(`Ошибка валидации: ${errors}. <a href="/admin/programs">Вернуться назад</a>`);
+    }
+    throw e;
   }
-  await Program.updateOne({ _id: req.params.id }, update);
-  res.redirect('/admin/programs');
 });
 
 router.post('/admin/programs/:id/delete', adminAuthMiddleware, async (req, res) => {
