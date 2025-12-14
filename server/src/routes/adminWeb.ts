@@ -1536,13 +1536,27 @@ router.post('/admin/gallery/create', adminAuthMiddleware, async (req: any, res: 
   const { GalleryItem } = await import('../models/GalleryItem.js');
   const schema = z.object({
     title: z.string().min(1),
-    description: z.string().optional(),
-    mediaUrl: z.string().url(),
-    mediaType: z.enum(['photo', 'video']).default('photo'),
-    order: z.coerce.number().optional()
+    description: z.string().optional().default(''),
+    mediaUrl: z.string().min(1).refine((val) => {
+      if (!val || val.trim() === '') return false;
+      try {
+        new URL(val.trim());
+        return true;
+      } catch {
+        return false;
+      }
+    }, { message: 'Invalid URL' }),
+    mediaType: z.enum(['photo', 'video']).optional().default('photo'),
+    order: z.coerce.number().optional().default(0)
   });
   const data = schema.parse(req.body);
-  await GalleryItem.create(data);
+  await GalleryItem.create({
+    title: data.title,
+    description: data.description || '',
+    mediaUrl: data.mediaUrl.trim(),
+    mediaType: data.mediaType || 'photo',
+    order: data.order || 0
+  });
   res.redirect('/admin/gallery');
 });
 
@@ -1551,11 +1565,25 @@ router.post('/admin/gallery/:id', adminAuthMiddleware, async (req: any, res: any
   const schema = z.object({
     title: z.string().min(1).optional(),
     description: z.string().optional(),
-    mediaUrl: z.string().url().optional(),
+    mediaUrl: z.string().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      try {
+        new URL(val.trim());
+        return true;
+      } catch {
+        return false;
+      }
+    }, { message: 'Invalid URL' }),
     mediaType: z.enum(['photo', 'video']).optional(),
     order: z.coerce.number().optional()
   });
-  const update = schema.parse(req.body);
+  const parsed = schema.parse(req.body);
+  const update: any = {};
+  if (parsed.title !== undefined) update.title = parsed.title;
+  if (parsed.description !== undefined) update.description = parsed.description;
+  if (parsed.mediaUrl !== undefined) update.mediaUrl = parsed.mediaUrl.trim();
+  if (parsed.mediaType !== undefined) update.mediaType = parsed.mediaType;
+  if (parsed.order !== undefined) update.order = parsed.order;
   await GalleryItem.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/gallery');
 });
