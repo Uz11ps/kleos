@@ -1537,7 +1537,7 @@ router.post('/admin/gallery/create', adminAuthMiddleware, async (req: any, res: 
   const schema = z.object({
     title: z.string().min(1),
     description: z.string().optional().default(''),
-    mediaUrl: z.string().min(1).refine((val) => {
+    mediaUrl: z.string().refine((val) => {
       if (!val || val.trim() === '') return false;
       try {
         new URL(val.trim());
@@ -1545,7 +1545,7 @@ router.post('/admin/gallery/create', adminAuthMiddleware, async (req: any, res: 
       } catch {
         return false;
       }
-    }, { message: 'Invalid URL' }),
+    }, { message: 'Media URL is required and must be a valid URL' }),
     mediaType: z.enum(['photo', 'video']).optional().default('photo'),
     order: z.coerce.number().optional().default(0)
   });
