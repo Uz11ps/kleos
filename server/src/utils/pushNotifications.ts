@@ -1,5 +1,6 @@
 import { User } from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import { GoogleAuth } from 'google-auth-library';
 
 /**
  * Отправка push-уведомления через Firebase Cloud Messaging (FCM)
@@ -70,8 +71,67 @@ async function sendPushNotification(fcmToken: string, title: string, body: strin
 
 /**
  * Получение OAuth2 токена доступа для FCM HTTP v1 API через Service Account
+ * Использует google-auth-library для правильной обработки Service Account
  */
 async function getAccessToken(): Promise<string | null> {
+  try {
+    // Пробуем использовать google-auth-library (более надежный способ)
+    let auth: GoogleAuth | null = null;
+    
+    const fs = await import('fs');
+    const path = await import('path');
+    const serviceAccountPath = process.env.FCM_SERVICE_ACCOUNT_PATH || path.join(process.cwd(), 'firebase-service-account.json');
+    
+    // Пробуем загрузить из файла
+    if (fs.existsSync(serviceAccountPath)) {
+      console.log(`[OAuth2] Loading service account from file using GoogleAuth: ${serviceAccountPath}`);
+      auth = new GoogleAuth({
+        keyFile: serviceAccountPath,
+        scopes: ['https://www.googleapis.com/auth/firebase.messaging']
+      });
+    } else {
+      // Пробуем из переменной окружения
+      const serviceAccountJson = process.env.FCM_SERVICE_ACCOUNT_JSON;
+      if (serviceAccountJson) {
+        console.log(`[OAuth2] Loading service account from environment variable using GoogleAuth`);
+        const serviceAccount = JSON.parse(serviceAccountJson);
+        auth = new GoogleAuth({
+          credentials: serviceAccount,
+          scopes: ['https://www.googleapis.com/auth/firebase.messaging']
+        });
+      }
+    }
+    
+    if (!auth) {
+      console.error('[OAuth2] Service Account not configured. Set FCM_SERVICE_ACCOUNT_PATH or FCM_SERVICE_ACCOUNT_JSON');
+      return null;
+    }
+    
+    console.log(`[OAuth2] Getting access token using GoogleAuth...`);
+    const client = await auth.getClient();
+    const accessToken = await client.getAccessToken();
+    
+    if (!accessToken.token) {
+      console.error('[OAuth2] Failed to get access token - token is empty');
+      return null;
+    }
+    
+    console.log(`[OAuth2] Access token obtained successfully using GoogleAuth, length: ${accessToken.token.length}`);
+    return accessToken.token;
+  } catch (error: any) {
+    console.error('[OAuth2] Error getting access token with GoogleAuth:', error.message);
+    console.error('[OAuth2] Error stack:', error.stack);
+    
+    // Fallback на ручной метод, если google-auth-library не работает
+    console.log('[OAuth2] Falling back to manual JWT method...');
+    return await getAccessTokenManual();
+  }
+}
+
+/**
+ * Ручной метод получения access token (fallback)
+ */
+async function getAccessTokenManual(): Promise<string | null> {
   let serviceAccount: any = null;
   
   // Пробуем сначала прочитать из файла (проще для настройки)
