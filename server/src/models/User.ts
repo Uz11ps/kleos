@@ -19,7 +19,9 @@ const userSchema = new Schema({
   university: { type: String },
   payment: { type: String },
   penalties: { type: String },
-  notes: { type: String }
+  notes: { type: String },
+  // FCM токен для push-уведомлений
+  fcmToken: { type: String, index: true, sparse: true }
 }, { timestamps: true });
 
 export const User = model('User', userSchema);

@@ -903,14 +903,19 @@ router.post('/admin/admissions/:id/accept', adminAuthMiddleware, async (req: any
     if (uid) {
       await User.updateOne({ _id: uid }, { role: 'student', ...(studentId ? { studentId } : {}) });
       
-      // TODO: Отправить push-уведомление пользователю о принятии заявки
-      // const user = await User.findById(uid);
-      // if (user) {
-      //   await sendPushNotification(user, { 
-      //     title: 'Заявка принята', 
-      //     body: 'Ваша заявка на поступление была принята. Теперь вы студент!' 
-      //   });
-      // }
+      // Отправка push-уведомления пользователю о принятии заявки
+      try {
+        const { sendPushToUser } = await import('../utils/pushNotifications.js');
+        await sendPushToUser(
+          uid.toString(),
+          'Заявка принята',
+          'Ваша заявка на поступление была принята. Теперь вы студент!',
+          { type: 'admission_accepted', admissionId: id }
+        );
+      } catch (e: any) {
+        console.error('Error sending push notification for admission:', e);
+        // Не прерываем процесс из-за ошибки отправки уведомления
+      }
     }
   }
   res.redirect('/admin/admissions');
@@ -1585,17 +1590,39 @@ router.post('/admin/news/create', adminAuthMiddleware, uploadImages.single('imag
     const data = schema.parse(req.body);
     const base = process.env.PUBLIC_BASE_URL || '';
     const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
+    
+    // Обработка publishedAt: если пустая строка или невалидная дата, используем текущую дату
+    let publishedAt = new Date();
+    if (data.publishedAt && data.publishedAt.trim() !== '') {
+      const parsedDate = new Date(data.publishedAt);
+      if (!isNaN(parsedDate.getTime())) {
+        publishedAt = parsedDate;
+      }
+    }
+    
     const newsItem = await News.create({
       title: data.title,
       imageUrl: imageUrl,
-      publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
+      publishedAt: publishedAt,
       order: data.order,
       active: data.active === 'on',
       content: data.content || ''
     });
     
-    // TODO: Отправить push-уведомление о новой новости всем пользователям
-    // await sendPushNotificationToAll({ title: 'Новая новость', body: data.title });
+    // Отправка push-уведомления о новой новости всем пользователям
+    if (data.active === 'on') {
+      try {
+        const { sendPushToAll } = await import('../utils/pushNotifications.js');
+        await sendPushToAll(
+          'Новая новость',
+          data.title,
+          { newsId: newsItem._id.toString(), type: 'news' }
+        );
+      } catch (e: any) {
+        console.error('Error sending push notification for news:', e);
+        // Не прерываем создание новости из-за ошибки отправки уведомления
+      }
+    }
     
     res.redirect('/admin/news');
   } catch (e: any) {

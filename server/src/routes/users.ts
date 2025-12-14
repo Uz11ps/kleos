@@ -37,7 +37,20 @@ const updateSchema = z.object({
   penalties: z.string().optional(),
   notes: z.string().optional(),
   studentId: z.string().optional(),
-  emailVerified: z.boolean().optional()
+  emailVerified: z.boolean().optional(),
+  fcmToken: z.string().optional()
+});
+
+// Эндпоинт для сохранения FCM токена
+router.post('/fcm-token', auth(), async (req, res) => {
+  const userId = (req as any).auth?.uid;
+  if (!userId) return res.status(401).json({ error: 'unauthorized' });
+  
+  const schema = z.object({ token: z.string().min(1) });
+  const { token } = schema.parse(req.body);
+  
+  await User.updateOne({ _id: userId }, { fcmToken: token });
+  res.json({ ok: true });
 });
 
 // Эндпоинт для получения данных текущего пользователя

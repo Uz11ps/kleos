@@ -3,6 +3,7 @@ package com.example.kleos.data.network
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PUT
+import retrofit2.http.POST
 
 data class UserProfileDto(
     val id: String,
@@ -33,11 +34,22 @@ data class UpdateProfileRequest(
     val notes: String? = null
 )
 
+data class FcmTokenRequest(
+    val token: String
+)
+
+data class ApiResponse(
+    val ok: Boolean?,
+    val error: String?
+)
+
 interface UsersApi {
     @GET("users/me")
     suspend fun getProfile(): UserProfileDto
 
     @PUT("users/me")
     suspend fun updateProfile(@Body body: UpdateProfileRequest): Map<String, Any?>
+    
+    @POST("users/fcm-token")
+    suspend fun saveFcmToken(@Body request: FcmTokenRequest): ApiResponse
 }
-
