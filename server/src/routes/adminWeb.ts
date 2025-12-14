@@ -42,7 +42,8 @@ const ChatSchema = new Schema({
 const MessageSchema = new Schema({
   chatId: { type: Types.ObjectId, ref: 'Chat', index: true },
   senderRole: { type: String, enum: ['student', 'admin', 'system'] },
-  text: String
+  text: String,
+  isReadByAdmin: { type: Boolean, default: false, index: true }
 }, { timestamps: true });
 const Chat = (mongoose.models.Chat as any) || model('Chat', ChatSchema);
 const Message = (mongoose.models.Message as any) || model('Message', MessageSchema);
@@ -918,7 +919,7 @@ router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
     // Проверяем наличие непрочитанных сообщений от студента
     let unreadCount = 0;
     try {
-      unreadCount = await Message.countDocuments({ chatId: c._id, senderRole: 'student', isReadByAdmin: false });
+      unreadCount = await Message.countDocuments({ chatId: (c as any)._id, senderRole: 'student', isReadByAdmin: false });
     } catch (e) {
       // Игнорируем ошибки
     }
