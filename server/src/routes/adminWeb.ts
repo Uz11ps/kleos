@@ -1253,9 +1253,10 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
           <input name="order" type="number" value="${n.order || 0}" />
           <label><input type="checkbox" name="active" ${n.active ? 'checked' : ''}/> active</label>
           <textarea name="content" rows="3" placeholder="Content" style="width:100%">${(n.content || '').toString().replace(/</g,'&lt;')}</textarea>
-          <div style="margin-top:6px">
+          <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn primary" type="submit">Save</button>
             <button class="btn danger" formaction="/admin/news/${n._id}/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
+            ${n.active ? `<button class="btn" type="button" onclick="sendNotification('${n._id}', '${(n.title || '').toString().replace(/'/g, "\\'")}')" style="background:var(--accent-2);color:#fff;border:none;">📢 Отправить уведомление</button>` : ''}
           </div>
         </form>
       </td>
@@ -1279,6 +1280,27 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
         </table>
       </div>
     </div>
+    <script>
+      async function sendNotification(newsId, title) {
+        if (!confirm('Отправить push-уведомление о новости "' + title + '" всем пользователям?')) {
+          return;
+        }
+        try {
+          const response = await fetch('/admin/news/' + newsId + '/send-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const result = await response.json();
+          if (result.ok) {
+            alert('Уведомление отправлено успешно! Получено пользователей: ' + result.count);
+          } else {
+            alert('Ошибка отправки: ' + (result.error || 'unknown'));
+          }
+        } catch (e) {
+          alert('Ошибка: ' + e.message);
+        }
+      }
+    </script>
   `;
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - News', active: 'news', body }));
 });
@@ -1660,6 +1682,29 @@ router.post('/admin/news/:id/delete', adminAuthMiddleware, async (req, res) => {
   const { News } = await import('../models/News.js');
   await News.deleteOne({ _id: req.params.id });
   res.redirect('/admin/news');
+});
+
+router.post('/admin/news/:id/send-notification', adminAuthMiddleware, async (req, res) => {
+  try {
+    const { News } = await import('../models/News.js');
+    const { sendPushToAll } = await import('../utils/pushNotifications.js');
+    const news = await News.findById(req.params.id);
+    if (!news) {
+      return res.status(404).json({ ok: false, error: 'News not found' });
+    }
+    if (!news.active) {
+      return res.status(400).json({ ok: false, error: 'News is not active' });
+    }
+    const count = await sendPushToAll(
+      'Новая новость',
+      news.title,
+      { newsId: news._id.toString(), type: 'news' }
+    );
+    res.json({ ok: true, count });
+  } catch (e: any) {
+    console.error('Error sending notification:', e);
+    res.status(500).json({ ok: false, error: e?.message || 'unknown' });
+  }
 });
 
 // Gallery UI
