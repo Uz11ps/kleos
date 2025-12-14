@@ -512,8 +512,10 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
           </div>
           <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;">
             <button class="btn primary" type="submit">💾 Сохранить изменения</button>
-            <button class="btn danger" type="button" onclick="if(confirm('Вы уверены, что хотите удалить этого пользователя?')){const f=document.createElement('form');f.method='post';f.action='/admin/users/${u._id}/delete';document.body.appendChild(f);f.submit();}">🗑️ Удалить</button>
           </div>
+        </form>
+        <form method="post" action="/admin/users/${u._id}/delete" onsubmit="return confirm('Вы уверены, что хотите удалить этого пользователя?');" style="margin-top:8px;">
+          <button class="btn danger" type="submit">🗑️ Удалить</button>
         </form>
       </td>
     </tr>
