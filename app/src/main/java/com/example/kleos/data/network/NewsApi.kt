@@ -13,5 +13,8 @@ data class NewsDto(
 interface NewsApi {
     @GET("news")
     suspend fun list(): List<NewsDto>
+    
+    @GET("news/{id}")
+    suspend fun get(@retrofit2.http.Path("id") id: String): NewsDto
 }
 

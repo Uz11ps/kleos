@@ -582,6 +582,44 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
   const body = `
     <div class="card">
       <h2>Users</h2>
+      <div class="card" style="margin-bottom:20px;background:var(--card);border:2px dashed var(--border);">
+        <h3 style="margin-top:0;">➕ Создать нового пользователя</h3>
+        <form method="post" action="/admin/users/create" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+          <div class="input-group">
+            <label class="required">Email</label>
+            <input name="email" type="email" placeholder="user@example.com" required />
+          </div>
+          <div class="input-group">
+            <label class="required">Пароль</label>
+            <input name="password" type="password" placeholder="Минимум 6 символов" required />
+          </div>
+          <div class="input-group">
+            <label class="required">Полное имя</label>
+            <input name="fullName" placeholder="Иван Иванов" required />
+          </div>
+          <div class="input-group">
+            <label class="required">Роль</label>
+            <select name="role" required>
+              <option value="user">Пользователь</option>
+              <option value="student">Студент</option>
+              <option value="admin">Администратор</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>ID студента</label>
+            <input name="studentId" placeholder="Введите ID студента" />
+          </div>
+          <div class="input-group" style="grid-column:1/-1;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="emailVerified" checked style="width:auto;margin:0;" />
+              <span>Email подтвержден</span>
+            </label>
+          </div>
+          <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;">
+            <button class="btn primary" type="submit">✨ Создать пользователя</button>
+          </div>
+        </form>
+      </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
@@ -660,6 +698,33 @@ router.post('/admin/users/:id', adminAuthMiddleware, async (req: any, res: any) 
   }
   await User.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/users');
+});
+
+router.post('/admin/users/create', adminAuthMiddleware, async (req: any, res: any) => {
+  try {
+    const schema = z.object({
+      email: z.string().email(),
+      password: z.string().min(6),
+      fullName: z.string().min(1),
+      role: z.enum(['user', 'student', 'admin']).default('user'),
+      studentId: z.string().optional(),
+      emailVerified: z.union([z.literal('on'), z.string()]).optional()
+    });
+    const data = schema.parse(req.body);
+    const bcrypt = await import('bcryptjs');
+    const hashedPassword = await bcrypt.default.hash(data.password, 10);
+    await User.create({
+      email: data.email,
+      password: hashedPassword,
+      fullName: data.fullName,
+      role: data.role,
+      studentId: data.studentId,
+      emailVerified: data.emailVerified === 'on'
+    });
+    res.redirect('/admin/users');
+  } catch (e: any) {
+    res.status(400).send(`Error creating user: ${e.message}`);
+  }
 });
 
 router.post('/admin/users/:id/delete', adminAuthMiddleware, async (req, res) => {
@@ -1869,29 +1934,31 @@ router.post('/admin/gallery/:id/delete', adminAuthMiddleware, async (req, res) =
 router.get('/admin/universities', adminAuthMiddleware, async (_req, res) => {
   const { University } = await import('../models/University.js');
   const list = await University.find().sort({ order: 1, name: 1 }).lean();
-  const rows = list.map(u => `
+  const rows = list.map(u => {
+    const socialLinks = (u as any).socialLinks || {};
+    const degreePrograms = (u as any).degreePrograms || [];
+    const contentBlocks = (u as any).contentBlocks || [];
+    return `
     <tr>
       <td>${u._id}</td>
       <td>
-        <form method="post" action="/admin/universities/${u._id}" enctype="multipart/form-data">
-          <input name="name" value="${(u.name || '').toString().replace(/"/g,'&quot;')}" placeholder="Name" style="min-width:200px"/>
-          <input name="city" value="${(u.city || '').toString().replace(/"/g,'&quot;')}" placeholder="City"/>
-          <input name="country" value="${(u.country || 'Russia').toString().replace(/"/g,'&quot;')}" placeholder="Country"/>
-          <input name="website" value="${(u.website || '').toString().replace(/"/g,'&quot;')}" placeholder="Website URL"/>
-          ${u.logoUrl ? `<div style="margin:8px 0;"><img src="${u.logoUrl}" style="max-width:100px;max-height:100px;border-radius:8px;" alt="Current logo"/></div>` : ''}
-          <input type="file" name="logoFile" accept="image/*" />
-          ${u.logoUrl ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">Текущий логотип: ${u.logoUrl}</div>` : ''}
-          <input type="number" name="order" value="${u.order || 0}" placeholder="Order"/>
-          <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" ${u.active ? 'checked' : ''}/> active</label>
-          <textarea name="description" rows="2" placeholder="Description" style="width:100%">${(u.description || '').toString().replace(/</g,'&lt;')}</textarea>
-          <div style="margin-top:6px">
-            <button class="btn primary" type="submit">Save</button>
-            <button class="btn danger" formaction="/admin/universities/${u._id}/delete" formmethod="post" onclick="return confirm('Delete?')">Delete</button>
-          </div>
-        </form>
+        <div style="margin-bottom:12px;">
+          <a href="/admin/universities/${u._id}/edit" class="btn" style="background:var(--accent);color:#fff;">✏️ Редактировать</a>
+          <form method="post" action="/admin/universities/${u._id}/delete" style="display:inline-block;margin-left:8px;" onsubmit="return confirm('Delete?');">
+            <button class="btn danger" type="submit">🗑️ Удалить</button>
+          </form>
+        </div>
+        <div style="font-weight:600;font-size:18px;color:var(--accent);margin-bottom:8px;">${u.name}</div>
+        <div style="color:var(--muted);margin-bottom:4px;">📍 ${u.city || ''}${u.city && u.country ? ', ' : ''}${u.country || ''}</div>
+        ${u.description ? `<div style="margin-top:8px;">${(u.description || '').toString().replace(/</g,'&lt;')}</div>` : ''}
+        ${socialLinks.facebook || socialLinks.twitter || socialLinks.instagram || socialLinks.youtube || socialLinks.whatsapp || socialLinks.phone || socialLinks.email ? 
+          `<div style="margin-top:8px;font-size:12px;color:var(--muted);">Соцсети: ${[socialLinks.facebook && 'Facebook', socialLinks.twitter && 'Twitter', socialLinks.instagram && 'Instagram', socialLinks.youtube && 'YouTube', socialLinks.whatsapp && 'WhatsApp', socialLinks.phone && 'Phone', socialLinks.email && 'Email'].filter(Boolean).join(', ')}</div>` : ''}
+        ${degreePrograms.length > 0 ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);">Направления: ${degreePrograms.map((d: any) => d.type).join(', ')}</div>` : ''}
+        ${contentBlocks.length > 0 ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);">Блоков контента: ${contentBlocks.length}</div>` : ''}
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
   const body = `
     <div class="card">
       <h2>Universities</h2>
@@ -1950,6 +2017,292 @@ router.post('/admin/universities/create', adminAuthMiddleware, uploadLogos.singl
     order: data.order || 0
   });
   res.redirect('/admin/universities');
+});
+
+router.get('/admin/universities/:id/edit', adminAuthMiddleware, async (req: any, res: any) => {
+  const { University } = await import('../models/University.js');
+  const u = await University.findById(req.params.id).lean();
+  if (!u) return res.status(404).send('University not found');
+  
+  const socialLinks = (u as any).socialLinks || {};
+  const degreePrograms = (u as any).degreePrograms || [];
+  const contentBlocks = (u as any).contentBlocks || [];
+  
+  const degreeProgramsHtml = degreePrograms.map((dp: any, idx: number) => `
+    <div style="border:1px solid var(--border);padding:12px;margin-bottom:8px;border-radius:8px;background:var(--card);">
+      <input type="hidden" name="degreePrograms[${idx}][_id]" value="${dp._id || ''}" />
+      <select name="degreePrograms[${idx}][type]" style="width:100%;margin-bottom:8px;">
+        <option value="Bachelor's degree" ${dp.type === "Bachelor's degree" ? 'selected' : ''}>Bachelor's degree</option>
+        <option value="Master's degree" ${dp.type === "Master's degree" ? 'selected' : ''}>Master's degree</option>
+        <option value="Research degree" ${dp.type === "Research degree" ? 'selected' : ''}>Research degree</option>
+        <option value="Speciality degree" ${dp.type === "Speciality degree" ? 'selected' : ''}>Speciality degree</option>
+      </select>
+      <textarea name="degreePrograms[${idx}][description]" placeholder="Описание направления" style="width:100%;min-height:60px;">${(dp.description || '').toString().replace(/</g,'&lt;')}</textarea>
+      <button type="button" class="btn danger" onclick="this.closest('div').remove()" style="margin-top:8px;">Удалить</button>
+    </div>
+  `).join('');
+  
+  const contentBlocksHtml = contentBlocks.map((cb: any, idx: number) => `
+    <div style="border:1px solid var(--border);padding:12px;margin-bottom:8px;border-radius:8px;background:var(--card);">
+      <input type="hidden" name="contentBlocks[${idx}][_id]" value="${cb._id || ''}" />
+      <select name="contentBlocks[${idx}][type]" style="width:100%;margin-bottom:8px;">
+        <option value="text" ${cb.type === 'text' ? 'selected' : ''}>Текст</option>
+        <option value="image" ${cb.type === 'image' ? 'selected' : ''}>Изображение</option>
+        <option value="heading" ${cb.type === 'heading' ? 'selected' : ''}>Заголовок</option>
+      </select>
+      <textarea name="contentBlocks[${idx}][content]" placeholder="Содержимое блока" style="width:100%;min-height:80px;">${(cb.content || '').toString().replace(/</g,'&lt;')}</textarea>
+      <input type="number" name="contentBlocks[${idx}][order]" value="${cb.order || 0}" placeholder="Порядок" style="width:100px;margin-top:8px;" />
+      <button type="button" class="btn danger" onclick="this.closest('div').remove()" style="margin-top:8px;">Удалить</button>
+    </div>
+  `).join('');
+  
+  const body = `
+    <div class="card">
+      <h2>Редактирование университета: ${u.name}</h2>
+      <div style="margin-bottom:16px;"><a href="/admin/universities" class="btn">&larr; Назад к списку</a></div>
+      <form method="post" action="/admin/universities/${u._id}/update" enctype="multipart/form-data" style="display:grid;gap:20px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+          <div class="input-group">
+            <label class="required">Название</label>
+            <input name="name" value="${(u.name || '').toString().replace(/"/g,'&quot;')}" required />
+          </div>
+          <div class="input-group">
+            <label>Город</label>
+            <input name="city" value="${(u.city || '').toString().replace(/"/g,'&quot;')}" />
+          </div>
+          <div class="input-group">
+            <label>Страна</label>
+            <input name="country" value="${(u.country || 'Russia').toString().replace(/"/g,'&quot;')}" />
+          </div>
+          <div class="input-group">
+            <label>Сайт</label>
+            <input name="website" value="${(u.website || '').toString().replace(/"/g,'&quot;')}" placeholder="https://example.com" />
+          </div>
+          <div class="input-group">
+            <label>Логотип</label>
+            ${u.logoUrl ? `<div style="margin:8px 0;"><img src="${u.logoUrl}" style="max-width:150px;max-height:150px;border-radius:8px;" alt="Current logo"/></div>` : ''}
+            <input type="file" name="logoFile" accept="image/*" />
+          </div>
+          <div class="input-group">
+            <label>Порядок сортировки</label>
+            <input type="number" name="order" value="${u.order || 0}" />
+          </div>
+          <div class="input-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="active" ${u.active ? 'checked' : ''} style="width:auto;margin:0;" />
+              <span>Активен</span>
+            </label>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Описание</label>
+          <textarea name="description" rows="3" style="width:100%">${(u.description || '').toString().replace(/</g,'&lt;')}</textarea>
+        </div>
+        
+        <div style="border-top:2px solid var(--border);padding-top:20px;">
+          <h3>Социальные сети и контакты</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+            <div class="input-group">
+              <label>Facebook</label>
+              <input name="socialLinks[facebook]" value="${(socialLinks.facebook || '').toString().replace(/"/g,'&quot;')}" placeholder="https://facebook.com/..." />
+            </div>
+            <div class="input-group">
+              <label>Twitter</label>
+              <input name="socialLinks[twitter]" value="${(socialLinks.twitter || '').toString().replace(/"/g,'&quot;')}" placeholder="https://twitter.com/..." />
+            </div>
+            <div class="input-group">
+              <label>Instagram</label>
+              <input name="socialLinks[instagram]" value="${(socialLinks.instagram || '').toString().replace(/"/g,'&quot;')}" placeholder="https://instagram.com/..." />
+            </div>
+            <div class="input-group">
+              <label>YouTube</label>
+              <input name="socialLinks[youtube]" value="${(socialLinks.youtube || '').toString().replace(/"/g,'&quot;')}" placeholder="https://youtube.com/..." />
+            </div>
+            <div class="input-group">
+              <label>WhatsApp (номер телефона)</label>
+              <input name="socialLinks[whatsapp]" value="${(socialLinks.whatsapp || '').toString().replace(/"/g,'&quot;')}" placeholder="+7 999 999-99-99" />
+            </div>
+            <div class="input-group">
+              <label>Телефон</label>
+              <input name="socialLinks[phone]" value="${(socialLinks.phone || '').toString().replace(/"/g,'&quot;')}" placeholder="+7 999 999-99-99" />
+            </div>
+            <div class="input-group">
+              <label>Email</label>
+              <input name="socialLinks[email]" type="email" value="${(socialLinks.email || '').toString().replace(/"/g,'&quot;')}" placeholder="info@university.edu" />
+            </div>
+          </div>
+        </div>
+        
+        <div style="border-top:2px solid var(--border);padding-top:20px;">
+          <h3>Направления обучения</h3>
+          <div id="degreeProgramsContainer">
+            ${degreeProgramsHtml}
+          </div>
+          <button type="button" class="btn" onclick="addDegreeProgram()" style="margin-top:12px;">➕ Добавить направление</button>
+        </div>
+        
+        <div style="border-top:2px solid var(--border);padding-top:20px;">
+          <h3>Блоки контента страницы</h3>
+          <div id="contentBlocksContainer">
+            ${contentBlocksHtml}
+          </div>
+          <button type="button" class="btn" onclick="addContentBlock()" style="margin-top:12px;">➕ Добавить блок</button>
+        </div>
+        
+        <div style="margin-top:20px;">
+          <button class="btn primary" type="submit">💾 Сохранить изменения</button>
+        </div>
+      </form>
+    </div>
+    <script>
+      let degreeProgramIndex = ${degreePrograms.length};
+      let contentBlockIndex = ${contentBlocks.length};
+      
+      function addDegreeProgram() {
+        const container = document.getElementById('degreeProgramsContainer');
+        const div = document.createElement('div');
+        div.style.cssText = 'border:1px solid var(--border);padding:12px;margin-bottom:8px;border-radius:8px;background:var(--card);';
+        div.innerHTML = \`
+          <select name="degreePrograms[\${degreeProgramIndex}][type]" style="width:100%;margin-bottom:8px;">
+            <option value="Bachelor's degree">Bachelor's degree</option>
+            <option value="Master's degree">Master's degree</option>
+            <option value="Research degree">Research degree</option>
+            <option value="Speciality degree">Speciality degree</option>
+          </select>
+          <textarea name="degreePrograms[\${degreeProgramIndex}][description]" placeholder="Описание направления" style="width:100%;min-height:60px;"></textarea>
+          <button type="button" class="btn danger" onclick="this.closest('div').remove()" style="margin-top:8px;">Удалить</button>
+        \`;
+        container.appendChild(div);
+        degreeProgramIndex++;
+      }
+      
+      function addContentBlock() {
+        const container = document.getElementById('contentBlocksContainer');
+        const div = document.createElement('div');
+        div.style.cssText = 'border:1px solid var(--border);padding:12px;margin-bottom:8px;border-radius:8px;background:var(--card);';
+        div.innerHTML = \`
+          <select name="contentBlocks[\${contentBlockIndex}][type]" style="width:100%;margin-bottom:8px;">
+            <option value="text">Текст</option>
+            <option value="image">Изображение</option>
+            <option value="heading">Заголовок</option>
+          </select>
+          <textarea name="contentBlocks[\${contentBlockIndex}][content]" placeholder="Содержимое блока" style="width:100%;min-height:80px;"></textarea>
+          <input type="number" name="contentBlocks[\${contentBlockIndex}][order]" value="0" placeholder="Порядок" style="width:100px;margin-top:8px;" />
+          <button type="button" class="btn danger" onclick="this.closest('div').remove()" style="margin-top:8px;">Удалить</button>
+        \`;
+        container.appendChild(div);
+        contentBlockIndex++;
+      }
+    </script>
+  `;
+  sendAdminResponse(res, await adminLayout({ title: `Kleos Admin - Edit University: ${u.name}`, active: 'universities', body }));
+});
+
+router.post('/admin/universities/:id/update', adminAuthMiddleware, uploadLogos.single('logoFile'), async (req: any, res: any) => {
+  const { University } = await import('../models/University.js');
+  try {
+    const schema = z.object({
+      name: z.string().min(1).optional(),
+      city: z.string().optional(),
+      country: z.string().optional(),
+      description: z.string().optional(),
+      website: z.string().optional().refine((val) => {
+        if (!val || val.trim() === '') return true;
+        try {
+          new URL(val.trim());
+          return true;
+        } catch {
+          return false;
+        }
+      }, { message: 'Invalid URL' }),
+      active: z.string().optional(),
+      order: z.coerce.number().optional(),
+      'socialLinks[facebook]': z.string().optional(),
+      'socialLinks[twitter]': z.string().optional(),
+      'socialLinks[instagram]': z.string().optional(),
+      'socialLinks[youtube]': z.string().optional(),
+      'socialLinks[whatsapp]': z.string().optional(),
+      'socialLinks[phone]': z.string().optional(),
+      'socialLinks[email]': z.string().email().optional()
+    });
+    const parsed = schema.parse(req.body);
+    const update: any = {};
+    if (parsed.name !== undefined) update.name = parsed.name;
+    if (parsed.city !== undefined) update.city = parsed.city;
+    if (parsed.country !== undefined) update.country = parsed.country;
+    if (parsed.description !== undefined) update.description = parsed.description;
+    if (parsed.website !== undefined) update.website = parsed.website && parsed.website.trim() ? parsed.website.trim() : undefined;
+    if (req.file) {
+      const base = process.env.PUBLIC_BASE_URL || '';
+      update.logoUrl = `${base}/uploads/logos/${req.file.filename}`;
+    }
+    if (parsed.active !== undefined) update.active = parsed.active === 'on';
+    if (parsed.order !== undefined) update.order = parsed.order;
+    
+    // Parse social links
+    const socialLinks: any = {};
+    if (req.body['socialLinks[facebook]']) socialLinks.facebook = req.body['socialLinks[facebook]'].trim() || undefined;
+    if (req.body['socialLinks[twitter]']) socialLinks.twitter = req.body['socialLinks[twitter]'].trim() || undefined;
+    if (req.body['socialLinks[instagram]']) socialLinks.instagram = req.body['socialLinks[instagram]'].trim() || undefined;
+    if (req.body['socialLinks[youtube]']) socialLinks.youtube = req.body['socialLinks[youtube]'].trim() || undefined;
+    if (req.body['socialLinks[whatsapp]']) socialLinks.whatsapp = req.body['socialLinks[whatsapp]'].trim() || undefined;
+    if (req.body['socialLinks[phone]']) socialLinks.phone = req.body['socialLinks[phone]'].trim() || undefined;
+    if (req.body['socialLinks[email]']) socialLinks.email = req.body['socialLinks[email]'].trim() || undefined;
+    update.socialLinks = socialLinks;
+    
+    // Parse degree programs
+    const degreePrograms: any[] = [];
+    const degreeProgramKeys = Object.keys(req.body).filter(k => k.startsWith('degreePrograms['));
+    const degreeProgramMap = new Map<number, any>();
+    degreeProgramKeys.forEach(key => {
+      const match = key.match(/degreePrograms\[(\d+)\]\[(\w+)\]/);
+      if (match) {
+        const idx = parseInt(match[1]);
+        const field = match[2];
+        if (!degreeProgramMap.has(idx)) degreeProgramMap.set(idx, {});
+        degreeProgramMap.get(idx)![field] = req.body[key];
+      }
+    });
+    degreeProgramMap.forEach((dp, idx) => {
+      if (dp.type && dp.type.trim()) {
+        degreePrograms.push({
+          type: dp.type.trim(),
+          description: dp.description ? dp.description.trim() : '',
+          order: parseInt(dp.order) || 0
+        });
+      }
+    });
+    update.degreePrograms = degreePrograms;
+    
+    // Parse content blocks
+    const contentBlocks: any[] = [];
+    const contentBlockKeys = Object.keys(req.body).filter(k => k.startsWith('contentBlocks['));
+    const contentBlockMap = new Map<number, any>();
+    contentBlockKeys.forEach(key => {
+      const match = key.match(/contentBlocks\[(\d+)\]\[(\w+)\]/);
+      if (match) {
+        const idx = parseInt(match[1]);
+        const field = match[2];
+        if (!contentBlockMap.has(idx)) contentBlockMap.set(idx, {});
+        contentBlockMap.get(idx)![field] = req.body[key];
+      }
+    });
+    contentBlockMap.forEach((cb, idx) => {
+      if (cb.type && cb.content && cb.content.trim()) {
+        contentBlocks.push({
+          type: cb.type.trim(),
+          content: cb.content.trim(),
+          order: parseInt(cb.order) || 0
+        });
+      }
+    });
+    update.contentBlocks = contentBlocks;
+    
+    await University.updateOne({ _id: req.params.id }, update);
+    res.redirect('/admin/universities');
+  } catch (e: any) {
+    res.status(400).send(`Error updating university: ${e.message}`);
+  }
 });
 
 router.post('/admin/universities/:id', adminAuthMiddleware, uploadLogos.single('logoFile'), async (req: any, res: any) => {

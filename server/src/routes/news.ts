@@ -17,6 +17,19 @@ router.get('/', async (_req, res) => {
   })));
 });
 
+// Public get single news item
+router.get('/:id', async (req, res) => {
+  const n = await News.findOne({ _id: req.params.id, active: true }).lean();
+  if (!n) return res.status(404).json({ error: 'not_found' });
+  res.json({
+    id: n._id,
+    title: n.title,
+    content: n.content,
+    imageUrl: n.imageUrl,
+    publishedAt: n.publishedAt,
+  });
+});
+
 // Admin CRUD (can also be managed in adminWeb, but keep API endpoints)
 router.post('/', auth('admin'), async (req, res) => {
   const schema = z.object({

@@ -25,6 +25,19 @@ class NewsRepository {
         }
     }
 
+    suspend fun get(id: String): NewsItem? = withContext(Dispatchers.IO) {
+        runCatching {
+            val dto = api.get(id)
+            NewsItem(
+                id = dto.id,
+                title = dto.title,
+                dateText = formatDate(dto.publishedAt),
+                content = dto.content,
+                imageUrl = dto.imageUrl
+            )
+        }.getOrNull()
+    }
+
     private fun formatDate(iso: String?): String {
         if (iso.isNullOrBlank()) return ""
         // Try ISO8601 → "MMMM d, yyyy"

@@ -32,12 +32,18 @@ class NewsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         val adapter = NewsAdapter(emptyList()) { item ->
-            // Показываем диалог с деталями новости
-            com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                .setTitle(item.title)
-                .setMessage("${item.dateText}\n\n${item.content ?: "Нет дополнительной информации"}")
-                .setPositiveButton("OK", null)
-                .show()
+            // Переход на детальную страницу новости
+            val bundle = Bundle().apply {
+                putString("newsId", item.id)
+                putString("title", item.title)
+                putString("content", item.content ?: "")
+                putString("dateText", item.dateText)
+                putString("imageUrl", item.imageUrl ?: "")
+            }
+            androidx.navigation.fragment.findNavController(this).navigate(
+                com.example.kleos.R.id.newsDetailFragment,
+                bundle
+            )
         }
         binding.newsRecycler.layoutManager = LinearLayoutManager(requireContext())
         binding.newsRecycler.adapter = adapter

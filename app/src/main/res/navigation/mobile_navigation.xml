@@ -16,6 +16,12 @@
         android:name="com.example.kleos.ui.news.NewsFragment"
         android:label="@string/menu_news"
         tools:layout="@layout/fragment_news" />
+    
+    <fragment
+        android:id="@+id/newsDetailFragment"
+        android:name="com.example.kleos.ui.news.NewsDetailFragment"
+        android:label="News Detail"
+        tools:layout="@layout/fragment_news_detail" />
 
     <fragment
         android:id="@+id/nav_gallery"

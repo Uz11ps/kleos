@@ -19,6 +19,24 @@ router.get('/', async (_req, res) => {
   })));
 });
 
+// Public endpoint - get single university by id
+router.get('/:id', async (req, res) => {
+  const u = await University.findOne({ _id: req.params.id, active: true }).lean();
+  if (!u) return res.status(404).json({ error: 'not_found' });
+  res.json({
+    id: u._id,
+    name: u.name,
+    city: u.city,
+    country: u.country,
+    description: u.description,
+    website: u.website,
+    logoUrl: u.logoUrl,
+    socialLinks: (u as any).socialLinks || {},
+    degreePrograms: (u as any).degreePrograms || [],
+    contentBlocks: (u as any).contentBlocks || []
+  });
+});
+
 // Admin endpoints
 router.post('/', auth('admin'), async (req, res) => {
   try {
