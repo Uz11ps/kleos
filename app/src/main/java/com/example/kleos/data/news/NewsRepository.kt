@@ -18,7 +18,9 @@ class NewsRepository {
             NewsItem(
                 id = dto.id,
                 title = dto.title,
-                dateText = formatDate(dto.publishedAt)
+                dateText = formatDate(dto.publishedAt),
+                content = dto.content,
+                imageUrl = dto.imageUrl
             )
         }
     }

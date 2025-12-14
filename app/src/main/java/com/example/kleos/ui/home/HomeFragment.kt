@@ -45,7 +45,14 @@ class HomeFragment : Fragment() {
         // Анимация появления карточки пользователя
         com.example.kleos.ui.utils.AnimationUtils.bounceIn(binding.userCard, 600)
         
-        val adapter = NewsAdapter(emptyList())
+        val adapter = NewsAdapter(emptyList()) { item ->
+            // Показываем диалог с деталями новости
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(item.title)
+                .setMessage("${item.dateText}\n\n${item.content ?: "Нет дополнительной информации"}")
+                .setPositiveButton("OK", null)
+                .show()
+        }
         binding.newsRecycler.layoutManager = LinearLayoutManager(requireContext())
         binding.newsRecycler.adapter = adapter
 

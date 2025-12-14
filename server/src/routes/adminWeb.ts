@@ -902,6 +902,15 @@ router.post('/admin/admissions/:id/accept', adminAuthMiddleware, async (req: any
     const uid = (adm as any).userId;
     if (uid) {
       await User.updateOne({ _id: uid }, { role: 'student', ...(studentId ? { studentId } : {}) });
+      
+      // TODO: Отправить push-уведомление пользователю о принятии заявки
+      // const user = await User.findById(uid);
+      // if (user) {
+      //   await sendPushNotification(user, { 
+      //     title: 'Заявка принята', 
+      //     body: 'Ваша заявка на поступление была принята. Теперь вы студент!' 
+      //   });
+      // }
     }
   }
   res.redirect('/admin/admissions');
@@ -1564,25 +1573,39 @@ router.post('/admin/programs/:id/delete', adminAuthMiddleware, async (req, res) 
   res.redirect('/admin/programs');
 });
 router.post('/admin/news/create', adminAuthMiddleware, uploadImages.single('imageFile'), async (req, res) => {
-  const { News } = await import('../models/News.js');
-  const schema = z.object({
-    title: z.string().min(1),
-    publishedAt: z.string().optional().default(''),
-    order: z.coerce.number().optional().default(0),
-    active: z.string().optional()
-  });
-  const data = schema.parse(req.body);
-  const base = process.env.PUBLIC_BASE_URL || '';
-  const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
-  await News.create({
-    title: data.title,
-    imageUrl: imageUrl,
-    publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
-    order: data.order,
-    active: data.active === 'on',
-    content: ''
-  });
-  res.redirect('/admin/news');
+  try {
+    const { News } = await import('../models/News.js');
+    const schema = z.object({
+      title: z.string().min(1),
+      publishedAt: z.string().optional().default(''),
+      order: z.coerce.number().optional().default(0),
+      active: z.string().optional(),
+      content: z.string().optional().default('')
+    });
+    const data = schema.parse(req.body);
+    const base = process.env.PUBLIC_BASE_URL || '';
+    const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
+    const newsItem = await News.create({
+      title: data.title,
+      imageUrl: imageUrl,
+      publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
+      order: data.order,
+      active: data.active === 'on',
+      content: data.content || ''
+    });
+    
+    // TODO: Отправить push-уведомление о новой новости всем пользователям
+    // await sendPushNotificationToAll({ title: 'Новая новость', body: data.title });
+    
+    res.redirect('/admin/news');
+  } catch (e: any) {
+    if (e instanceof ZodError) {
+      const errors = e.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+      return res.status(400).send(`Ошибка валидации: ${errors}. <a href="/admin/news">Вернуться назад</a>`);
+    }
+    console.error('Error creating news:', e);
+    return res.status(500).send(`Ошибка при создании новости: ${e?.message || 'unknown'}. <a href="/admin/news">Вернуться назад</a>`);
+  }
 });
 
 router.post('/admin/news/:id', adminAuthMiddleware, uploadImages.single('imageFile'), async (req, res) => {

@@ -31,7 +31,14 @@ class NewsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        val adapter = NewsAdapter(emptyList())
+        val adapter = NewsAdapter(emptyList()) { item ->
+            // Показываем диалог с деталями новости
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle(item.title)
+                .setMessage("${item.dateText}\n\n${item.content ?: "Нет дополнительной информации"}")
+                .setPositiveButton("OK", null)
+                .show()
+        }
         binding.newsRecycler.layoutManager = LinearLayoutManager(requireContext())
         binding.newsRecycler.adapter = adapter
 

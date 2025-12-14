@@ -40,6 +40,13 @@ class AdmissionFormFragment : Fragment() {
 
         if (!isAdded) return
 
+        // Автозаполнение email из сессии пользователя
+        val sessionManager = com.example.kleos.data.auth.SessionManager(requireContext())
+        val currentUser = sessionManager.getCurrentUser()
+        if (!currentUser?.email.isNullOrBlank() && binding.emailEditText.text.isNullOrBlank()) {
+            binding.emailEditText.setText(currentUser?.email)
+        }
+
         // Анимация появления заголовка
         val titleView = binding.root.findViewById<View>(com.example.kleos.R.id.titleText)
         titleView?.let { AnimationUtils.slideUpFade(it, 0) }
