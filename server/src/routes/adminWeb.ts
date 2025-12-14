@@ -388,10 +388,32 @@ async function adminLayout(opts: {
         <div class="container page">
           ${body}
         </div>
-      </main>
-    </div>
-  </body>
-</html>`;
+                  </main>
+                </div>
+                <script>
+                  function handleUniversitySelect(select) {
+                    const universities = JSON.parse(select.getAttribute('data-universities') || '[]');
+                    const selectedId = select.value;
+                    const universityInfo = document.getElementById('universityInfo');
+                    const universityDetails = document.getElementById('universityDetails');
+                    const programFields = document.getElementById('programFields');
+                    
+                    if (selectedId) {
+                      const university = universities.find(u => u.id === selectedId);
+                      if (university) {
+                        universityDetails.innerHTML = '<div style="font-weight:600;font-size:18px;color:var(--accent);margin-bottom:8px;">' + university.name + '</div><div style="color:var(--muted);font-size:14px;">📍 ' + (university.city ? university.city + ', ' : '') + university.country + '</div>';
+                        universityInfo.style.display = 'block';
+                        programFields.style.display = 'block';
+                        programFields.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                      }
+                    } else {
+                      universityInfo.style.display = 'none';
+                      programFields.style.display = 'none';
+                    }
+                  }
+                </script>
+              </body>
+            </html>`;
 }
 
 function adminAuthMiddleware(req: any, res: any, next: any) {
@@ -1351,7 +1373,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           <h3 style="margin-top:0;color:var(--accent);">🏛️ Шаг 1: Выберите университет</h3>
           <div class="input-group">
             <label class="required" style="font-size:16px;font-weight:600;">Университет</label>
-            <select name="universityId" id="universitySelect" required style="min-width:300px;font-size:16px;padding:14px;">
+            <select name="universityId" id="universitySelect" required style="min-width:300px;font-size:16px;padding:14px;" onchange="handleUniversitySelect(this)" data-universities='${JSON.stringify(universities.map(u => ({ id: u._id.toString(), name: u.name, city: u.city || '', country: u.country || 'Russia' })))}'>
               <option value="">-- Выберите университет --</option>
               ${universityOptions}
             </select>
@@ -1419,34 +1441,6 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           </div>
         </div>
       </form>
-      <script>
-        (function() {
-          const universitySelect = document.getElementById('universitySelect');
-          const programFields = document.getElementById('programFields');
-          const universityInfo = document.getElementById('universityInfo');
-          const universityDetails = document.getElementById('universityDetails');
-          const universities = ${JSON.stringify(universities.map(u => ({ id: u._id.toString(), name: u.name, city: u.city || '', country: u.country || 'Russia' })))};
-          
-          universitySelect.addEventListener('change', function() {
-            const selectedId = this.value;
-            if (selectedId) {
-              const university = universities.find(u => u.id === selectedId);
-              if (university) {
-                universityDetails.innerHTML = \`
-                  <div style="font-weight:600;font-size:18px;color:var(--accent);margin-bottom:8px;">\${university.name}</div>
-                  <div style="color:var(--muted);font-size:14px;">📍 \${university.city ? university.city + ', ' : ''}\${university.country}</div>
-                \`;
-                universityInfo.style.display = 'block';
-                programFields.style.display = 'block';
-                programFields.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-              }
-            } else {
-              universityInfo.style.display = 'none';
-              programFields.style.display = 'none';
-            }
-          });
-        })();
-      </script>
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
