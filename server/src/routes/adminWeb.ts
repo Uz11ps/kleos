@@ -21,16 +21,50 @@ function getAdminCreds() {
   };
 }
 
-// File uploads (logos)
-const upload = multer({
+// File uploads configuration
+const uploadLogos = multer({
   storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, path.join(process.cwd(), 'uploads', 'logos')),
+    destination: (_req, _file, cb) => {
+      const dir = path.join(process.cwd(), 'uploads', 'logos');
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
     filename: (_req, file, cb) => {
       const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname || '')}`;
       cb(null, name);
     }
   }),
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
+
+const uploadMedia = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = path.join(process.cwd(), 'uploads', 'media');
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname || '')}`;
+      cb(null, name);
+    }
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB for videos
+});
+
+const uploadImages = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = path.join(process.cwd(), 'uploads', 'images');
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname || '')}`;
+      cb(null, name);
+    }
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB for images
 });
 
 // Minimal chat models for server-side admin rendering
@@ -709,7 +743,7 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Partners', active: 'partners', body }));
 });
 
-router.post('/admin/partners', adminAuthMiddleware, upload.single('logoFile'), async (req: any, res) => {
+router.post('/admin/partners', adminAuthMiddleware, uploadLogos.single('logoFile'), async (req: any, res) => {
   const schema = z.object({
     name: z.string(),
     description: z.string().optional(),
@@ -728,7 +762,7 @@ router.post('/admin/partners', adminAuthMiddleware, upload.single('logoFile'), a
   res.redirect('/admin/partners');
 });
 
-router.post('/admin/partners/:id', adminAuthMiddleware, upload.single('logoFile'), async (req: any, res) => {
+router.post('/admin/partners/:id', adminAuthMiddleware, uploadLogos.single('logoFile'), async (req: any, res) => {
   const schema = z.object({
     name: z.string().optional(),
     description: z.string().optional(),
@@ -1173,9 +1207,11 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
     <tr>
       <td>${n._id}</td>
       <td>
-        <form method="post" action="/admin/news/${n._id}">
+        <form method="post" action="/admin/news/${n._id}" enctype="multipart/form-data">
           <input name="title" value="${(n.title || '').toString().replace(/"/g,'&quot;')}" />
-          <input name="imageUrl" placeholder="Image URL" value="${(n.imageUrl || '').toString().replace(/"/g,'&quot;')}" />
+          ${n.imageUrl ? `<div style="margin:8px 0;"><img src="${n.imageUrl}" style="max-width:200px;max-height:150px;border-radius:8px;" alt="Current image"/></div>` : ''}
+          <input type="file" name="imageFile" accept="image/*" />
+          ${n.imageUrl ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">Текущее изображение: ${n.imageUrl}</div>` : ''}
           <input name="publishedAt" type="datetime-local" value="${n.publishedAt ? new Date(n.publishedAt).toISOString().slice(0,16) : ''}" />
           <input name="order" type="number" value="${n.order || 0}" />
           <label><input type="checkbox" name="active" ${n.active ? 'checked' : ''}/> active</label>
@@ -1191,9 +1227,9 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
   const body = `
     <div class="card">
       <h2>News</h2>
-      <form method="post" action="/admin/news/create" class="form-row">
-        <input name="title" placeholder="Title" style="min-width:260px"/>
-        <input name="imageUrl" placeholder="Image URL"/>
+      <form method="post" action="/admin/news/create" enctype="multipart/form-data" class="form-row">
+        <input name="title" placeholder="Title" style="min-width:260px" required/>
+        <input type="file" name="imageFile" accept="image/*"/>
         <input name="publishedAt" type="datetime-local"/>
         <input name="order" type="number" placeholder="Order" value="0"/>
         <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" checked/> active</label>
@@ -1231,7 +1267,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
         <div style="font-size:12px;color:var(--muted);margin-top:4px;">${p.active ? '<span style="color:#10b981;">✓ Активна</span>' : '<span style="color:var(--muted);">✗ Неактивна</span>'}</div>
       </td>
       <td>
-        <form method="post" action="/admin/programs/${p._id}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+        <form method="post" action="/admin/programs/${p._id}" enctype="multipart/form-data" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
           <div class="input-group">
             <label class="required">Название программы</label>
             <input name="title" value="${(p.title || '').toString().replace(/"/g,'&quot;')}" placeholder="Введите название" required />
@@ -1272,8 +1308,10 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
             <input type="number" name="durationMonths" value="${p.durationMonths || 0}" placeholder="0" min="0" />
           </div>
           <div class="input-group">
-            <label>URL изображения</label>
-            <input name="imageUrl" value="${(p.imageUrl||'').toString().replace(/"/g,'&quot;')}" placeholder="https://example.com/image.jpg" />
+            <label>Изображение программы</label>
+            ${p.imageUrl ? `<div style="margin:8px 0;"><img src="${p.imageUrl}" style="max-width:200px;max-height:150px;border-radius:8px;" alt="Current image"/></div>` : ''}
+            <input type="file" name="imageFile" accept="image/*" />
+            ${p.imageUrl ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">Текущее изображение: ${p.imageUrl}</div>` : ''}
           </div>
           <div class="input-group">
             <label>Порядок сортировки</label>
@@ -1308,7 +1346,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           <a class="btn" href="/admin/programs">Reset</a>
         </form>
       </div>
-      <form method="post" action="/admin/programs/create" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+      <form method="post" action="/admin/programs/create" enctype="multipart/form-data" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
         <div class="input-group">
           <label class="required">Название программы</label>
           <input name="title" placeholder="Введите название" required />
@@ -1349,8 +1387,8 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           <input type="number" name="durationMonths" placeholder="0" min="0" value="0" />
         </div>
         <div class="input-group">
-          <label>URL изображения</label>
-          <input name="imageUrl" placeholder="https://example.com/image.jpg" />
+          <label>Изображение программы</label>
+          <input type="file" name="imageFile" accept="image/*" />
         </div>
         <div class="input-group">
           <label>Порядок сортировки</label>
@@ -1381,7 +1419,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Programs', active: 'programs', body }));
 });
 
-router.post('/admin/programs/create', adminAuthMiddleware, async (req, res) => {
+router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('imageFile'), async (req, res) => {
   const { Program } = await import('../models/Program.js');
   const schema = z.object({
     title: z.string().min(1),
@@ -1392,22 +1430,23 @@ router.post('/admin/programs/create', adminAuthMiddleware, async (req, res) => {
     universityId: z.string().optional(),
     tuition: z.coerce.number().optional().default(0),
     durationMonths: z.coerce.number().optional().default(0),
-    imageUrl: z.string().optional().default(''),
     active: z.string().optional(),
     order: z.coerce.number().optional().default(0),
     description: z.string().optional().default('')
   });
   const d = schema.parse(req.body);
+  const base = process.env.PUBLIC_BASE_URL || '';
+  const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
   await Program.create({
     title: d.title, slug: d.slug, language: d.language, level: d.level,
     university: d.university, universityId: d.universityId || undefined,
     tuition: d.tuition, durationMonths: d.durationMonths,
-    imageUrl: d.imageUrl, active: d.active === 'on', order: d.order, description: d.description || ''
+    imageUrl: imageUrl, active: d.active === 'on', order: d.order, description: d.description || ''
   });
   res.redirect('/admin/programs');
 });
 
-router.post('/admin/programs/:id', adminAuthMiddleware, async (req, res) => {
+router.post('/admin/programs/:id', adminAuthMiddleware, uploadImages.single('imageFile'), async (req, res) => {
   const { Program } = await import('../models/Program.js');
   const schema = z.object({
     title: z.string().optional(),
@@ -1419,7 +1458,6 @@ router.post('/admin/programs/:id', adminAuthMiddleware, async (req, res) => {
     universityId: z.string().optional(),
     tuition: z.coerce.number().optional(),
     durationMonths: z.coerce.number().optional(),
-    imageUrl: z.string().optional(),
     active: z.string().optional(),
     order: z.coerce.number().optional()
   });
@@ -1428,6 +1466,10 @@ router.post('/admin/programs/:id', adminAuthMiddleware, async (req, res) => {
   if ('active' in d) update.active = d.active === 'on';
   if (d.universityId === '') update.universityId = null;
   else if (d.universityId) update.universityId = d.universityId;
+  if (req.file) {
+    const base = process.env.PUBLIC_BASE_URL || '';
+    update.imageUrl = `${base}/uploads/images/${req.file.filename}`;
+  }
   await Program.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/programs');
 });
@@ -1437,19 +1479,20 @@ router.post('/admin/programs/:id/delete', adminAuthMiddleware, async (req, res) 
   await Program.deleteOne({ _id: req.params.id });
   res.redirect('/admin/programs');
 });
-router.post('/admin/news/create', adminAuthMiddleware, async (req, res) => {
+router.post('/admin/news/create', adminAuthMiddleware, uploadImages.single('imageFile'), async (req, res) => {
   const { News } = await import('../models/News.js');
   const schema = z.object({
     title: z.string().min(1),
-    imageUrl: z.string().optional().default(''),
     publishedAt: z.string().optional().default(''),
     order: z.coerce.number().optional().default(0),
     active: z.string().optional()
   });
   const data = schema.parse(req.body);
+  const base = process.env.PUBLIC_BASE_URL || '';
+  const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
   await News.create({
     title: data.title,
-    imageUrl: data.imageUrl,
+    imageUrl: imageUrl,
     publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
     order: data.order,
     active: data.active === 'on',
@@ -1458,11 +1501,10 @@ router.post('/admin/news/create', adminAuthMiddleware, async (req, res) => {
   res.redirect('/admin/news');
 });
 
-router.post('/admin/news/:id', adminAuthMiddleware, async (req, res) => {
+router.post('/admin/news/:id', adminAuthMiddleware, uploadImages.single('imageFile'), async (req, res) => {
   const { News } = await import('../models/News.js');
   const schema = z.object({
     title: z.string().optional(),
-    imageUrl: z.string().optional(),
     content: z.string().optional(),
     publishedAt: z.string().optional(),
     order: z.coerce.number().optional(),
@@ -1472,6 +1514,10 @@ router.post('/admin/news/:id', adminAuthMiddleware, async (req, res) => {
   const update: any = { ...data };
   if ('active' in data) update.active = data.active === 'on';
   if (data.publishedAt) update.publishedAt = new Date(data.publishedAt);
+  if (req.file) {
+    const base = process.env.PUBLIC_BASE_URL || '';
+    update.imageUrl = `${base}/uploads/images/${req.file.filename}`;
+  }
   await News.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/news');
 });
@@ -1490,9 +1536,11 @@ router.get('/admin/gallery', adminAuthMiddleware, async (_req, res) => {
     <tr>
       <td>${g._id}</td>
       <td>
-        <form method="post" action="/admin/gallery/${g._id}">
+        <form method="post" action="/admin/gallery/${g._id}" enctype="multipart/form-data">
           <input name="title" value="${(g.title || '').toString().replace(/"/g,'&quot;')}" placeholder="Title"/>
-          <input name="mediaUrl" placeholder="Media URL" value="${(g.mediaUrl || '').toString().replace(/"/g,'&quot;')}" />
+          ${g.mediaUrl ? `<div style="margin:8px 0;"><img src="${g.mediaUrl}" style="max-width:200px;max-height:150px;border-radius:8px;" alt="Current media"/></div>` : ''}
+          <input type="file" name="mediaFile" accept="image/*,video/*" />
+          ${g.mediaUrl ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">Текущий файл: ${g.mediaUrl}</div>` : ''}
           <select name="mediaType">
             <option value="photo" ${g.mediaType === 'photo' ? 'selected' : ''}>Photo</option>
             <option value="video" ${g.mediaType === 'video' ? 'selected' : ''}>Video</option>
@@ -1510,9 +1558,9 @@ router.get('/admin/gallery', adminAuthMiddleware, async (_req, res) => {
   const body = `
     <div class="card">
       <h2>Gallery</h2>
-      <form method="post" action="/admin/gallery/create" class="form-row">
-        <input name="title" placeholder="Title" style="min-width:200px"/>
-        <input name="mediaUrl" placeholder="Media URL"/>
+      <form method="post" action="/admin/gallery/create" enctype="multipart/form-data" class="form-row">
+        <input name="title" placeholder="Title" style="min-width:200px" required/>
+        <input type="file" name="mediaFile" accept="image/*,video/*" required/>
         <select name="mediaType">
           <option value="photo">Photo</option>
           <option value="video">Video</option>
@@ -1532,30 +1580,25 @@ router.get('/admin/gallery', adminAuthMiddleware, async (_req, res) => {
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Gallery', active: 'gallery', body }));
 });
 
-router.post('/admin/gallery/create', adminAuthMiddleware, async (req: any, res: any) => {
+router.post('/admin/gallery/create', adminAuthMiddleware, uploadMedia.single('mediaFile'), async (req: any, res: any) => {
   try {
     const { GalleryItem } = await import('../models/GalleryItem.js');
+    if (!req.file) {
+      return res.status(400).send('Media file is required. <a href="/admin/gallery">Go back</a>');
+    }
     const schema = z.object({
       title: z.string().min(1),
       description: z.string().optional().default(''),
-      mediaUrl: z.string().refine((val) => {
-        const trimmed = (val || '').trim();
-        if (trimmed === '') return false;
-        try {
-          new URL(trimmed);
-          return true;
-        } catch {
-          return false;
-        }
-      }, { message: 'Media URL is required and must be a valid URL' }),
       mediaType: z.enum(['photo', 'video']).optional().default('photo'),
       order: z.coerce.number().optional().default(0)
     });
     const data = schema.parse(req.body);
+    const base = process.env.PUBLIC_BASE_URL || '';
+    const mediaUrl = `${base}/uploads/media/${req.file.filename}`;
     await GalleryItem.create({
       title: data.title,
       description: data.description || '',
-      mediaUrl: data.mediaUrl.trim(),
+      mediaUrl: mediaUrl,
       mediaType: data.mediaType || 'photo',
       order: data.order || 0
     });
@@ -1569,20 +1612,11 @@ router.post('/admin/gallery/create', adminAuthMiddleware, async (req: any, res: 
   }
 });
 
-router.post('/admin/gallery/:id', adminAuthMiddleware, async (req: any, res: any) => {
+router.post('/admin/gallery/:id', adminAuthMiddleware, uploadMedia.single('mediaFile'), async (req: any, res: any) => {
   const { GalleryItem } = await import('../models/GalleryItem.js');
   const schema = z.object({
     title: z.string().min(1).optional(),
     description: z.string().optional(),
-    mediaUrl: z.string().optional().refine((val) => {
-      if (!val || val.trim() === '') return true;
-      try {
-        new URL(val.trim());
-        return true;
-      } catch {
-        return false;
-      }
-    }, { message: 'Invalid URL' }),
     mediaType: z.enum(['photo', 'video']).optional(),
     order: z.coerce.number().optional()
   });
@@ -1590,9 +1624,12 @@ router.post('/admin/gallery/:id', adminAuthMiddleware, async (req: any, res: any
   const update: any = {};
   if (parsed.title !== undefined) update.title = parsed.title;
   if (parsed.description !== undefined) update.description = parsed.description;
-  if (parsed.mediaUrl !== undefined) update.mediaUrl = parsed.mediaUrl.trim();
   if (parsed.mediaType !== undefined) update.mediaType = parsed.mediaType;
   if (parsed.order !== undefined) update.order = parsed.order;
+  if (req.file) {
+    const base = process.env.PUBLIC_BASE_URL || '';
+    update.mediaUrl = `${base}/uploads/media/${req.file.filename}`;
+  }
   await GalleryItem.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/gallery');
 });
@@ -1611,12 +1648,14 @@ router.get('/admin/universities', adminAuthMiddleware, async (_req, res) => {
     <tr>
       <td>${u._id}</td>
       <td>
-        <form method="post" action="/admin/universities/${u._id}">
+        <form method="post" action="/admin/universities/${u._id}" enctype="multipart/form-data">
           <input name="name" value="${(u.name || '').toString().replace(/"/g,'&quot;')}" placeholder="Name" style="min-width:200px"/>
           <input name="city" value="${(u.city || '').toString().replace(/"/g,'&quot;')}" placeholder="City"/>
           <input name="country" value="${(u.country || 'Russia').toString().replace(/"/g,'&quot;')}" placeholder="Country"/>
           <input name="website" value="${(u.website || '').toString().replace(/"/g,'&quot;')}" placeholder="Website URL"/>
-          <input name="logoUrl" value="${(u.logoUrl || '').toString().replace(/"/g,'&quot;')}" placeholder="Logo URL"/>
+          ${u.logoUrl ? `<div style="margin:8px 0;"><img src="${u.logoUrl}" style="max-width:100px;max-height:100px;border-radius:8px;" alt="Current logo"/></div>` : ''}
+          <input type="file" name="logoFile" accept="image/*" />
+          ${u.logoUrl ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">Текущий логотип: ${u.logoUrl}</div>` : ''}
           <input type="number" name="order" value="${u.order || 0}" placeholder="Order"/>
           <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" ${u.active ? 'checked' : ''}/> active</label>
           <textarea name="description" rows="2" placeholder="Description" style="width:100%">${(u.description || '').toString().replace(/</g,'&lt;')}</textarea>
@@ -1631,12 +1670,12 @@ router.get('/admin/universities', adminAuthMiddleware, async (_req, res) => {
   const body = `
     <div class="card">
       <h2>Universities</h2>
-      <form method="post" action="/admin/universities/create" class="form-row">
+      <form method="post" action="/admin/universities/create" enctype="multipart/form-data" class="form-row">
         <input name="name" placeholder="Name" style="min-width:200px"/>
         <input name="city" placeholder="City"/>
         <input name="country" placeholder="Country" value="Russia"/>
         <input name="website" placeholder="Website URL"/>
-        <input name="logoUrl" placeholder="Logo URL"/>
+        <input type="file" name="logoFile" accept="image/*" />
         <input type="number" name="order" placeholder="Order" value="0"/>
         <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" checked/> active</label>
         <textarea name="description" rows="2" placeholder="Description" style="width:100%"></textarea>
@@ -1653,7 +1692,7 @@ router.get('/admin/universities', adminAuthMiddleware, async (_req, res) => {
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Universities', active: 'universities', body }));
 });
 
-router.post('/admin/universities/create', adminAuthMiddleware, async (req: any, res: any) => {
+router.post('/admin/universities/create', adminAuthMiddleware, uploadLogos.single('logoFile'), async (req: any, res: any) => {
   const { University } = await import('../models/University.js');
   const schema = z.object({
     name: z.string().min(1),
@@ -1669,33 +1708,26 @@ router.post('/admin/universities/create', adminAuthMiddleware, async (req: any, 
         return false;
       }
     }, { message: 'Invalid URL' }),
-    logoUrl: z.string().optional().refine((val) => {
-      if (!val || val.trim() === '') return true;
-      try {
-        new URL(val.trim());
-        return true;
-      } catch {
-        return false;
-      }
-    }, { message: 'Invalid URL' }),
     active: z.string().optional(),
     order: z.coerce.number().optional().default(0)
   });
   const data = schema.parse(req.body);
+  const base = process.env.PUBLIC_BASE_URL || '';
+  const logoUrl = req.file ? `${base}/uploads/logos/${req.file.filename}` : undefined;
   await University.create({
     name: data.name,
     city: data.city || '',
     country: data.country || 'Russia',
     description: data.description || '',
     website: data.website && data.website.trim() ? data.website.trim() : undefined,
-    logoUrl: data.logoUrl && data.logoUrl.trim() ? data.logoUrl.trim() : undefined,
+    logoUrl: logoUrl,
     active: data.active === 'on',
     order: data.order || 0
   });
   res.redirect('/admin/universities');
 });
 
-router.post('/admin/universities/:id', adminAuthMiddleware, async (req: any, res: any) => {
+router.post('/admin/universities/:id', adminAuthMiddleware, uploadLogos.single('logoFile'), async (req: any, res: any) => {
   const { University } = await import('../models/University.js');
   const schema = z.object({
     name: z.string().min(1).optional(),
@@ -1703,15 +1735,6 @@ router.post('/admin/universities/:id', adminAuthMiddleware, async (req: any, res
     country: z.string().optional(),
     description: z.string().optional(),
     website: z.string().optional().refine((val) => {
-      if (!val || val.trim() === '') return true;
-      try {
-        new URL(val.trim());
-        return true;
-      } catch {
-        return false;
-      }
-    }, { message: 'Invalid URL' }),
-    logoUrl: z.string().optional().refine((val) => {
       if (!val || val.trim() === '') return true;
       try {
         new URL(val.trim());
@@ -1730,7 +1753,10 @@ router.post('/admin/universities/:id', adminAuthMiddleware, async (req: any, res
   if (parsed.country !== undefined) update.country = parsed.country;
   if (parsed.description !== undefined) update.description = parsed.description;
   if (parsed.website !== undefined) update.website = parsed.website && parsed.website.trim() ? parsed.website.trim() : undefined;
-  if (parsed.logoUrl !== undefined) update.logoUrl = parsed.logoUrl && parsed.logoUrl.trim() ? parsed.logoUrl.trim() : undefined;
+  if (req.file) {
+    const base = process.env.PUBLIC_BASE_URL || '';
+    update.logoUrl = `${base}/uploads/logos/${req.file.filename}`;
+  }
   if (parsed.active !== undefined) update.active = parsed.active === 'on';
   if (parsed.order !== undefined) update.order = parsed.order;
   await University.updateOne({ _id: req.params.id }, update);
