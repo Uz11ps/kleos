@@ -148,15 +148,18 @@ async function getAccessToken(): Promise<string | null> {
     // Создаем JWT для получения access token
     const now = Math.floor(Date.now() / 1000);
     
+    // Формируем правильный JWT payload для Google OAuth2
     const tokenPayload = {
-      iss: client_email,
-      scope: 'https://www.googleapis.com/auth/firebase.messaging',
-      aud: 'https://oauth2.googleapis.com/token',
-      exp: now + 3600,
-      iat: now
+      iss: client_email,  // Issuer - email из service account
+      sub: client_email,  // Subject - должен быть такой же как issuer
+      aud: 'https://oauth2.googleapis.com/token',  // Audience
+      exp: now + 3600,  // Expiration time (1 hour)
+      iat: now,  // Issued at time
+      scope: 'https://www.googleapis.com/auth/firebase.messaging'  // Scope для FCM
     };
     
     console.log(`[OAuth2] Signing JWT with algorithm RS256...`);
+    console.log(`[OAuth2] JWT payload:`, JSON.stringify(tokenPayload, null, 2));
     console.log(`[OAuth2] Private key starts with: ${formattedPrivateKey.substring(0, 50)}`);
     console.log(`[OAuth2] Private key ends with: ${formattedPrivateKey.substring(formattedPrivateKey.length - 50)}`);
     console.log(`[OAuth2] Private key length: ${formattedPrivateKey.length}, lines: ${formattedPrivateKey.split('\n').length}`);
@@ -165,6 +168,7 @@ async function getAccessToken(): Promise<string | null> {
     try {
       token = jwt.sign(tokenPayload, formattedPrivateKey, { algorithm: 'RS256' });
       console.log(`[OAuth2] JWT created successfully, length: ${token.length}`);
+      console.log(`[OAuth2] JWT preview: ${token.substring(0, 50)}...`);
     } catch (jwtError: any) {
       console.error(`[OAuth2] Error signing JWT:`, jwtError.message);
       console.error(`[OAuth2] JWT error details:`, jwtError);
