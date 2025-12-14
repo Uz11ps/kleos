@@ -228,7 +228,8 @@ router.post('/register', async (req, res) => {
     const verifyToken = crypto.randomBytes(32).toString('hex');
     const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     // userId присваивается только после верификации email
-    const user = await User.create({ fullName, email, passwordHash, emailVerifyToken: verifyToken, emailVerifyExpires: verifyExpires, emailVerified: false });
+    // При регистрации устанавливаем роль 'user' (после принятия admission станет 'student')
+    const user = await User.create({ fullName, email, passwordHash, role: 'user', emailVerifyToken: verifyToken, emailVerifyExpires: verifyExpires, emailVerified: false });
     const base = process.env.PUBLIC_BASE_URL || `https://${req.get('host')}`;
     const webLink = `${base}/auth/verify?token=${verifyToken}`;
     const appScheme = process.env.APP_DEEP_LINK_SCHEME || 'kleos';

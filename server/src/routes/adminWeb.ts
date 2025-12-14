@@ -520,6 +520,7 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
           <div class="input-group">
             <label class="required">Роль</label>
             <select name="role">
+              <option value="user"${u.role === 'user' ? ' selected' : ''}>Пользователь</option>
               <option value="student"${u.role === 'student' ? ' selected' : ''}>Студент</option>
               <option value="admin"${u.role === 'admin' ? ' selected' : ''}>Администратор</option>
             </select>
@@ -640,7 +641,7 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
 router.post('/admin/users/:id', adminAuthMiddleware, async (req: any, res: any) => {
   const schema = z.object({
     fullName: z.string().optional(),
-    role: z.enum(['student','admin']).optional(),
+    role: z.enum(['user','student','admin']).optional(),
     phone: z.string().optional(),
     course: z.string().optional(),
     speciality: z.string().optional(),
