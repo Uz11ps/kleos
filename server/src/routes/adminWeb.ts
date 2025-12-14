@@ -910,19 +910,32 @@ router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
 // Chats simple UI (uses public chats endpoints)
 router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
   const chats = await Chat.find().populate('userId', 'studentId fullName email').sort({ lastMessageAt: -1 }).limit(200).lean();
-  const items = await Promise.all(chats.map(async (c) => {
+  // Получаем все непрочитанные сообщения одним запросом
+  const chatIds = chats.map(c => (c as any)._id);
+  let unreadCounts: Record<string, number> = {};
+  try {
+    const unreadMessages = await Message.find({ 
+      chatId: { $in: chatIds }, 
+      senderRole: 'student', 
+      isReadByAdmin: false 
+    }).lean();
+    for (const msg of unreadMessages) {
+      const chatId = (msg as any).chatId?.toString();
+      if (chatId) {
+        unreadCounts[chatId] = (unreadCounts[chatId] || 0) + 1;
+      }
+    }
+  } catch (e) {
+    // Игнорируем ошибки
+  }
+  const items = chats.map((c) => {
+    const chatIdStr = (c as any)._id.toString();
     const user = (c as any).userId;
     const studentId = user?.studentId || '';
-    const displayId = studentId || (user?._id ? user._id.toString().slice(-6) : c._id.toString().slice(-6));
+    const displayId = studentId || (user?._id ? user._id.toString().slice(-6) : chatIdStr.slice(-6));
     const userName = user?.fullName || 'Гость';
     const userEmail = user?.email || '';
-    // Проверяем наличие непрочитанных сообщений от студента
-    let unreadCount = 0;
-    try {
-      unreadCount = await Message.countDocuments({ chatId: (c as any)._id, senderRole: 'student', isReadByAdmin: false });
-    } catch (e) {
-      // Игнорируем ошибки
-    }
+    const unreadCount = unreadCounts[chatIdStr] || 0;
     const badgeHtml = unreadCount > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:600;margin-left:8px;">${unreadCount}</span>` : '';
     return `<div class="chat-item" style="padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--card);transition:all 0.2s ease;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -933,10 +946,10 @@ router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
           </div>
           <div style="color:var(--text);margin-top:4px;">${userName}${userEmail ? ` (${userEmail})` : ''}</div>
         </div>
-        <a href="/admin/chats/${c._id}" class="btn primary" style="text-decoration:none;">Открыть</a>
+        <a href="/admin/chats/${chatIdStr}" class="btn primary" style="text-decoration:none;">Открыть</a>
       </div>
     </div>`;
-  }));
+  });
   const body = `
     <div class="card">
       <h2>💬 Чаты поддержки</h2>
