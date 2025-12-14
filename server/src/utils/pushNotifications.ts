@@ -166,11 +166,44 @@ async function sendPushNotificationOAuth2(fcmToken: string, title: string, body:
     return false;
   }
   
-  console.log('Access token obtained successfully');
+  console.log('Access token obtained successfully, length:', accessToken.length);
 
   try {
     // Используем новый FCM v1 API endpoint согласно документации Firebase
     const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+    
+    const messagePayload = {
+      message: {
+        token: fcmToken,
+        notification: {
+          title,
+          body
+        },
+        data: data || {},
+        android: {
+          priority: 'high' as const,
+          notification: {
+            sound: 'default',
+            channelId: 'default'
+          }
+        },
+        apns: {
+          headers: {
+            'apns-priority': '10'
+          },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1
+            }
+          }
+        }
+      }
+    };
+    
+    console.log(`[FCM] Sending request to: ${url}`);
+    console.log(`[FCM] Token length: ${fcmToken.length}, preview: ${fcmToken.substring(0, 30)}...`);
+    console.log(`[FCM] Payload: ${JSON.stringify(messagePayload).substring(0, 200)}...`);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -178,71 +211,60 @@ async function sendPushNotificationOAuth2(fcmToken: string, title: string, body:
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
       },
-      body: JSON.stringify({
-        message: {
-          token: fcmToken,
-          notification: {
-            title,
-            body
-          },
-          data: data || {},
-          android: {
-            priority: 'high',
-            notification: {
-              sound: 'default',
-              channelId: 'default'
-            }
-          },
-          apns: {
-            headers: {
-              'apns-priority': '10'
-            },
-            payload: {
-              aps: {
-                sound: 'default',
-                badge: 1
-              }
-            }
-          }
-        }
-      })
+      body: JSON.stringify(messagePayload)
     });
 
+    const responseText = await response.text();
+    console.log(`FCM API response status: ${response.status} ${response.statusText}`);
+    console.log(`FCM API response body: ${responseText.substring(0, 500)}`);
+    
     if (!response.ok) {
-      const text = await response.text();
       console.error(`FCM v1 API error: ${response.status} ${response.statusText}`);
-      console.error('Response body:', text);
+      console.error('Full response body:', responseText);
       
       // Если токен невалидный, удаляем его из базы
-      if (response.status === 404 || response.status === 400) {
+      if (response.status === 404 || response.status === 400 || response.status === 403) {
         try {
-          const errorData = JSON.parse(text);
-          const errorMessage = errorData.error?.message || '';
-          console.error('FCM error details:', errorMessage);
+          const errorData = JSON.parse(responseText);
+          const errorMessage = errorData.error?.message || errorData.error || '';
+          const errorCode = errorData.error?.code || '';
+          console.error('FCM error details:', { message: errorMessage, code: errorCode });
           
-          if (errorMessage.includes('Invalid') || errorMessage.includes('not found') || errorMessage.includes('registration')) {
-            console.log(`Removing invalid FCM token from database`);
+          if (errorMessage.includes('Invalid') || 
+              errorMessage.includes('not found') || 
+              errorMessage.includes('registration') ||
+              errorMessage.includes('token') ||
+              errorCode === 'INVALID_ARGUMENT' ||
+              errorCode === 'NOT_FOUND') {
+            console.log(`Removing invalid FCM token from database (error: ${errorMessage})`);
             await User.updateOne({ fcmToken }, { $unset: { fcmToken: 1 } });
           }
         } catch (e) {
           console.error('Failed to parse error response:', e);
+          console.error('Raw error response:', responseText);
         }
       }
       
       return false;
     }
 
-    const result = await response.json();
-    console.log('FCM v1 API response:', JSON.stringify(result));
-    
-    if (result.name) {
-      // Успешная отправка (v1 API возвращает объект с полем 'name')
-      console.log('Push notification sent successfully, message name:', result.name);
-      return true;
-    }
+    try {
+      const result = JSON.parse(responseText);
+      console.log('FCM v1 API success response:', JSON.stringify(result));
+      
+      if (result.name) {
+        // Успешная отправка (v1 API возвращает объект с полем 'name')
+        console.log('✅ Push notification sent successfully, message name:', result.name);
+        return true;
+      }
 
-    console.warn('Unexpected FCM response format:', result);
-    return false;
+      console.warn('Unexpected FCM response format:', result);
+      return false;
+    } catch (e) {
+      console.error('Failed to parse success response:', e);
+      console.error('Raw success response:', responseText);
+      return false;
+    }
   } catch (error: any) {
     console.error('Error sending push notification (OAuth2):', error);
     return false;
