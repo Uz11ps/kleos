@@ -82,23 +82,44 @@ async function getAccessToken(): Promise<string | null> {
     const path = await import('path');
     const serviceAccountPath = process.env.FCM_SERVICE_ACCOUNT_PATH || path.join(process.cwd(), 'firebase-service-account.json');
     
-    // Пробуем загрузить из файла
+    // ПРИОРИТЕТ: Сначала пробуем загрузить из файла (более надежно)
     if (fs.existsSync(serviceAccountPath)) {
       console.log(`[OAuth2] Loading service account from file using GoogleAuth: ${serviceAccountPath}`);
-      auth = new GoogleAuth({
-        keyFile: serviceAccountPath,
-        scopes: ['https://www.googleapis.com/auth/firebase.messaging']
-      });
-    } else {
-      // Пробуем из переменной окружения
+      try {
+        auth = new GoogleAuth({
+          keyFile: serviceAccountPath,
+          scopes: ['https://www.googleapis.com/auth/firebase.messaging']
+        });
+        console.log(`[OAuth2] GoogleAuth initialized successfully from file`);
+      } catch (fileError: any) {
+        console.error(`[OAuth2] Error initializing GoogleAuth from file:`, fileError.message);
+        // Продолжаем попытку с переменной окружения
+      }
+    }
+    
+    // Fallback: пробуем из переменной окружения, если файл не найден или не сработал
+    if (!auth) {
       const serviceAccountJson = process.env.FCM_SERVICE_ACCOUNT_JSON;
       if (serviceAccountJson) {
         console.log(`[OAuth2] Loading service account from environment variable using GoogleAuth`);
-        const serviceAccount = JSON.parse(serviceAccountJson);
-        auth = new GoogleAuth({
-          credentials: serviceAccount,
-          scopes: ['https://www.googleapis.com/auth/firebase.messaging']
-        });
+        try {
+          const serviceAccount = JSON.parse(serviceAccountJson);
+          // Проверяем, что ключ правильно отформатирован
+          if (serviceAccount.private_key) {
+            // Убеждаемся, что ключ имеет правильные переносы строк
+            if (!serviceAccount.private_key.includes('\n') && serviceAccount.private_key.includes('\\n')) {
+              console.log(`[OAuth2] Fixing escaped newlines in private_key from environment variable`);
+              serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+            }
+          }
+          auth = new GoogleAuth({
+            credentials: serviceAccount,
+            scopes: ['https://www.googleapis.com/auth/firebase.messaging']
+          });
+          console.log(`[OAuth2] GoogleAuth initialized successfully from environment variable`);
+        } catch (envError: any) {
+          console.error(`[OAuth2] Error initializing GoogleAuth from environment variable:`, envError.message);
+        }
       }
     }
     
