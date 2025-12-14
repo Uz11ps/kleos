@@ -340,6 +340,7 @@ async function adminLayout(opts: {
           ${navLink('/admin/i18n','I18n','i18n', undefined, '🌐')}
           ${navLink('/admin/news','News','news', undefined, '📰')}
           ${navLink('/admin/gallery','Gallery','gallery', undefined, '🖼️')}
+          ${navLink('/admin/universities','Universities','universities', undefined, '🏛️')}
         </nav>
         <div class="logout-section">
           <a class="logout-link" href="/admin/logout">
@@ -441,11 +442,12 @@ router.get('/admin/logout', (req, res) => {
 router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
   const users = await User.find().sort({ createdAt: -1 }).lean();
   const rows = users.map(u => {
-    const userId = (u as any).userId || 0;
+    const studentId = (u as any).studentId || '';
+    const displayId = studentId || u._id.toString().slice(-6);
     return `
     <tr>
       <td style="vertical-align:top;padding-top:20px;">
-        <div style="font-weight:600;color:var(--accent);font-size:18px;">ID: ${userId}</div>
+        <div style="font-weight:600;color:var(--accent);font-size:18px;">ID: ${displayId}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px;">${u._id}</div>
       </td>
       <td>
@@ -750,7 +752,8 @@ router.post('/admin/partners/:id/delete', adminAuthMiddleware, async (req, res) 
 // Admissions UI
 router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
   const showAll = req.query.all === 'true';
-  const filter = showAll ? {} : { $or: [{ status: { $in: ['new', 'processing', null] } }, { status: { $exists: false } }] };
+  // По умолчанию показываем все заявки
+  const filter = showAll ? {} : {};
   const list = await Admission.find(filter).sort({ createdAt: -1 }).lean();
   const rows = list.map(a => {
     const status = a.status || 'new';
@@ -814,8 +817,8 @@ router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
         <h2 style="margin:0">Admissions</h2>
         <div>
-          <a class="btn ${showAll ? '' : 'primary'}" href="/admin/admissions">Новые</a>
-          <a class="btn ${showAll ? 'primary' : ''}" href="/admin/admissions?all=true" style="margin-left:8px">Все</a>
+          <a class="btn ${showAll ? 'primary' : ''}" href="/admin/admissions?all=true">Все</a>
+          <a class="btn ${showAll ? '' : 'primary'}" href="/admin/admissions" style="margin-left:8px">Новые</a>
         </div>
       </div>
       <div class="table-wrap" style="margin-top:12px">
@@ -905,26 +908,38 @@ router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
 
 // Chats simple UI (uses public chats endpoints)
 router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
-  const chats = await Chat.find().populate('userId', 'userId fullName email').sort({ lastMessageAt: -1 }).limit(200).lean();
-  const items = chats.map(c => {
+  const chats = await Chat.find().populate('userId', 'studentId fullName email').sort({ lastMessageAt: -1 }).limit(200).lean();
+  const items = await Promise.all(chats.map(async (c) => {
     const user = (c as any).userId;
-    const userId = user?.userId || 0; // ID пользователя или 0 для гостей
+    const studentId = user?.studentId || '';
+    const displayId = studentId || (user?._id ? user._id.toString().slice(-6) : c._id.toString().slice(-6));
     const userName = user?.fullName || 'Гость';
     const userEmail = user?.email || '';
+    // Проверяем наличие непрочитанных сообщений от студента
+    let unreadCount = 0;
+    try {
+      unreadCount = await Message.countDocuments({ chatId: c._id, senderRole: 'student', isReadByAdmin: false });
+    } catch (e) {
+      // Игнорируем ошибки
+    }
+    const badgeHtml = unreadCount > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:600;margin-left:8px;">${unreadCount}</span>` : '';
     return `<div class="chat-item" style="padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--card);transition:all 0.2s ease;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-weight:600;color:var(--accent);font-size:16px;">ID: ${userId}</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-weight:600;color:var(--accent);font-size:16px;">ID: ${displayId}</div>
+            ${badgeHtml}
+          </div>
           <div style="color:var(--text);margin-top:4px;">${userName}${userEmail ? ` (${userEmail})` : ''}</div>
         </div>
         <a href="/admin/chats/${c._id}" class="btn primary" style="text-decoration:none;">Открыть</a>
       </div>
     </div>`;
-  }).join('');
+  }));
   const body = `
     <div class="card">
       <h2>💬 Чаты поддержки</h2>
-      <div style="margin-top:16px">${items || '<div class="muted" style="padding:20px;text-align:center;">Нет активных чатов</div>'}</div>
+      <div style="margin-top:16px">${items.length > 0 ? items.join('') : '<div class="muted" style="padding:20px;text-align:center;">Нет активных чатов</div>'}</div>
     </div>
   `;
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
@@ -932,10 +947,11 @@ router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
 
 router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
   const chatId = req.params.id;
-  const chat = await Chat.findById(chatId).populate('userId', 'userId fullName email').lean();
+  const chat = await Chat.findById(chatId).populate('userId', 'studentId fullName email').lean();
   if (!chat) return res.status(404).send('Chat not found');
   const user = (chat as any).userId;
-  const userId = user?.userId || 0;
+  const studentId = user?.studentId || '';
+  const displayId = studentId || (user?._id ? user._id.toString().slice(-6) : chatId.slice(-6));
   const userName = user?.fullName || 'Гость';
   const userEmail = user?.email || '';
   
@@ -955,7 +971,7 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
     <div class="card">
       <div style="margin-bottom:16px;"><a href="/admin/chats" class="btn">&larr; Назад к списку</a></div>
       <div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;">
-        <div style="font-size:20px;font-weight:600;color:var(--accent);margin-bottom:8px;">ID пользователя: ${userId}</div>
+        <div style="font-size:20px;font-weight:600;color:var(--accent);margin-bottom:8px;">ID пользователя: ${displayId}</div>
         <div style="color:var(--text);margin-bottom:4px;">Имя: ${userName}</div>
         ${userEmail ? `<div style="color:var(--muted);">Email: ${userEmail}</div>` : ''}
       </div>
@@ -976,7 +992,7 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
       });
     </script>
   `;
-  sendAdminResponse(res, await adminLayout({ title: `Kleos Admin - Chat (ID: ${userId})`, active: 'chats', body }));
+  sendAdminResponse(res, await adminLayout({ title: `Kleos Admin - Chat (ID: ${displayId})`, active: 'chats', body }));
 });
 
 router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
