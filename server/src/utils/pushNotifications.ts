@@ -107,25 +107,33 @@ async function getAccessToken(): Promise<string | null> {
   }
 
   try {
-    const { private_key, client_email } = serviceAccount;
+    const { private_key, client_email, project_id } = serviceAccount;
+    
+    if (!private_key || !client_email) {
+      console.error('[OAuth2] Service account missing required fields: private_key or client_email');
+      return null;
+    }
+    
+    console.log(`[OAuth2] Creating JWT for client_email: ${client_email}`);
     
     // Создаем JWT для получения access token
     const jwt = await import('jsonwebtoken');
     const now = Math.floor(Date.now() / 1000);
     
-    const token = jwt.sign(
-      {
-        iss: client_email,
-        scope: 'https://www.googleapis.com/auth/firebase.messaging',
-        aud: 'https://oauth2.googleapis.com/token',
-        exp: now + 3600,
-        iat: now
-      },
-      private_key,
-      { algorithm: 'RS256' }
-    );
+    const tokenPayload = {
+      iss: client_email,
+      scope: 'https://www.googleapis.com/auth/firebase.messaging',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600,
+      iat: now
+    };
+    
+    console.log(`[OAuth2] Signing JWT with algorithm RS256...`);
+    const token = jwt.sign(tokenPayload, private_key, { algorithm: 'RS256' });
+    console.log(`[OAuth2] JWT created, length: ${token.length}`);
 
     // Обмениваем JWT на access token
+    console.log(`[OAuth2] Exchanging JWT for access token...`);
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -135,16 +143,32 @@ async function getAccessToken(): Promise<string | null> {
       })
     });
 
+    const responseText = await response.text();
+    console.log(`[OAuth2] Token exchange response: ${response.status} ${response.statusText}`);
+    
     if (!response.ok) {
-      const text = await response.text();
-      console.error('Failed to get access token:', text);
+      console.error(`[OAuth2] Failed to get access token: ${response.status}`);
+      console.error(`[OAuth2] Response body: ${responseText}`);
       return null;
     }
 
-    const result = await response.json();
-    return result.access_token;
+    try {
+      const result = JSON.parse(responseText);
+      if (!result.access_token) {
+        console.error('[OAuth2] Access token not found in response:', result);
+        return null;
+      }
+      
+      console.log(`[OAuth2] Access token obtained successfully, length: ${result.access_token.length}`);
+      return result.access_token;
+    } catch (e: any) {
+      console.error('[OAuth2] Failed to parse token response:', e.message);
+      console.error('[OAuth2] Raw response:', responseText.substring(0, 500));
+      return null;
+    }
   } catch (error: any) {
-    console.error('Error getting access token:', error);
+    console.error('[OAuth2] Error getting access token:', error.message);
+    console.error('[OAuth2] Error stack:', error.stack);
     return null;
   }
 }
