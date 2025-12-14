@@ -1,4 +1,5 @@
 import { User } from '../models/User.js';
+import jwt from 'jsonwebtoken';
 
 /**
  * Отправка push-уведомления через Firebase Cloud Messaging (FCM)
@@ -117,7 +118,6 @@ async function getAccessToken(): Promise<string | null> {
     console.log(`[OAuth2] Creating JWT for client_email: ${client_email}`);
     
     // Создаем JWT для получения access token
-    const jwt = await import('jsonwebtoken');
     const now = Math.floor(Date.now() / 1000);
     
     const tokenPayload = {
