@@ -119,7 +119,31 @@ async function getAccessToken(): Promise<string | null> {
     
     // Обрабатываем private_key - заменяем экранированные символы \n на реальные переносы строк
     // В JSON файле ключ может быть сохранен как "-----BEGIN PRIVATE KEY-----\\n..."
-    const formattedPrivateKey = private_key.replace(/\\n/g, '\n');
+    let formattedPrivateKey = private_key;
+    
+    // Проверяем, есть ли экранированные символы (двойной обратный слэш + n)
+    if (private_key.includes('\\n')) {
+      console.log(`[OAuth2] Found escaped newlines (\\n), replacing...`);
+      formattedPrivateKey = private_key.replace(/\\n/g, '\n');
+    } else if (private_key.includes('\n')) {
+      console.log(`[OAuth2] Private key already has real newlines`);
+    } else {
+      console.warn(`[OAuth2] Private key has no newlines - this might be a problem`);
+    }
+    
+    // Убираем лишние пробелы в начале и конце
+    formattedPrivateKey = formattedPrivateKey.trim();
+    
+    // Проверяем формат ключа
+    if (!formattedPrivateKey.includes('BEGIN PRIVATE KEY') && !formattedPrivateKey.includes('BEGIN RSA PRIVATE KEY')) {
+      console.error(`[OAuth2] Invalid private key format - missing BEGIN marker`);
+      return null;
+    }
+    
+    if (!formattedPrivateKey.includes('END PRIVATE KEY') && !formattedPrivateKey.includes('END RSA PRIVATE KEY')) {
+      console.error(`[OAuth2] Invalid private key format - missing END marker`);
+      return null;
+    }
     
     // Создаем JWT для получения access token
     const now = Math.floor(Date.now() / 1000);
@@ -133,9 +157,19 @@ async function getAccessToken(): Promise<string | null> {
     };
     
     console.log(`[OAuth2] Signing JWT with algorithm RS256...`);
-    console.log(`[OAuth2] Private key preview: ${formattedPrivateKey.substring(0, 50)}...`);
+    console.log(`[OAuth2] Private key starts with: ${formattedPrivateKey.substring(0, 50)}`);
+    console.log(`[OAuth2] Private key ends with: ${formattedPrivateKey.substring(formattedPrivateKey.length - 50)}`);
+    console.log(`[OAuth2] Private key length: ${formattedPrivateKey.length}, lines: ${formattedPrivateKey.split('\n').length}`);
     
-    const token = jwt.sign(tokenPayload, formattedPrivateKey, { algorithm: 'RS256' });
+    let token: string;
+    try {
+      token = jwt.sign(tokenPayload, formattedPrivateKey, { algorithm: 'RS256' });
+      console.log(`[OAuth2] JWT created successfully, length: ${token.length}`);
+    } catch (jwtError: any) {
+      console.error(`[OAuth2] Error signing JWT:`, jwtError.message);
+      console.error(`[OAuth2] JWT error details:`, jwtError);
+      return null;
+    }
     console.log(`[OAuth2] JWT created, length: ${token.length}`);
 
     // Обмениваем JWT на access token
@@ -151,10 +185,20 @@ async function getAccessToken(): Promise<string | null> {
 
     const responseText = await response.text();
     console.log(`[OAuth2] Token exchange response: ${response.status} ${response.statusText}`);
+    console.log(`[OAuth2] Response body: ${responseText}`);
     
     if (!response.ok) {
       console.error(`[OAuth2] Failed to get access token: ${response.status}`);
-      console.error(`[OAuth2] Response body: ${responseText}`);
+      console.error(`[OAuth2] Full error response: ${responseText}`);
+      
+      // Попробуем распарсить ошибку для более детальной информации
+      try {
+        const errorData = JSON.parse(responseText);
+        console.error(`[OAuth2] Error details:`, errorData);
+      } catch (e) {
+        // Игнорируем ошибки парсинга
+      }
+      
       return null;
     }
 
