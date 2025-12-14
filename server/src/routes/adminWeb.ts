@@ -514,7 +514,7 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
             <button class="btn primary" type="submit">💾 Сохранить изменения</button>
           </div>
         </form>
-        <form method="post" action="/admin/users/${u._id}/delete" onsubmit="return confirm('Вы уверены, что хотите удалить этого пользователя?');" style="margin-top:8px;">
+        <form method="post" action="/admin/users/${u._id}/delete" onsubmit="return confirm(&quot;Вы уверены, что хотите удалить этого пользователя?&quot;);" style="margin-top:8px;">
           <button class="btn danger" type="submit">🗑️ Удалить</button>
         </form>
       </td>
@@ -1620,16 +1620,41 @@ router.post('/admin/universities/create', adminAuthMiddleware, async (req: any, 
   const { University } = await import('../models/University.js');
   const schema = z.object({
     name: z.string().min(1),
-    city: z.string().optional(),
+    city: z.string().optional().default(''),
     country: z.string().optional().default('Russia'),
-    description: z.string().optional(),
-    website: z.string().url().optional(),
-    logoUrl: z.string().url().optional(),
-    active: z.coerce.boolean().optional().default(true),
+    description: z.string().optional().default(''),
+    website: z.string().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      try {
+        new URL(val.trim());
+        return true;
+      } catch {
+        return false;
+      }
+    }, { message: 'Invalid URL' }),
+    logoUrl: z.string().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      try {
+        new URL(val.trim());
+        return true;
+      } catch {
+        return false;
+      }
+    }, { message: 'Invalid URL' }),
+    active: z.string().optional(),
     order: z.coerce.number().optional().default(0)
   });
   const data = schema.parse(req.body);
-  await University.create(data);
+  await University.create({
+    name: data.name,
+    city: data.city || '',
+    country: data.country || 'Russia',
+    description: data.description || '',
+    website: data.website && data.website.trim() ? data.website.trim() : undefined,
+    logoUrl: data.logoUrl && data.logoUrl.trim() ? data.logoUrl.trim() : undefined,
+    active: data.active === 'on',
+    order: data.order || 0
+  });
   res.redirect('/admin/universities');
 });
 
@@ -1640,12 +1665,37 @@ router.post('/admin/universities/:id', adminAuthMiddleware, async (req: any, res
     city: z.string().optional(),
     country: z.string().optional(),
     description: z.string().optional(),
-    website: z.string().url().optional(),
-    logoUrl: z.string().url().optional(),
-    active: z.coerce.boolean().optional(),
+    website: z.string().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      try {
+        new URL(val.trim());
+        return true;
+      } catch {
+        return false;
+      }
+    }, { message: 'Invalid URL' }),
+    logoUrl: z.string().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      try {
+        new URL(val.trim());
+        return true;
+      } catch {
+        return false;
+      }
+    }, { message: 'Invalid URL' }),
+    active: z.string().optional(),
     order: z.coerce.number().optional()
   });
-  const update = schema.parse(req.body);
+  const parsed = schema.parse(req.body);
+  const update: any = {};
+  if (parsed.name !== undefined) update.name = parsed.name;
+  if (parsed.city !== undefined) update.city = parsed.city;
+  if (parsed.country !== undefined) update.country = parsed.country;
+  if (parsed.description !== undefined) update.description = parsed.description;
+  if (parsed.website !== undefined) update.website = parsed.website && parsed.website.trim() ? parsed.website.trim() : undefined;
+  if (parsed.logoUrl !== undefined) update.logoUrl = parsed.logoUrl && parsed.logoUrl.trim() ? parsed.logoUrl.trim() : undefined;
+  if (parsed.active !== undefined) update.active = parsed.active === 'on';
+  if (parsed.order !== undefined) update.order = parsed.order;
   await University.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/universities');
 });
