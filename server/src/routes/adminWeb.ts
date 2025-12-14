@@ -1477,6 +1477,12 @@ router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('
       return res.status(400).send('Выбранный университет не найден. <a href="/admin/programs">Вернуться назад</a>');
     }
     
+    // Проверяем, что slug уникален
+    const existingProgram = await Program.findOne({ slug: d.slug });
+    if (existingProgram) {
+      return res.status(400).send(`Программа с slug "${d.slug}" уже существует. Пожалуйста, используйте другой slug. <a href="/admin/programs">Вернуться назад</a>`);
+    }
+    
     const base = process.env.PUBLIC_BASE_URL || '';
     const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
     await Program.create({
@@ -1490,6 +1496,11 @@ router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('
     if (e instanceof ZodError) {
       const errors = e.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
       return res.status(400).send(`Ошибка валидации: ${errors}. <a href="/admin/programs">Вернуться назад</a>`);
+    }
+    // Обработка ошибок дублирования MongoDB
+    if (e.code === 11000) {
+      const field = Object.keys(e.keyPattern || {})[0] || 'slug';
+      return res.status(400).send(`Программа с таким ${field === 'slug' ? 'slug' : field} уже существует. Пожалуйста, используйте другое значение. <a href="/admin/programs">Вернуться назад</a>`);
     }
     throw e;
   }
