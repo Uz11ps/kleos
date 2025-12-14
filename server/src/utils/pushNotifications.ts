@@ -246,9 +246,14 @@ export async function sendPushToUser(userId: string, title: string, body: string
  * Отправка push-уведомления всем пользователям с FCM токенами
  */
 export async function sendPushToAll(title: string, body: string, data?: Record<string, string>): Promise<number> {
-  const users = await User.find({ fcmToken: { $exists: true, $ne: null } }).select('fcmToken').lean();
+  const users = await User.find({ fcmToken: { $exists: true, $ne: null, $ne: '' } }).select('fcmToken email').lean();
+  console.log(`Found ${users.length} users with FCM tokens`);
   if (users.length === 0) {
-    console.log('No users with FCM tokens found');
+    console.log('No users with FCM tokens found. Users need to login and have FCM token registered.');
+    // Выводим информацию о пользователях без токенов для отладки
+    const totalUsers = await User.countDocuments();
+    const usersWithoutTokens = await User.countDocuments({ $or: [{ fcmToken: { $exists: false } }, { fcmToken: null }, { fcmToken: '' }] });
+    console.log(`Total users: ${totalUsers}, Users without FCM tokens: ${usersWithoutTokens}`);
     return 0;
   }
 

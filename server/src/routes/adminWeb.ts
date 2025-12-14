@@ -1292,7 +1292,14 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
           });
           const result = await response.json();
           if (result.ok) {
-            alert('Уведомление отправлено успешно! Получено пользователей: ' + result.count);
+            const message = 'Уведомление отправлено успешно!\\n' +
+              'Отправлено: ' + result.count + '\\n' +
+              'Всего пользователей с токенами: ' + (result.totalUsersWithTokens || 0);
+            alert(message);
+            if (result.count === 0 && result.totalUsersWithTokens === 0) {
+              alert('Внимание: У пользователей нет сохраненных FCM токенов.\\n' +
+                'Пользователи должны войти в приложение, чтобы токен был отправлен на сервер.');
+            }
           } else {
             alert('Ошибка отправки: ' + (result.error || 'unknown'));
           }
@@ -1688,6 +1695,7 @@ router.post('/admin/news/:id/send-notification', adminAuthMiddleware, async (req
   try {
     const { News } = await import('../models/News.js');
     const { sendPushToAll } = await import('../utils/pushNotifications.js');
+    const { User } = await import('../models/User.js');
     const news = await News.findById(req.params.id);
     if (!news) {
       return res.status(404).json({ ok: false, error: 'News not found' });
@@ -1695,12 +1703,18 @@ router.post('/admin/news/:id/send-notification', adminAuthMiddleware, async (req
     if (!news.active) {
       return res.status(400).json({ ok: false, error: 'News is not active' });
     }
+    
+    // Проверяем количество пользователей с токенами перед отправкой
+    const usersWithTokens = await User.countDocuments({ fcmToken: { $exists: true, $ne: null, $ne: '' } });
+    console.log(`Sending notification to ${usersWithTokens} users with FCM tokens`);
+    
     const count = await sendPushToAll(
       'Новая новость',
       news.title,
       { newsId: news._id.toString(), type: 'news' }
     );
-    res.json({ ok: true, count });
+    
+    res.json({ ok: true, count, totalUsersWithTokens: usersWithTokens });
   } catch (e: any) {
     console.error('Error sending notification:', e);
     res.status(500).json({ ok: false, error: e?.message || 'unknown' });

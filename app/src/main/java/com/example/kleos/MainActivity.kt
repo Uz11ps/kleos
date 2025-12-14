@@ -112,6 +112,9 @@ class MainActivity : AppCompatActivity() {
         
         // Загружаем профиль пользователя, если он залогинен, и обновляем видимость меню
         if (sessionManager.isLoggedIn()) {
+            // Отправляем FCM токен на сервер (если еще не отправлен)
+            com.example.kleos.utils.FcmTokenManager.registerToken(this)
+            
             lifecycleScope.launch {
                 runCatching {
                     val profile = ProfileRepository().getProfile()

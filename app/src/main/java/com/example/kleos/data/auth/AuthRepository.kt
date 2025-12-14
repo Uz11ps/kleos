@@ -56,6 +56,8 @@ interface AuthRepository {
             sessionManager.saveToken(resp.token)
             sessionManager.saveUser(resp.user.fullName, resp.user.email)
             sessionManager.saveRole(resp.user.role)
+            // Отправляем FCM токен после успешного логина
+            com.example.kleos.utils.FcmTokenManager.registerToken(context)
             sessionManager.getCurrentUser()!!
         }
 
