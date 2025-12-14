@@ -129,15 +129,22 @@ async function getAccessToken(): Promise<string | null> {
     }
     
     console.log(`[OAuth2] Getting access token using GoogleAuth...`);
+    console.log(`[OAuth2] Server time: ${new Date().toISOString()}`);
+    
     const client = await auth.getClient();
+    
+    // Проверяем тип клиента
+    console.log(`[OAuth2] Client type: ${client.constructor.name}`);
+    
     const accessToken = await client.getAccessToken();
     
     if (!accessToken.token) {
       console.error('[OAuth2] Failed to get access token - token is empty');
+      console.error('[OAuth2] Access token response:', accessToken);
       return null;
     }
     
-    console.log(`[OAuth2] Access token obtained successfully using GoogleAuth, length: ${accessToken.token.length}`);
+    console.log(`[OAuth2] ✅ Access token obtained successfully using GoogleAuth, length: ${accessToken.token.length}`);
     return accessToken.token;
   } catch (error: any) {
     console.error('[OAuth2] Error getting access token with GoogleAuth:', error.message);
