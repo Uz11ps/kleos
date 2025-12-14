@@ -2,7 +2,7 @@ import { Router } from 'express';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import { Partner } from '../models/Partner.js';
 import { Admission } from '../models/Admission.js';
 import chatsRoutes from './chats.js';
@@ -1533,31 +1533,40 @@ router.get('/admin/gallery', adminAuthMiddleware, async (_req, res) => {
 });
 
 router.post('/admin/gallery/create', adminAuthMiddleware, async (req: any, res: any) => {
-  const { GalleryItem } = await import('../models/GalleryItem.js');
-  const schema = z.object({
-    title: z.string().min(1),
-    description: z.string().optional().default(''),
-    mediaUrl: z.string().refine((val) => {
-      if (!val || val.trim() === '') return false;
-      try {
-        new URL(val.trim());
-        return true;
-      } catch {
-        return false;
-      }
-    }, { message: 'Media URL is required and must be a valid URL' }),
-    mediaType: z.enum(['photo', 'video']).optional().default('photo'),
-    order: z.coerce.number().optional().default(0)
-  });
-  const data = schema.parse(req.body);
-  await GalleryItem.create({
-    title: data.title,
-    description: data.description || '',
-    mediaUrl: data.mediaUrl.trim(),
-    mediaType: data.mediaType || 'photo',
-    order: data.order || 0
-  });
-  res.redirect('/admin/gallery');
+  try {
+    const { GalleryItem } = await import('../models/GalleryItem.js');
+    const schema = z.object({
+      title: z.string().min(1),
+      description: z.string().optional().default(''),
+      mediaUrl: z.string().refine((val) => {
+        const trimmed = (val || '').trim();
+        if (trimmed === '') return false;
+        try {
+          new URL(trimmed);
+          return true;
+        } catch {
+          return false;
+        }
+      }, { message: 'Media URL is required and must be a valid URL' }),
+      mediaType: z.enum(['photo', 'video']).optional().default('photo'),
+      order: z.coerce.number().optional().default(0)
+    });
+    const data = schema.parse(req.body);
+    await GalleryItem.create({
+      title: data.title,
+      description: data.description || '',
+      mediaUrl: data.mediaUrl.trim(),
+      mediaType: data.mediaType || 'photo',
+      order: data.order || 0
+    });
+    res.redirect('/admin/gallery');
+  } catch (e: any) {
+    if (e instanceof ZodError) {
+      const errors = e.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+      return res.status(400).send(`Validation error: ${errors}. <a href="/admin/gallery">Go back</a>`);
+    }
+    throw e;
+  }
 });
 
 router.post('/admin/gallery/:id', adminAuthMiddleware, async (req: any, res: any) => {
