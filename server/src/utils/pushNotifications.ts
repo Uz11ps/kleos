@@ -117,6 +117,10 @@ async function getAccessToken(): Promise<string | null> {
     
     console.log(`[OAuth2] Creating JWT for client_email: ${client_email}`);
     
+    // Обрабатываем private_key - заменяем экранированные символы \n на реальные переносы строк
+    // В JSON файле ключ может быть сохранен как "-----BEGIN PRIVATE KEY-----\\n..."
+    const formattedPrivateKey = private_key.replace(/\\n/g, '\n');
+    
     // Создаем JWT для получения access token
     const now = Math.floor(Date.now() / 1000);
     
@@ -129,7 +133,9 @@ async function getAccessToken(): Promise<string | null> {
     };
     
     console.log(`[OAuth2] Signing JWT with algorithm RS256...`);
-    const token = jwt.sign(tokenPayload, private_key, { algorithm: 'RS256' });
+    console.log(`[OAuth2] Private key preview: ${formattedPrivateKey.substring(0, 50)}...`);
+    
+    const token = jwt.sign(tokenPayload, formattedPrivateKey, { algorithm: 'RS256' });
     console.log(`[OAuth2] JWT created, length: ${token.length}`);
 
     // Обмениваем JWT на access token
