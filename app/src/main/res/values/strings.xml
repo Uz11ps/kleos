@@ -106,7 +106,7 @@
 
     <!-- Programs/Filters -->
     <string name="filters_title">Filters</string>
-    <string name="filter_search_program">Search for program or subprogram</string>
+    <string name="filter_search_program">Search programs</string>
     <string name="filter_language">Language</string>
     <string name="filter_education_level">Level of education</string>
     <string name="filter_university">University</string>

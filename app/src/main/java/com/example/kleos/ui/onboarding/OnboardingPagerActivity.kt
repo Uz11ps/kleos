@@ -26,17 +26,17 @@ class OnboardingPagerActivity : AppCompatActivity() {
     private val pages by lazy {
         listOf(
             OnboardingPage(
-                R.drawable.ic_menu_gallery,
+                R.drawable.illustration_onboarding_universities,
                 getString(R.string.ob_title_1),
                 getString(R.string.ob_sub_1)
             ),
             OnboardingPage(
-                R.drawable.ic_menu_slideshow,
+                R.drawable.illustration_onboarding_live_talkshow,
                 getString(R.string.ob_title_2),
                 getString(R.string.ob_sub_2)
             ),
             OnboardingPage(
-                R.drawable.ic_menu_camera,
+                R.drawable.illustration_onboarding_forum,
                 getString(R.string.ob_title_3),
                 getString(R.string.ob_sub_3)
             )

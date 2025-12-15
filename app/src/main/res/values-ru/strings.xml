@@ -80,7 +80,7 @@
 
     <!-- Programs/Filters -->
     <string name="filters_title">Фильтры</string>
-    <string name="filter_search_program">Поиск программы или подпрограммы</string>
+    <string name="filter_search_program">Поиск программ</string>
     <string name="filter_language">Язык</string>
     <string name="filter_education_level">Уровень образования</string>
     <string name="filter_university">Университет</string>

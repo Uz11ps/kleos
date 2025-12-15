@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.kleos.data.news.NewsRepository
 import com.example.kleos.databinding.FragmentNewsBinding
@@ -40,7 +41,7 @@ class NewsFragment : Fragment() {
                 putString("dateText", item.dateText)
                 putString("imageUrl", item.imageUrl ?: "")
             }
-            androidx.navigation.fragment.findNavController(this).navigate(
+            findNavController().navigate(
                 com.example.kleos.R.id.newsDetailFragment,
                 bundle
             )

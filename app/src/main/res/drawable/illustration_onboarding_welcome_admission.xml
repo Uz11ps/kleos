@@ -1,0 +1,61 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="200dp"
+    android:viewportWidth="320"
+    android:viewportHeight="200">
+
+    <!-- Transparent background to match page -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,0 L320,0 L320,200 L0,200 Z" />
+
+    <!-- Card -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M62,46 L258,46 L258,154 L62,154 Z" />
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M70,54 L250,54 L250,146 L70,146 Z" />
+
+    <!-- Globe (international) -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M118,100 m-26,0 a26,26 0,1 1,52 0 a26,26 0,1 1,-52 0" />
+    <path
+        android:fillColor="#0EA5E9"
+        android:pathData="M118,76 C106,86 106,114 118,124 C130,114 130,86 118,76 Z" />
+    <path
+        android:fillColor="#0EA5E9"
+        android:pathData="M92,100 L144,100 L144,104 L92,104 Z" />
+
+    <!-- Document (apply/admission) -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M168,74 L224,74 L236,86 L236,134 L168,134 Z" />
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M224,74 L236,86 L224,86 Z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M176,92 L228,92 L228,96 L176,96 Z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M176,102 L220,102 L220,106 L176,106 Z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M176,112 L228,112 L228,116 L176,116 Z" />
+
+    <!-- Checkmark -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M202,128 L196,122 L192,126 L202,136 L222,116 L218,112 Z" />
+
+    <!-- Small stars -->
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M46,66 L50,74 L58,78 L50,82 L46,90 L42,82 L34,78 L42,74 Z" />
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M274,64 L278,70 L286,74 L278,78 L274,86 L270,78 L262,74 L270,70 Z" />
+</vector>
+
