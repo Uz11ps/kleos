@@ -95,6 +95,14 @@ async function adminLayout(opts: {
   } catch (e) {
     // Игнорируем ошибки при подсчете непрочитанных сообщений
   }
+  // Проверяем наличие новых/необработанных заявок
+  let newAdmissionsCount = 0;
+  try {
+    const { Admission } = await import('../models/Admission.js');
+    newAdmissionsCount = await Admission.countDocuments({ status: { $in: ['new', 'processing'] } });
+  } catch (e) {
+    // Игнорируем ошибки при подсчете новых заявок
+  }
   const navLink = (href: string, label: string, key: typeof active, badge?: number, icon?: string) => {
     const badgeHtml = badge && badge > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 6px;font-size:11px;margin-left:auto;font-weight:600">${badge}</span>` : '';
     const iconHtml = icon ? `<span style="font-size:18px">${icon}</span>` : '';
@@ -369,7 +377,7 @@ async function adminLayout(opts: {
         <nav class="nav">
           ${navLink('/admin/users','Users','users', undefined, '👥')}
           ${navLink('/admin/partners','Partners','partners', undefined, '🤝')}
-          ${navLink('/admin/admissions','Admissions','admissions', undefined, '📝')}
+          ${navLink('/admin/admissions','Admissions','admissions', newAdmissionsCount, '📝')}
           ${navLink('/admin/programs','Programs','programs', undefined, '🎓')}
           ${navLink('/admin/chats','Chats','chats', unreadCount, '💬')}
           ${navLink('/admin/i18n','I18n','i18n', undefined, '🌐')}
