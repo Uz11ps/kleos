@@ -458,12 +458,25 @@ async function sendPushNotificationOAuth2(fcmToken: string, title: string, body:
  * Отправка push-уведомления конкретному пользователю
  */
 export async function sendPushToUser(userId: string, title: string, body: string, data?: Record<string, string>): Promise<boolean> {
-  const user = await User.findById(userId);
-  if (!user || !(user as any).fcmToken) {
+  console.log(`[sendPushToUser] Looking up user ${userId}`);
+  const user = await User.findById(userId).lean();
+  if (!user) {
+    console.log(`[sendPushToUser] User ${userId} not found`);
     return false;
   }
-
-  return await sendPushNotification((user as any).fcmToken, title, body, data);
+  
+  const fcmToken = (user as any).fcmToken;
+  const userEmail = (user as any).email || 'unknown';
+  
+  if (!fcmToken || fcmToken.trim() === '') {
+    console.log(`[sendPushToUser] User ${userId} (${userEmail}) has no FCM token`);
+    return false;
+  }
+  
+  console.log(`[sendPushToUser] User ${userId} (${userEmail}) has FCM token, sending notification`);
+  const result = await sendPushNotification(fcmToken, title, body, data);
+  console.log(`[sendPushToUser] Notification result for user ${userId}: ${result ? 'success' : 'failed'}`);
+  return result;
 }
 
 /**

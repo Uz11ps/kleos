@@ -1157,21 +1157,43 @@ router.post('/admin/chats/:id/send', adminAuthMiddleware, async (req, res) => {
     
     // Отправка push-уведомления пользователю о новом сообщении от администратора
     try {
-      const chat = await Chat.findById(chatId).lean();
-      const userId = (chat as any)?.userId;
+      const chat = await Chat.findById(chatId).populate('userId').lean();
+      const userId = (chat as any)?.userId?._id || (chat as any)?.userId;
+      
+      console.log(`[Admin Chat] Sending message to chat ${chatId}, userId: ${userId}`);
+      
       if (userId) {
-        const { sendPushToUser } = await import('../utils/pushNotifications.js');
-        // Обрезаем текст сообщения для уведомления (первые 100 символов)
-        const notificationText = text.length > 100 ? text.substring(0, 100) + '...' : text;
-        await sendPushToUser(
-          userId.toString(),
-          'Новое сообщение от администратора',
-          notificationText,
-          { type: 'admin_message', chatId: chatId.toString() }
-        );
+        const { User } = await import('../models/User.js');
+        const user = await User.findById(userId).lean();
+        
+        if (!user) {
+          console.log(`[Admin Chat] User ${userId} not found`);
+        } else {
+          const fcmToken = (user as any).fcmToken;
+          console.log(`[Admin Chat] User ${userId} found, FCM token: ${fcmToken ? 'present' : 'missing'}`);
+          
+          if (fcmToken && fcmToken.trim()) {
+            const { sendPushToUser } = await import('../utils/pushNotifications.js');
+            // Обрезаем текст сообщения для уведомления (первые 100 символов)
+            const notificationText = text.length > 100 ? text.substring(0, 100) + '...' : text;
+            console.log(`[Admin Chat] Sending push notification to user ${userId}`);
+            const result = await sendPushToUser(
+              userId.toString(),
+              'Новое сообщение от администратора',
+              notificationText,
+              { type: 'admin_message', chatId: chatId.toString() }
+            );
+            console.log(`[Admin Chat] Push notification result: ${result ? 'success' : 'failed'}`);
+          } else {
+            console.log(`[Admin Chat] User ${userId} has no FCM token, skipping notification`);
+          }
+        }
+      } else {
+        console.log(`[Admin Chat] Chat ${chatId} has no userId (guest user), skipping notification`);
       }
     } catch (e: any) {
-      console.error('Error sending push notification for admin message:', e);
+      console.error('[Admin Chat] Error sending push notification for admin message:', e);
+      console.error('[Admin Chat] Error stack:', e.stack);
       // Не прерываем процесс из-за ошибки отправки уведомления
     }
   }
