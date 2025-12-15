@@ -184,22 +184,35 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
     
-    private fun updateMenuVisibility() {
+    override fun onResume() {
+        super.onResume()
+        // Обновляем видимость меню при возврате на экран (на случай изменения роли)
+        updateMenuVisibility()
+    }
+    
+    fun updateMenuVisibility() {
         val navView: NavigationView = binding.navView
         val bottomNav: BottomNavigationView = findViewById(R.id.bottom_nav)
         val isLoggedIn = sessionManager.isLoggedIn()
         val userRole = sessionManager.getUserRole()
-        // Роль 'user' (зарегистрированный пользователь) имеет доступ к чату, но не к профилю
-        // Роль 'student' (после принятия admission) имеет доступ и к чату, и к профилю
-        val isUser = userRole == "user" || userRole == "student"
-        val isStudent = userRole == "student"
+        
+        // Логика доступа:
+        // - Гость (не залогинен): нет доступа к чату, профилю и поступлению
+        // - Пользователь (role = "user"): есть доступ к чату и поступлению, но нет доступа к профилю
+        // - Студент (role = "student"): есть доступ и к чату, и к профилю, и к поступлению
+        
+        val hasChatAccess = isLoggedIn && (userRole == "user" || userRole == "student")
+        val hasProfileAccess = isLoggedIn && userRole == "student"
+        val hasAdmissionAccess = isLoggedIn && (userRole == "user" || userRole == "student")
         
         // Управление видимостью пунктов меню в боковом меню
-        navView.menu.findItem(R.id.nav_chat)?.isVisible = isUser
-        navView.menu.findItem(R.id.nav_profile)?.isVisible = isStudent
+        navView.menu.findItem(R.id.nav_chat)?.isVisible = hasChatAccess
+        navView.menu.findItem(R.id.nav_profile)?.isVisible = hasProfileAccess
+        navView.menu.findItem(R.id.nav_admission)?.isVisible = hasAdmissionAccess
         
         // Управление видимостью пунктов меню в нижней навигации
-        bottomNav.menu.findItem(R.id.nav_chat)?.isVisible = isUser
-        bottomNav.menu.findItem(R.id.nav_profile)?.isVisible = isStudent
+        bottomNav.menu.findItem(R.id.nav_chat)?.isVisible = hasChatAccess
+        bottomNav.menu.findItem(R.id.nav_profile)?.isVisible = hasProfileAccess
+        bottomNav.menu.findItem(R.id.nav_admission)?.isVisible = hasAdmissionAccess
     }
 }

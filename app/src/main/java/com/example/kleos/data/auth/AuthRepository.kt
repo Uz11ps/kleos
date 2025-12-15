@@ -69,8 +69,10 @@ interface AuthRepository {
             return@runCatching if (token != null && userMap != null) {
                 val uFullName = userMap["fullName"] as? String ?: fullName
                 val uEmail = userMap["email"] as? String ?: email
+                val uRole = userMap["role"] as? String ?: "user"
                 sessionManager.saveToken(token)
                 sessionManager.saveUser(uFullName, uEmail)
+                sessionManager.saveRole(uRole)
                 sessionManager.getCurrentUser()!!
             } else {
                 // Save minimal local info (without token) so we can show it in UI if needed

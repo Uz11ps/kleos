@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.kleos.MainActivity
 import com.example.kleos.data.auth.AuthRepository
 import com.example.kleos.data.auth.SessionManager
 import com.example.kleos.data.profile.ProfileRepository
@@ -77,6 +78,10 @@ class ProfileFragment : Fragment() {
                 val profile = withContext(Dispatchers.IO) {
                     profileRepository.getProfile()
                 }
+                // Обновляем роль пользователя в сессии
+                val sessionManager = SessionManager(requireContext())
+                sessionManager.saveRole(profile.role)
+                
                 binding.nameEditText.setText(profile.fullName)
                 binding.phoneEditText.setText(profile.phone ?: "")
                 binding.notesEditText.setText(profile.notes ?: "")
@@ -87,6 +92,9 @@ class ProfileFragment : Fragment() {
                 binding.statusEditText.setText(profile.status ?: "")
                 binding.universityEditText.setText(profile.university ?: "")
                 binding.studentIdEditText.setText(profile.studentId ?: "")
+                
+                // Обновляем видимость меню в MainActivity после обновления роли
+                (activity as? MainActivity)?.updateMenuVisibility()
             } catch (e: Exception) {
                 // Если не удалось загрузить с сервера, используем локальные данные
                 val user = SessionManager(requireContext()).getCurrentUser()

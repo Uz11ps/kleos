@@ -73,6 +73,7 @@ class SessionManager(context: Context) {
             .remove(KEY_USER_FULL_NAME)
             .remove(KEY_USER_EMAIL)
             .remove(KEY_TOKEN)
+            .remove(KEY_USER_ROLE)
             .apply()
     }
 
