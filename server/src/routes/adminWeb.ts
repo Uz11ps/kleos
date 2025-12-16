@@ -84,7 +84,7 @@ const Message = (mongoose.models.Message as any) || model('Message', MessageSche
 
 async function adminLayout(opts: {
   title: string;
-  active?: 'users' | 'partners' | 'admissions' | 'programs' | 'chats' | 'i18n' | 'news' | 'gallery' | 'universities' | 'settings' | '';
+  active?: 'users' | 'partners' | 'admissions' | 'programs' | 'chats' | 'i18n' | 'news' | 'gallery' | 'universities' | 'settings' | 'dashboard' | '';
   body: string;
 }) {
   const { title, active = '', body } = opts;
@@ -375,6 +375,7 @@ async function adminLayout(opts: {
           <span>Kleos Admin</span>
         </div>
         <nav class="nav">
+          ${navLink('/admin/dashboard','Dashboard','', undefined, '📊')}
           ${navLink('/admin/users','Users','users', undefined, '👥')}
           ${navLink('/admin/partners','Partners','partners', undefined, '🤝')}
           ${navLink('/admin/admissions','Admissions','admissions', newAdmissionsCount, '📝')}
@@ -384,6 +385,7 @@ async function adminLayout(opts: {
           ${navLink('/admin/news','News','news', undefined, '📰')}
           ${navLink('/admin/gallery','Gallery','gallery', undefined, '🖼️')}
           ${navLink('/admin/universities','Universities','universities', undefined, '🏛️')}
+          ${navLink('/admin/settings','Settings','settings', undefined, '⚙️')}
         </nav>
         <div class="logout-section">
           <a class="logout-link" href="/admin/logout">
@@ -515,7 +517,7 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
   
   const html = await adminLayout({
     title: 'Dashboard',
-    active: '',
+    active: 'dashboard',
     body: `
       <div class="page-header">
         <h1>📊 Dashboard</h1>
@@ -563,7 +565,8 @@ router.get('/admin/users', adminAuthMiddleware, async (req, res) => {
   if (search) {
     query.$or = [
       { fullName: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
+      { email: { $regex: search, $options: 'i' } },
+      { phone: { $regex: search, $options: 'i' } }
     ];
   }
   if (filter === 'students') {
@@ -1524,11 +1527,13 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
   const { Program } = await import('../models/Program.js');
   const { University } = await import('../models/University.js');
   const q = String(req.query.q || '').trim();
+  const universityIdFilter = String(req.query.universityId || '').trim();
   const filter: any = {};
   if (q) filter.$or = [{ title: { $regex: q, $options: 'i' } }, { university: { $regex: q, $options: 'i' } }];
+  if (universityIdFilter) filter.universityId = universityIdFilter;
   const list = await Program.find(filter).sort({ order: 1, createdAt: -1 }).lean();
   const universities = await University.find({ active: true }).sort({ name: 1 }).lean();
-  const universityOptions = universities.map(u => `<option value="${u._id}">${u.name}</option>`).join('');
+  const universityOptions = universities.map(u => `<option value="${u._id}" ${universityIdFilter === u._id.toString() ? 'selected' : ''}>${u.name}</option>`).join('');
   const rows = list.map(p => {
     const currentUnivId = (p as any).universityId?.toString() || '';
     const levelText = p.level === 'bachelor' ? 'Бакалавриат' : p.level === 'master' ? 'Магистратура' : p.level === 'phd' ? 'Аспирантура' : p.level === 'foundation' ? 'Подготовительный' : 'Другое';
@@ -1563,10 +1568,6 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
               <option value="">-- Выберите университет --</option>
               ${universities.map(u => `<option value="${u._id}" ${currentUnivId === u._id.toString() ? 'selected' : ''}>${u.name}</option>`).join('')}
             </select>
-          </div>
-          <div class="input-group">
-            <label>Университет (legacy)</label>
-            <input name="university" value="${(p.university||'').toString().replace(/"/g,'&quot;')}" placeholder="Название университета" />
           </div>
           <div class="input-group">
             <label>Стоимость обучения</label>
@@ -1615,7 +1616,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           <h3 style="margin-top:0;color:var(--accent);">🏛️ Шаг 1: Выберите университет</h3>
           <div class="input-group">
             <label class="required" style="font-size:16px;font-weight:600;">Университет</label>
-            <select name="universityId" id="universitySelect" required style="min-width:300px;font-size:16px;padding:14px;" onchange="handleUniversitySelect(this)" data-universities='${JSON.stringify(universities.map(u => ({ id: u._id.toString(), name: u.name, city: u.city || '', country: u.country || 'Russia' })))}'>
+            <select name="universityId" id="universitySelect" required style="min-width:300px;font-size:16px;padding:14px;" onchange="handleUniversitySelectAndFilter(this)" data-universities='${JSON.stringify(universities.map(u => ({ id: u._id.toString(), name: u.name, city: u.city || '', country: u.country || 'Russia' })))}'>
               <option value="">-- Выберите университет --</option>
               ${universityOptions}
             </select>
@@ -1642,10 +1643,6 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
               <select name="level">
                 ${["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"].map(l=>`<option value="${l}">${l}</option>`).join('')}
               </select>
-            </div>
-            <div class="input-group">
-              <label>Университет (legacy)</label>
-              <input name="university" placeholder="Название университета" />
             </div>
             <div class="input-group">
               <label>Стоимость обучения</label>
@@ -1679,10 +1676,72 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
-          <tbody>${rows}</tbody>
+          <tbody id="programsTableBody">${rows}</tbody>
         </table>
       </div>
     </div>
+    <script>
+      function handleUniversitySelectAndFilter(select) {
+        const universities = JSON.parse(select.getAttribute('data-universities') || '[]');
+        const selectedId = select.value;
+        const universityInfo = document.getElementById('universityInfo');
+        const universityDetails = document.getElementById('universityDetails');
+        const programFields = document.getElementById('programFields');
+        
+        if (selectedId) {
+          const university = universities.find(u => u.id === selectedId);
+          if (university) {
+            universityDetails.innerHTML = '<div style="font-weight:600;font-size:18px;color:var(--accent);margin-bottom:8px;">' + university.name + '</div><div style="color:var(--muted);font-size:14px;">📍 ' + (university.city ? university.city + ', ' : '') + university.country + '</div>';
+            universityInfo.style.display = 'block';
+            programFields.style.display = 'block';
+            programFields.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        } else {
+          universityInfo.style.display = 'none';
+          programFields.style.display = 'none';
+        }
+        
+        // Filter programs table by university
+        filterProgramsTable(selectedId);
+      }
+      
+      function filterProgramsTable(universityId) {
+        const rows = document.querySelectorAll('#programsTableBody tr');
+        rows.forEach(row => {
+          const select = row.querySelector('select[name="universityId"]');
+          if (select) {
+            const rowUniversityId = select.value;
+            if (!universityId || rowUniversityId === universityId) {
+              row.style.display = '';
+            } else {
+              row.style.display = 'none';
+            }
+          }
+        });
+        
+        // Update URL with filter
+        const url = new URL(window.location.href);
+        if (universityId) {
+          url.searchParams.set('universityId', universityId);
+        } else {
+          url.searchParams.delete('universityId');
+        }
+        window.history.replaceState({}, '', url);
+      }
+      
+      // Apply filter on page load if universityId is in URL
+      window.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const universityId = urlParams.get('universityId');
+        if (universityId) {
+          const select = document.getElementById('universitySelect');
+          if (select) {
+            select.value = universityId;
+            handleUniversitySelectAndFilter(select);
+          }
+        }
+      });
+    </script>
   `;
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Programs', active: 'programs', body }));
 });
@@ -1695,7 +1754,6 @@ router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('
       title: z.string().min(1),
       language: z.enum(['ru','en','zh']).optional().default('en'),
       level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"]).optional().default("Bachelor's degree"),
-      university: z.string().optional().default(''),
       universityId: z.string().min(1, 'Университет обязателен для выбора'),
       tuition: z.coerce.number().optional().default(0),
       durationYears: z.coerce.number().optional().default(4),
@@ -1714,7 +1772,7 @@ router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('
     
     await Program.create({
       title: d.title, language: d.language, level: d.level,
-      university: d.university || university.name, universityId: d.universityId,
+      university: university.name, universityId: d.universityId,
       tuition: d.tuition, durationYears: d.durationYears,
       active: d.active === 'on', order: d.order, description: d.description || ''
     });
@@ -1748,7 +1806,6 @@ router.post('/admin/programs/:id', adminAuthMiddleware, uploadImages.single('ima
       description: z.string().optional(),
       language: z.enum(['ru','en','zh']).optional(),
       level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"]).optional(),
-      university: z.string().optional(),
       universityId: z.string().min(1, 'Университет обязателен').optional(),
       tuition: z.coerce.number().optional(),
       durationYears: z.coerce.number().optional(),
