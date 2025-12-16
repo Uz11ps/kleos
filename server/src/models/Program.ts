@@ -4,15 +4,13 @@ import { Types } from 'mongoose';
 
 const programSchema = new Schema({
   title: { type: String, required: true, index: 'text' },
-  slug: { type: String, required: true, unique: true, index: true },
   description: { type: String, default: '' },
   language: { type: String, enum: ['ru','en','zh'], default: 'en', index: true },
-  level: { type: String, enum: ['bachelor','master','phd','foundation','other'], default: 'other', index: true },
+  level: { type: String, enum: ["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"], default: "Bachelor's degree", index: true },
   university: { type: String, index: true }, // Legacy field, kept for backward compatibility
-  universityId: { type: Types.ObjectId, ref: 'University', index: true },
+  universityId: { type: Types.ObjectId, ref: 'University', required: true, index: true },
   tuition: { type: Number, default: 0 },
-  durationMonths: { type: Number, default: 0 },
-  imageUrl: { type: String, default: '' },
+  durationYears: { type: Number, default: 4 }, // Changed from durationMonths to durationYears
   active: { type: Boolean, default: true, index: true },
   order: { type: Number, default: 0 }
 }, { timestamps: true });

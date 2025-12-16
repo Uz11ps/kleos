@@ -83,6 +83,8 @@
     <string name="label_program">Program</string>
     <string name="label_comment_optional">Comment (optional)</string>
     <string name="action_submit_application">Submit application</string>
+    <string name="consent_label">I agree to the processing of personal data</string>
+    <string name="consent_read_full">Read full text</string>
 
     <!-- Onboarding -->
     <string name="ob_title_1">Discover and explore famed Russian universities</string>

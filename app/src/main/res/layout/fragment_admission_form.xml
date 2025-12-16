@@ -153,6 +153,35 @@
             android:layout_marginBottom="16dp"
             android:hint="@string/label_nationality"
             app:startIconDrawable="@android:drawable/ic_menu_compass"
+            app:startIconTint="@color/kleos_blue"
+            app:endIconMode="dropdown_menu">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/nationalityEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/dark_on_surface"
+                android:textColorHint="@color/dark_on_surface_variant"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:fontFamily="sans-serif"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:inputType="none"
+                android:focusable="true"
+                android:focusableInTouchMode="true" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Kleos.TextInputLayout.OutlinedBox.Modern"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="@string/label_passport_number"
+            app:startIconDrawable="@android:drawable/ic_menu_view"
             app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -407,19 +436,49 @@
                 android:paddingBottom="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp">
+            
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/consentCheckBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/consent_label"
+                android:textColor="@color/dark_on_surface"
+                android:checked="false" />
+            
+            <TextView
+                android:id="@+id/consentLinkText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/consent_read_full"
+                android:textColor="@color/kleos_blue"
+                android:textStyle="underline"
+                android:layout_marginStart="48dp"
+                android:layout_marginTop="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="8dp" />
+        </LinearLayout>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/submitButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/action_submit_application"
             style="@style/Widget.Kleos.Button.Rounded"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
             android:backgroundTint="@color/kleos_blue"
             android:textColor="@color/white"
             android:textSize="16sp"
             android:paddingTop="16dp"
-            android:paddingBottom="16dp" />
+            android:paddingBottom="16dp"
+            android:enabled="false" />
     </LinearLayout>
 </ScrollView>
 

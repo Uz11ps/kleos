@@ -10,6 +10,8 @@
     <string name="menu_partners">Партнеры</string>
     <string name="menu_chat">Поддержка</string>
     <string name="menu_admission">Поступление</string>
+    <string name="action_logout">Выход</string>
+    <string name="menu_news">Новости</string>
     <string name="choose_language">Выберите язык</string>
     <string name="lang_russian">Русский</string>
     <string name="lang_english">English</string>
@@ -57,6 +59,8 @@
     <string name="label_program">Программа</string>
     <string name="label_comment_optional">Комментарий (необязательно)</string>
     <string name="action_submit_application">Отправить заявку</string>
+    <string name="consent_label">Я согласен(а) на обработку персональных данных</string>
+    <string name="consent_read_full">Прочитать полный текст</string>
 
     <!-- Onboarding -->
     <string name="ob_title_1">Откройте для себя ведущие университеты России</string>

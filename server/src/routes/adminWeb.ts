@@ -84,7 +84,7 @@ const Message = (mongoose.models.Message as any) || model('Message', MessageSche
 
 async function adminLayout(opts: {
   title: string;
-  active?: 'users' | 'partners' | 'admissions' | 'programs' | 'chats' | 'i18n' | 'news' | 'gallery' | 'universities' | '';
+  active?: 'users' | 'partners' | 'admissions' | 'programs' | 'chats' | 'i18n' | 'news' | 'gallery' | 'universities' | 'settings' | '';
   body: string;
 }) {
   const { title, active = '', body } = opts;
@@ -493,7 +493,7 @@ router.post('/admin/login', (req: any, res: any) => {
   if (username === expected.username && password === expected.password) {
     const token = jwt.sign({ role: 'admin' }, process.env.JWT_SECRET!, { expiresIn: '7d' });
     res.cookie('admin_token', token, { httpOnly: true, sameSite: 'lax' });
-    return res.redirect('/admin/users');
+    return res.redirect('/admin/dashboard');
   }
   return res.redirect('/admin?err=Invalid credentials');
 });
@@ -503,9 +503,76 @@ router.get('/admin/logout', (req, res) => {
   res.redirect('/admin');
 });
 
+// Dashboard
+router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
+  const { User } = await import('../models/User.js');
+  const { Admission } = await import('../models/Admission.js');
+  
+  const totalUsers = await User.countDocuments();
+  const totalStudents = await User.countDocuments({ role: 'student' });
+  const totalAdmissions = await Admission.countDocuments();
+  const newAdmissions = await Admission.countDocuments({ status: { $in: ['new', 'processing'] } });
+  
+  const html = await adminLayout({
+    title: 'Dashboard',
+    active: '',
+    body: `
+      <div class="page-header">
+        <h1>📊 Dashboard</h1>
+      </div>
+      
+      <div class="grid cols-4" style="margin-bottom:24px;">
+        <div class="card">
+          <div style="font-size:32px;font-weight:700;color:var(--accent);margin-bottom:8px;">${totalUsers}</div>
+          <div style="color:var(--muted);">Total Users</div>
+        </div>
+        <div class="card">
+          <div style="font-size:32px;font-weight:700;color:var(--accent-2);margin-bottom:8px;">${totalStudents}</div>
+          <div style="color:var(--muted);">Students</div>
+        </div>
+        <div class="card">
+          <div style="font-size:32px;font-weight:700;color:#10b981;margin-bottom:8px;">${totalAdmissions}</div>
+          <div style="color:var(--muted);">Total Admissions</div>
+        </div>
+        <div class="card">
+          <div style="font-size:32px;font-weight:700;color:#f59e0b;margin-bottom:8px;">${newAdmissions}</div>
+          <div style="color:var(--muted);">Pending Admissions</div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h2>Quick Actions</h2>
+        <div class="grid cols-3" style="margin-top:16px;">
+          <a href="/admin/users" class="btn-secondary" style="text-align:center;padding:16px;">👥 Manage Users</a>
+          <a href="/admin/admissions" class="btn-secondary" style="text-align:center;padding:16px;">📝 View Admissions</a>
+          <a href="/admin/programs" class="btn-secondary" style="text-align:center;padding:16px;">🎓 Manage Programs</a>
+        </div>
+      </div>
+    `
+  });
+  sendAdminResponse(res, html);
+});
+
 // Users list
-router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
-  const users = await User.find().sort({ createdAt: -1 }).lean();
+router.get('/admin/users', adminAuthMiddleware, async (req, res) => {
+  const { User } = await import('../models/User.js');
+  const search = (req.query.search as string || '').trim().toLowerCase();
+  const filter = req.query.filter as string || 'all'; // 'all', 'students', 'users'
+  
+  let query: any = {};
+  if (search) {
+    query.$or = [
+      { fullName: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } }
+    ];
+  }
+  if (filter === 'students') {
+    query.role = 'student';
+  } else if (filter === 'users') {
+    query.role = 'user';
+  }
+  
+  const users = await User.find(query).sort({ createdAt: -1 }).lean();
   const rows = users.map(u => {
     const studentId = (u as any).studentId || '';
     const displayId = studentId || u._id.toString().slice(-6);
@@ -588,8 +655,32 @@ router.get('/admin/users', adminAuthMiddleware, async (_req, res) => {
   }).join('');
 
   const body = `
+    <div class="page-header">
+      <h1>👥 Users</h1>
+    </div>
+    
+    <div class="card" style="margin-bottom:20px;">
+      <h2>Search & Filter</h2>
+      <form method="get" action="/admin/users" style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end;">
+        <div class="input-group">
+          <label>Search by name or email</label>
+          <input name="search" type="text" placeholder="Search..." value="${search}" />
+        </div>
+        <div class="input-group">
+          <label>Filter</label>
+          <select name="filter">
+            <option value="all"${filter === 'all' ? ' selected' : ''}>All Users</option>
+            <option value="students"${filter === 'students' ? ' selected' : ''}>Students Only</option>
+            <option value="users"${filter === 'users' ? ' selected' : ''}>Regular Users Only</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary">Search</button>
+      </form>
+      ${search || filter !== 'all' ? `<div style="margin-top:12px;"><a href="/admin/users" class="btn-secondary">Clear filters</a></div>` : ''}
+    </div>
+    
     <div class="card">
-      <h2>Users</h2>
+      <h2>Users List (${users.length} found)</h2>
       <div class="card" style="margin-bottom:20px;background:var(--card);border:2px dashed var(--border);">
         <h3 style="margin-top:0;">➕ Создать нового пользователя</h3>
         <form method="post" action="/admin/users/create" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
@@ -1455,10 +1546,6 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
             <input name="title" value="${(p.title || '').toString().replace(/"/g,'&quot;')}" placeholder="Введите название" required />
           </div>
           <div class="input-group">
-            <label class="required">Slug (URL)</label>
-            <input name="slug" value="${(p.slug || '').toString().replace(/"/g,'&quot;')}" placeholder="program-slug" required />
-          </div>
-          <div class="input-group">
             <label class="required">Язык</label>
             <select name="language">
               ${['ru','en','zh'].map(l=>`<option value="${l}" ${p.language===l?'selected':''}>${l === 'ru' ? 'Русский' : l === 'en' ? 'Английский' : 'Китайский'}</option>`).join('')}
@@ -1467,7 +1554,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           <div class="input-group">
             <label class="required">Уровень</label>
             <select name="level">
-              ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l === 'bachelor' ? 'Бакалавриат' : l === 'master' ? 'Магистратура' : l === 'phd' ? 'Аспирантура' : l === 'foundation' ? 'Подготовительный' : 'Другое'}</option>`).join('')}
+              ${["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l}</option>`).join('')}
             </select>
           </div>
           <div class="input-group">
@@ -1486,14 +1573,8 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
             <input type="number" name="tuition" value="${p.tuition || 0}" placeholder="0" min="0" />
           </div>
           <div class="input-group">
-            <label>Длительность (месяцы)</label>
-            <input type="number" name="durationMonths" value="${p.durationMonths || 0}" placeholder="0" min="0" />
-          </div>
-          <div class="input-group">
-            <label>Изображение программы</label>
-            ${p.imageUrl ? `<div style="margin:8px 0;"><img src="${p.imageUrl}" style="max-width:200px;max-height:150px;border-radius:8px;" alt="Current image"/></div>` : ''}
-            <input type="file" name="imageFile" accept="image/*" />
-            ${p.imageUrl ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">Текущее изображение: ${p.imageUrl}</div>` : ''}
+            <label>Длительность (годы)</label>
+            <input type="number" name="durationYears" value="${(p as any).durationYears || 4}" placeholder="4" min="1" step="0.5" />
           </div>
           <div class="input-group">
             <label>Порядок сортировки</label>
@@ -1511,6 +1592,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           </div>
           <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;">
             <button class="btn primary" type="submit">💾 Сохранить</button>
+            <button class="btn secondary" type="submit" name="addMore" value="true">💾 Сохранить и добавить ещё</button>
             <button class="btn danger" type="button" onclick="if(confirm('Удалить программу?')){const f=document.createElement('form');f.method='post';f.action='/admin/programs/${p._id}/delete';document.body.appendChild(f);f.submit();}">🗑️ Удалить</button>
           </div>
         </form>
@@ -1550,10 +1632,6 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
               <input name="title" placeholder="Введите название" required />
             </div>
             <div class="input-group">
-              <label class="required">Slug (URL)</label>
-              <input name="slug" placeholder="program-slug" required />
-            </div>
-            <div class="input-group">
               <label class="required">Язык</label>
               <select name="language">
                 ${['ru','en','zh'].map(l=>`<option value="${l}">${l === 'ru' ? 'Русский' : l === 'en' ? 'Английский' : 'Китайский'}</option>`).join('')}
@@ -1562,7 +1640,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
             <div class="input-group">
               <label class="required">Уровень</label>
               <select name="level">
-                ${['bachelor','master','phd','foundation','other'].map(l=>`<option value="${l}">${l === 'bachelor' ? 'Бакалавриат' : l === 'master' ? 'Магистратура' : l === 'phd' ? 'Аспирантура' : l === 'foundation' ? 'Подготовительный' : 'Другое'}</option>`).join('')}
+                ${["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"].map(l=>`<option value="${l}">${l}</option>`).join('')}
               </select>
             </div>
             <div class="input-group">
@@ -1574,12 +1652,8 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
               <input type="number" name="tuition" placeholder="0" min="0" value="0" />
             </div>
             <div class="input-group">
-              <label>Длительность (месяцы)</label>
-              <input type="number" name="durationMonths" placeholder="0" min="0" value="0" />
-            </div>
-            <div class="input-group">
-              <label>Изображение программы</label>
-              <input type="file" name="imageFile" accept="image/*" />
+              <label>Длительность (годы)</label>
+              <input type="number" name="durationYears" placeholder="4" min="1" step="0.5" value="4" />
             </div>
             <div class="input-group">
               <label>Порядок сортировки</label>
@@ -1595,8 +1669,9 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
                 <span>Программа активна</span>
               </label>
             </div>
-            <div style="grid-column:1/-1;">
+            <div style="grid-column:1/-1;display:flex;gap:10px;">
               <button class="btn primary" type="submit">✨ Создать программу</button>
+              <button class="btn secondary" type="submit" name="addMore" value="true">✨ Создать и добавить ещё</button>
             </div>
           </div>
         </div>
@@ -1618,16 +1693,16 @@ router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('
     const { University } = await import('../models/University.js');
     const schema = z.object({
       title: z.string().min(1),
-      slug: z.string().min(1),
       language: z.enum(['ru','en','zh']).optional().default('en'),
-      level: z.enum(['bachelor','master','phd','foundation','other']).optional().default('other'),
+      level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"]).optional().default("Bachelor's degree"),
       university: z.string().optional().default(''),
       universityId: z.string().min(1, 'Университет обязателен для выбора'),
       tuition: z.coerce.number().optional().default(0),
-      durationMonths: z.coerce.number().optional().default(0),
+      durationYears: z.coerce.number().optional().default(4),
       active: z.string().optional(),
       order: z.coerce.number().optional().default(0),
-      description: z.string().optional().default('')
+      description: z.string().optional().default(''),
+      addMore: z.string().optional()
     });
     const d = schema.parse(req.body);
     
@@ -1637,21 +1712,19 @@ router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('
       return res.status(400).send('Выбранный университет не найден. <a href="/admin/programs">Вернуться назад</a>');
     }
     
-    // Проверяем, что slug уникален
-    const existingProgram = await Program.findOne({ slug: d.slug });
-    if (existingProgram) {
-      return res.status(400).send(`Программа с slug "${d.slug}" уже существует. Пожалуйста, используйте другой slug. <a href="/admin/programs">Вернуться назад</a>`);
-    }
-    
-    const base = process.env.PUBLIC_BASE_URL || '';
-    const imageUrl = req.file ? `${base}/uploads/images/${req.file.filename}` : '';
     await Program.create({
-      title: d.title, slug: d.slug, language: d.language, level: d.level,
+      title: d.title, language: d.language, level: d.level,
       university: d.university || university.name, universityId: d.universityId,
-      tuition: d.tuition, durationMonths: d.durationMonths,
-      imageUrl: imageUrl, active: d.active === 'on', order: d.order, description: d.description || ''
+      tuition: d.tuition, durationYears: d.durationYears,
+      active: d.active === 'on', order: d.order, description: d.description || ''
     });
-    res.redirect('/admin/programs');
+    
+    // If "add more" button was clicked, redirect to create form with university pre-selected
+    if (d.addMore === 'true') {
+      res.redirect(`/admin/programs?universityId=${d.universityId}`);
+    } else {
+      res.redirect('/admin/programs');
+    }
   } catch (e: any) {
     if (e instanceof ZodError) {
       const errors = e.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
@@ -1672,19 +1745,26 @@ router.post('/admin/programs/:id', adminAuthMiddleware, uploadImages.single('ima
     const { University } = await import('../models/University.js');
     const schema = z.object({
       title: z.string().optional(),
-      slug: z.string().optional(),
       description: z.string().optional(),
       language: z.enum(['ru','en','zh']).optional(),
-      level: z.enum(['bachelor','master','phd','foundation','other']).optional(),
+      level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"]).optional(),
       university: z.string().optional(),
       universityId: z.string().min(1, 'Университет обязателен').optional(),
       tuition: z.coerce.number().optional(),
-      durationMonths: z.coerce.number().optional(),
+      durationYears: z.coerce.number().optional(),
       active: z.string().optional(),
-      order: z.coerce.number().optional()
+      order: z.coerce.number().optional(),
+      addMore: z.string().optional()
     });
     const d = schema.parse(req.body);
-    const update: any = { ...d };
+    const update: any = {};
+    if (d.title !== undefined) update.title = d.title;
+    if (d.description !== undefined) update.description = d.description;
+    if (d.language !== undefined) update.language = d.language;
+    if (d.level !== undefined) update.level = d.level;
+    if (d.tuition !== undefined) update.tuition = d.tuition;
+    if (d.durationYears !== undefined) update.durationYears = d.durationYears;
+    if (d.order !== undefined) update.order = d.order;
     if ('active' in d) update.active = d.active === 'on';
     
     // Если universityId указан, проверяем его существование и не позволяем удалить привязку
@@ -1702,12 +1782,14 @@ router.post('/admin/programs/:id', adminAuthMiddleware, uploadImages.single('ima
       }
     }
     
-    if (req.file) {
-      const base = process.env.PUBLIC_BASE_URL || '';
-      update.imageUrl = `${base}/uploads/images/${req.file.filename}`;
-    }
     await Program.updateOne({ _id: req.params.id }, update);
-    res.redirect('/admin/programs');
+    
+    // If "add more" button was clicked, redirect to create form with university pre-selected
+    if (d.addMore === 'true' && d.universityId) {
+      res.redirect(`/admin/programs?universityId=${d.universityId}`);
+    } else {
+      res.redirect('/admin/programs');
+    }
   } catch (e: any) {
     if (e instanceof ZodError) {
       const errors = e.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
@@ -2051,8 +2133,16 @@ router.post('/admin/universities/create', adminAuthMiddleware, uploadLogos.singl
 
 router.get('/admin/universities/:id/edit', adminAuthMiddleware, async (req: any, res: any) => {
   const { University } = await import('../models/University.js');
+  const { Program } = await import('../models/Program.js');
   const u = await University.findById(req.params.id).lean();
   if (!u) return res.status(404).send('University not found');
+  
+  // Get programs linked to this university
+  const linkedPrograms = await Program.find({ universityId: u._id, active: true }).sort({ title: 1 }).lean();
+  // Get all other programs
+  const allPrograms = await Program.find({ active: true }).sort({ title: 1 }).lean();
+  const linkedProgramIds = new Set(linkedPrograms.map((p: any) => p._id.toString()));
+  const otherPrograms = allPrograms.filter((p: any) => !linkedProgramIds.has(p._id.toString()));
   
   const socialLinks = (u as any).socialLinks || {};
   const degreePrograms = (u as any).degreePrograms || [];
@@ -2179,6 +2269,44 @@ router.get('/admin/universities/:id/edit', adminAuthMiddleware, async (req: any,
           <button type="button" class="btn" onclick="addContentBlock()" style="margin-top:12px;">➕ Добавить блок</button>
         </div>
         
+        <div style="border-top:2px solid var(--border);padding-top:20px;">
+          <h3>Связанные программы</h3>
+          <p style="color:var(--muted);margin-bottom:16px;">Программы, связанные с этим университетом. Они будут отображаться на странице университета в приложении.</p>
+          ${linkedPrograms.length > 0 ? `
+            <div style="margin-bottom:16px;">
+              <h4 style="margin-bottom:8px;">Текущие программы (${linkedPrograms.length}):</h4>
+              <div style="display:grid;gap:8px;">
+                ${linkedPrograms.map((p: any) => `
+                  <div style="padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                      <div style="font-weight:600;">${(p.title || '').toString()}</div>
+                      <div style="font-size:12px;color:var(--muted);">${p.level || ''} • ${p.language === 'ru' ? 'Русский' : p.language === 'en' ? 'Английский' : 'Китайский'}</div>
+                    </div>
+                    <a href="/admin/programs?q=${encodeURIComponent(p.title || '')}" class="btn" style="padding:6px 12px;">Редактировать</a>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : '<p style="color:var(--muted);margin-bottom:16px;">Нет связанных программ.</p>'}
+          ${otherPrograms.length > 0 ? `
+            <div>
+              <h4 style="margin-bottom:8px;">Добавить существующие программы:</h4>
+              <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:12px;">
+                ${otherPrograms.map((p: any) => `
+                  <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:4px;margin-bottom:4px;transition:background 0.2s;" onmouseover="this.style.background='var(--card)'" onmouseout="this.style.background='transparent'">
+                    <input type="checkbox" name="linkPrograms[]" value="${p._id}" style="width:auto;margin:0;" />
+                    <div style="flex:1;">
+                      <div style="font-weight:600;">${(p.title || '').toString()}</div>
+                      <div style="font-size:12px;color:var(--muted);">${p.level || ''} • ${p.language === 'ru' ? 'Русский' : p.language === 'en' ? 'Английский' : 'Китайский'}</div>
+                    </div>
+                  </label>
+                `).join('')}
+              </div>
+              <p style="font-size:12px;color:var(--muted);margin-top:8px;">Выберите программы, которые нужно связать с этим университетом.</p>
+            </div>
+          ` : '<p style="color:var(--muted);">Нет доступных программ для связывания.</p>'}
+        </div>
+        
         <div style="margin-top:20px;">
           <button class="btn primary" type="submit">💾 Сохранить изменения</button>
         </div>
@@ -2230,6 +2358,7 @@ router.get('/admin/universities/:id/edit', adminAuthMiddleware, async (req: any,
 
 router.post('/admin/universities/:id/update', adminAuthMiddleware, uploadLogos.single('logoFile'), async (req: any, res: any) => {
   const { University } = await import('../models/University.js');
+  const { Program } = await import('../models/Program.js');
   try {
     const schema = z.object({
       name: z.string().min(1).optional(),
@@ -2329,6 +2458,17 @@ router.post('/admin/universities/:id/update', adminAuthMiddleware, uploadLogos.s
     update.contentBlocks = contentBlocks;
     
     await University.updateOne({ _id: req.params.id }, update);
+    
+    // Handle program linking
+    const linkPrograms = Array.isArray(req.body['linkPrograms[]']) ? req.body['linkPrograms[]'] : (req.body['linkPrograms[]'] ? [req.body['linkPrograms[]']] : []);
+    if (linkPrograms.length > 0) {
+      const { Program } = await import('../models/Program.js');
+      await Program.updateMany(
+        { _id: { $in: linkPrograms } },
+        { $set: { universityId: req.params.id } }
+      );
+    }
+    
     res.redirect('/admin/universities');
   } catch (e: any) {
     res.status(400).send(`Error updating university: ${e.message}`);
@@ -2375,6 +2515,111 @@ router.post('/admin/universities/:id/delete', adminAuthMiddleware, async (req, r
   const { University } = await import('../models/University.js');
   await University.deleteOne({ _id: req.params.id });
   res.redirect('/admin/universities');
+});
+
+// Settings page
+router.get('/admin/settings', adminAuthMiddleware, async (req, res) => {
+  const { Settings } = await import('../models/Settings.js');
+  const countriesSetting = await Settings.findOne({ key: 'countries' }).lean();
+  const consentTextRuSetting = await Settings.findOne({ key: 'consent_text_ru' }).lean();
+  const consentTextEnSetting = await Settings.findOne({ key: 'consent_text_en' }).lean();
+  
+  const countries = countriesSetting?.value || [];
+  const consentTextRu = consentTextRuSetting?.value || '';
+  const consentTextEn = consentTextEnSetting?.value || '';
+  
+  const html = await adminLayout({
+    title: 'Settings',
+    active: 'settings',
+    body: `
+      <div class="page-header">
+        <h1>⚙️ Settings</h1>
+      </div>
+      
+      <div class="card">
+        <h2>Countries List</h2>
+        <p style="color:var(--muted);margin-bottom:20px;">Manage the list of countries available for selection in admission forms.</p>
+        <form method="POST" action="/admin/settings/countries">
+          <div style="margin-bottom:20px;">
+            <label style="display:block;margin-bottom:8px;font-weight:600;">Countries (one per line):</label>
+            <textarea name="countries" rows="15" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:monospace;" placeholder="Russia&#10;USA&#10;China&#10;...">${Array.isArray(countries) ? countries.join('\n') : ''}</textarea>
+          </div>
+          <button type="submit" class="btn-primary">Save Countries</button>
+        </form>
+      </div>
+      
+      <div class="card" style="margin-top:24px;">
+        <h2>Data Processing Consent Text</h2>
+        <p style="color:var(--muted);margin-bottom:20px;">Manage the consent text shown to users when submitting admission forms.</p>
+        <form method="POST" action="/admin/settings/consent">
+          <div style="margin-bottom:20px;">
+            <label style="display:block;margin-bottom:8px;font-weight:600;">Russian Text:</label>
+            <textarea name="consent_text_ru" rows="20" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);">${consentTextRu}</textarea>
+          </div>
+          <div style="margin-bottom:20px;">
+            <label style="display:block;margin-bottom:8px;font-weight:600;">English Text:</label>
+            <textarea name="consent_text_en" rows="20" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);">${consentTextEn}</textarea>
+          </div>
+          <button type="submit" class="btn-primary">Save Consent Text</button>
+        </form>
+      </div>
+    `
+  });
+  sendAdminResponse(res, html);
+});
+
+router.post('/admin/settings/countries', adminAuthMiddleware, async (req, res) => {
+  const { Settings } = await import('../models/Settings.js');
+  const countriesText = (req.body?.countries as string || '').trim();
+  const countries = countriesText.split('\n')
+    .map(c => c.trim())
+    .filter(c => c.length > 0);
+  
+  await Settings.findOneAndUpdate(
+    { key: 'countries' },
+    { key: 'countries', value: countries, description: 'List of countries for admission forms' },
+    { upsert: true }
+  );
+  
+  res.redirect('/admin/settings');
+});
+
+router.post('/admin/settings/consent', adminAuthMiddleware, async (req, res) => {
+  const { Settings } = await import('../models/Settings.js');
+  const consentTextRu = (req.body?.consent_text_ru as string || '').trim();
+  const consentTextEn = (req.body?.consent_text_en as string || '').trim();
+  
+  await Settings.findOneAndUpdate(
+    { key: 'consent_text_ru' },
+    { key: 'consent_text_ru', value: consentTextRu, description: 'Data processing consent text in Russian' },
+    { upsert: true }
+  );
+  
+  await Settings.findOneAndUpdate(
+    { key: 'consent_text_en' },
+    { key: 'consent_text_en', value: consentTextEn, description: 'Data processing consent text in English' },
+    { upsert: true }
+  );
+  
+  res.redirect('/admin/settings');
+});
+
+// API endpoint for getting countries list (public)
+router.get('/api/settings/countries', async (req, res) => {
+  const { Settings } = await import('../models/Settings.js');
+  const countriesSetting = await Settings.findOne({ key: 'countries' }).lean();
+  const countries = countriesSetting?.value || [];
+  res.json({ countries: Array.isArray(countries) ? countries : [] });
+});
+
+// API endpoint for getting consent text (public)
+router.get('/api/settings/consent/:lang', async (req, res) => {
+  const { Settings } = await import('../models/Settings.js');
+  const lang = req.params.lang === 'ru' ? 'ru' : 'en';
+  const key = `consent_text_${lang}`;
+  const consentSetting = await Settings.findOne({ key }).lean();
+  const text = consentSetting?.value || '';
+  res.json({ text });
 });
 
 export default router;

@@ -93,6 +93,40 @@ class ProfileFragment : Fragment() {
                 binding.universityEditText.setText(profile.university ?: "")
                 binding.studentIdEditText.setText(profile.studentId ?: "")
                 
+                // Блокируем редактирование для студентов
+                val isStudent = profile.role == "student"
+                binding.nameEditText.isEnabled = !isStudent
+                binding.nameEditText.isFocusable = !isStudent
+                binding.nameEditText.isFocusableInTouchMode = !isStudent
+                binding.phoneEditText.isEnabled = !isStudent
+                binding.phoneEditText.isFocusable = !isStudent
+                binding.phoneEditText.isFocusableInTouchMode = !isStudent
+                binding.notesEditText.isEnabled = !isStudent
+                binding.notesEditText.isFocusable = !isStudent
+                binding.notesEditText.isFocusableInTouchMode = !isStudent
+                binding.paymentEditText.isEnabled = !isStudent
+                binding.paymentEditText.isFocusable = !isStudent
+                binding.paymentEditText.isFocusableInTouchMode = !isStudent
+                binding.penaltiesEditText.isEnabled = !isStudent
+                binding.penaltiesEditText.isFocusable = !isStudent
+                binding.penaltiesEditText.isFocusableInTouchMode = !isStudent
+                binding.courseEditText.isEnabled = !isStudent
+                binding.courseEditText.isFocusable = !isStudent
+                binding.courseEditText.isFocusableInTouchMode = !isStudent
+                binding.specialityEditText.isEnabled = !isStudent
+                binding.specialityEditText.isFocusable = !isStudent
+                binding.specialityEditText.isFocusableInTouchMode = !isStudent
+                binding.statusEditText.isEnabled = !isStudent
+                binding.statusEditText.isFocusable = !isStudent
+                binding.statusEditText.isFocusableInTouchMode = !isStudent
+                binding.universityEditText.isEnabled = !isStudent
+                binding.universityEditText.isFocusable = !isStudent
+                binding.universityEditText.isFocusableInTouchMode = !isStudent
+                // studentId всегда только для чтения
+                binding.studentIdEditText.isEnabled = false
+                binding.studentIdEditText.isFocusable = false
+                binding.studentIdEditText.isFocusableInTouchMode = false
+                
                 // Обновляем видимость меню в MainActivity после обновления роли
                 (activity as? MainActivity)?.updateMenuVisibility()
             } catch (e: Exception) {
@@ -104,6 +138,16 @@ class ProfileFragment : Fragment() {
     }
 
     private fun setupAutoSave() {
+        // Проверяем роль пользователя - студенты не могут редактировать
+        val sessionManager = SessionManager(requireContext())
+        val userRole = sessionManager.getUserRole()
+        val isStudent = userRole == "student"
+        
+        if (isStudent) {
+            // Для студентов отключаем автосохранение
+            return
+        }
+        
         val fields = listOf(
             binding.nameEditText,
             binding.phoneEditText,
@@ -157,6 +201,16 @@ class ProfileFragment : Fragment() {
     }
 
     private fun saveProfile() {
+        // Проверяем роль пользователя - студенты не могут редактировать
+        val sessionManager = SessionManager(requireContext())
+        val userRole = sessionManager.getUserRole()
+        val isStudent = userRole == "student"
+        
+        if (isStudent) {
+            // Для студентов блокируем сохранение
+            return
+        }
+        
         // Отменяем предыдущую задачу сохранения
         saveJob?.cancel()
         

@@ -8,13 +8,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.example.kleos.data.admissions.AdmissionsRepository
 import com.example.kleos.data.model.AdmissionApplication
+import com.example.kleos.data.network.ApiClient
+import com.example.kleos.data.network.SettingsApi
 import com.example.kleos.databinding.FragmentAdmissionFormBinding
 import com.example.kleos.ui.utils.AnimationUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.Locale
 import java.util.UUID
 import com.example.kleos.ui.language.t
 
@@ -24,6 +33,9 @@ class AdmissionFormFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var admissionsRepository: AdmissionsRepository
+    private var countriesList: List<String> = emptyList()
+    private var consentTextRu: String = ""
+    private var consentTextEn: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -108,7 +120,10 @@ class AdmissionFormFragment : Fragment() {
         }
 
         if (!isAdded) return
-        
+
+        // Load countries and consent text
+        loadCountriesAndConsent()
+
         // Phone mask per language
         val lang = resources.configuration.locales[0]?.language ?: "en"
         binding.phoneEditText.addTextChangedListener(
@@ -120,6 +135,16 @@ class AdmissionFormFragment : Fragment() {
             binding.lastNameEditText.hint = requireContext().t(com.example.kleos.R.string.label_last_name)
             binding.patronymicEditText.hint = requireContext().t(com.example.kleos.R.string.label_patronymic)
             binding.emailEditText.hint = requireContext().t(com.example.kleos.R.string.label_email)
+        }
+        
+        // Setup consent checkbox listener
+        binding.consentCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            binding.submitButton.isEnabled = isChecked
+        }
+        
+        // Setup consent link click listener
+        binding.consentLinkText.setOnClickListener {
+            showConsentDialog()
         }
 
         // Анимация при фокусе на инпутах
@@ -178,17 +203,25 @@ class AdmissionFormFragment : Fragment() {
             val phone = binding.phoneEditText.text?.toString().orEmpty()
             val email = binding.emailEditText.text?.toString().orEmpty()
             val dateOfBirth = binding.dateOfBirthEditText.text?.toString()
-            val nationality = binding.nationalityEditText.text?.toString()
+            val nationality = (binding.nationalityEditText as? MaterialAutoCompleteTextView)?.text?.toString()
             val passportNumber = binding.passportNumberEditText.text?.toString()
             val passportIssue = binding.passportIssueEditText.text?.toString()
             val program = binding.programEditText.text?.toString().orEmpty()
             val visaCity = binding.visaCityEditText.text?.toString()
             val comment = binding.commentEditText.text?.toString()
-            if (firstName.isBlank() || lastName.isBlank() || phone.isBlank() || email.isBlank() || program.isBlank()) {
+            if (firstName.isBlank() || lastName.isBlank() || phone.isBlank() || email.isBlank() || program.isBlank() || nationality.isNullOrBlank()) {
                 if (isAdded && _binding != null) {
                     AnimationUtils.releaseButton(binding.submitButton)
                     AnimationUtils.shake(binding.submitButton)
                     Toast.makeText(requireContext(), "Заполните обязательные поля", Toast.LENGTH_SHORT).show()
+                }
+                return@setOnClickListener
+            }
+            if (!binding.consentCheckBox.isChecked) {
+                if (isAdded && _binding != null) {
+                    AnimationUtils.releaseButton(binding.submitButton)
+                    AnimationUtils.shake(binding.consentCheckBox)
+                    Toast.makeText(requireContext(), "Необходимо согласие на обработку персональных данных", Toast.LENGTH_SHORT).show()
                 }
                 return@setOnClickListener
             }
@@ -247,6 +280,70 @@ class AdmissionFormFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun loadCountriesAndConsent() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val settingsApi = ApiClient.retrofit.create(SettingsApi::class.java)
+                val countriesResponse = settingsApi.getCountries()
+                countriesList = countriesResponse.countries
+                
+                val lang = resources.configuration.locales[0]?.language ?: "en"
+                val consentLang = if (lang == "ru") "ru" else "en"
+                val consentResponse = settingsApi.getConsentText(consentLang)
+                
+                if (lang == "ru") {
+                    consentTextRu = consentResponse.text
+                } else {
+                    consentTextEn = consentResponse.text
+                }
+                
+                // Also load the other language for dialog
+                val otherLang = if (lang == "ru") "en" else "ru"
+                val otherConsentResponse = settingsApi.getConsentText(otherLang)
+                if (otherLang == "ru") {
+                    consentTextRu = otherConsentResponse.text
+                } else {
+                    consentTextEn = otherConsentResponse.text
+                }
+                
+                // Setup nationality dropdown on main thread
+                if (isAdded) {
+                    requireActivity().runOnUiThread {
+                        setupNationalityDropdown()
+                    }
+                }
+            } catch (e: Exception) {
+                // Fallback: use default countries if API fails
+                countriesList = listOf("Russia", "USA", "China", "Germany", "France", "UK", "Italy", "Spain", "Japan", "South Korea")
+                if (isAdded) {
+                    requireActivity().runOnUiThread {
+                        setupNationalityDropdown()
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun setupNationalityDropdown() {
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, countriesList)
+        (binding.nationalityEditText as? MaterialAutoCompleteTextView)?.setAdapter(adapter)
+    }
+    
+    private fun showConsentDialog() {
+        val lang = resources.configuration.locales[0]?.language ?: "en"
+        val consentText = if (lang == "ru") {
+            if (consentTextRu.isNotBlank()) consentTextRu else consentTextEn
+        } else {
+            if (consentTextEn.isNotBlank()) consentTextEn else consentTextRu
+        }
+        
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(requireContext().t(com.example.kleos.R.string.consent_label))
+            .setMessage(consentText.ifBlank { "Consent text not available" })
+            .setPositiveButton("OK", null)
+            .show()
     }
 
     override fun onDestroyView() {
