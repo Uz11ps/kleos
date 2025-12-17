@@ -23,16 +23,31 @@
             android:layout_height="40dp"
             android:src="@mipmap/ic_launcher_round" />
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/nameText"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
-            android:textAppearance="@style/TextAppearance.Kleos.Title"
-            android:textColor="@color/dark_on_surface"
-            android:text="University Name" />
+            android:orientation="vertical">
+            
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/nameText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Kleos.Title"
+                android:textColor="@color/dark_on_surface"
+                android:text="University Name" />
+            
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/locationText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textAppearance="@style/TextAppearance.Kleos.Body2"
+                android:textColor="@color/dark_on_surface_variant"
+                android:text="Location" />
+        </LinearLayout>
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

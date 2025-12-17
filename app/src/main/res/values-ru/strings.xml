@@ -4,7 +4,8 @@
     <string name="action_login">Войти</string>
     <string name="action_register">Зарегистрироваться</string>
     <string name="menu_home">Главная</string>
-    <string name="menu_gallery">Университеты</string>
+    <string name="menu_gallery">Галерея</string>
+    <string name="menu_universities">Университеты</string>
     <string name="menu_slideshow">Программы</string>
     <string name="menu_profile">Профиль</string>
     <string name="menu_partners">Партнеры</string>

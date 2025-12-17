@@ -36,6 +36,12 @@
         tools:layout="@layout/fragment_gallery_detail" />
 
     <fragment
+        android:id="@+id/nav_universities"
+        android:name="com.example.kleos.ui.universities.UniversitiesFragment"
+        android:label="@string/menu_universities"
+        tools:layout="@layout/fragment_universities" />
+
+    <fragment
         android:id="@+id/nav_slideshow"
         android:name="com.example.kleos.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_slideshow"

@@ -146,6 +146,9 @@ class AdmissionFormFragment : Fragment() {
         binding.consentLinkText.setOnClickListener {
             showConsentDialog()
         }
+        
+        // Add underline to consent link text programmatically
+        binding.consentLinkText.paintFlags = android.graphics.Paint.UNDERLINE_TEXT_FLAG
 
         // Анимация при фокусе на инпутах
         val editTexts = listOf(
@@ -203,6 +206,7 @@ class AdmissionFormFragment : Fragment() {
             val phone = binding.phoneEditText.text?.toString().orEmpty()
             val email = binding.emailEditText.text?.toString().orEmpty()
             val dateOfBirth = binding.dateOfBirthEditText.text?.toString()
+            val placeOfBirth = binding.placeOfBirthEditText.text?.toString()
             val nationality = (binding.nationalityEditText as? MaterialAutoCompleteTextView)?.text?.toString()
             val passportNumber = binding.passportNumberEditText.text?.toString()
             val passportIssue = binding.passportIssueEditText.text?.toString()
@@ -242,7 +246,7 @@ class AdmissionFormFragment : Fragment() {
                 phone = phone,
                 email = email,
                 dateOfBirth = dateOfBirth,
-                placeOfBirth = null,
+                placeOfBirth = placeOfBirth,
                 nationality = nationality,
                 passportNumber = passportNumber,
                 passportIssue = passportIssue,

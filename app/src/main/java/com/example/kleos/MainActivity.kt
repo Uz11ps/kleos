@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_home,
                 R.id.nav_news,
                 R.id.nav_gallery,
+                R.id.nav_universities,
                 R.id.nav_slideshow,
                 R.id.nav_profile,
                 R.id.nav_partners,
@@ -63,6 +64,12 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+        
+        // Убеждаемся, что галерея и университеты видны в боковом меню сразу после настройки
+        navView.post {
+            navView.menu.findItem(R.id.nav_gallery)?.isVisible = true
+            navView.menu.findItem(R.id.nav_universities)?.isVisible = true
+        }
         // Заполним шапку бургера логином
         runCatching {
             val header = navView.getHeaderView(0)
@@ -206,13 +213,26 @@ class MainActivity : AppCompatActivity() {
         val hasAdmissionAccess = isLoggedIn && (userRole == "user" || userRole == "student")
         
         // Управление видимостью пунктов меню в боковом меню
+        // Галерея и Университеты всегда видны для всех пользователей
+        val galleryItem = navView.menu.findItem(R.id.nav_gallery)
+        if (galleryItem != null) {
+            galleryItem.isVisible = true
+            galleryItem.isEnabled = true
+        }
+        val universitiesItem = navView.menu.findItem(R.id.nav_universities)
+        if (universitiesItem != null) {
+            universitiesItem.isVisible = true
+            universitiesItem.isEnabled = true
+        }
         navView.menu.findItem(R.id.nav_chat)?.isVisible = hasChatAccess
         navView.menu.findItem(R.id.nav_profile)?.isVisible = hasProfileAccess
         navView.menu.findItem(R.id.nav_admission)?.isVisible = hasAdmissionAccess
         
         // Управление видимостью пунктов меню в нижней навигации
+        // Галерея всегда видна для всех пользователей
+        bottomNav.menu.findItem(R.id.nav_gallery)?.isVisible = true
         bottomNav.menu.findItem(R.id.nav_chat)?.isVisible = hasChatAccess
         bottomNav.menu.findItem(R.id.nav_profile)?.isVisible = hasProfileAccess
-        bottomNav.menu.findItem(R.id.nav_admission)?.isVisible = hasAdmissionAccess
+        // nav_admission убран из нижней навигации (только в боковом меню) из-за ограничения в 5 элементов
     }
 }

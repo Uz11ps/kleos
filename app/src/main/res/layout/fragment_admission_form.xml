@@ -131,7 +131,7 @@
             app:startIconTint="@color/kleos_blue">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/nationalityEditText"
+                android:id="@+id/placeOfBirthEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
@@ -457,12 +457,12 @@
                 android:layout_height="wrap_content"
                 android:text="@string/consent_read_full"
                 android:textColor="@color/kleos_blue"
-                android:textStyle="underline"
                 android:layout_marginStart="48dp"
                 android:layout_marginTop="4dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:padding="8dp" />
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackground" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
