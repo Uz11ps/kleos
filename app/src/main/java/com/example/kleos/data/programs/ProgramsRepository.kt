@@ -9,8 +9,8 @@ import kotlinx.coroutines.withContext
 class ProgramsRepository {
     private val api = ApiClient.retrofit.create(ProgramsApi::class.java)
 
-    suspend fun list(q: String?, language: String?, level: String?, university: String?): List<ProgramDto> =
-        withContext(Dispatchers.IO) { api.list(q, language, level, university) }
+    suspend fun list(q: String?, language: String?, level: String?, university: String?, universityId: String? = null): List<ProgramDto> =
+        withContext(Dispatchers.IO) { api.list(q, language, level, university, universityId) }
 
     suspend fun get(id: String): ProgramDto =
         withContext(Dispatchers.IO) { api.get(id) }

@@ -243,10 +243,10 @@ class ProgramsFiltersFragment : Fragment() {
                 .putExtra("description", program.description ?: "")
                 .putExtra("university", program.university ?: "")
                 .putExtra("tuition", (program.tuition ?: 0.0).toString())
-                .putExtra("duration", (program.durationMonths ?: 0).toString())
+                .putExtra("duration", (program.durationYears ?: 0.0).toString())
                 .putExtra("language", program.language ?: "")
                 .putExtra("level", program.level ?: "")
-                .putExtra("durationMonths", program.durationMonths ?: 0)
+                .putExtra("durationYears", program.durationYears ?: 0.0)
             startActivity(intent)
         }
         recyclerView.adapter = adapter

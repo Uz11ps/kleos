@@ -8,9 +8,10 @@ const programSchema = new Schema({
   language: { type: String, enum: ['ru','en','zh'], default: 'en', index: true },
   level: { type: String, enum: ["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"], default: "Bachelor's degree", index: true },
   university: { type: String, index: true }, // Legacy field, kept for backward compatibility
-  universityId: { type: Types.ObjectId, ref: 'University', required: true, index: true },
+  universityId: { type: Types.ObjectId, ref: 'University', required: false, index: true }, // Made optional for backward compatibility with old records
   tuition: { type: Number, default: 0 },
   durationYears: { type: Number, default: 4 }, // Changed from durationMonths to durationYears
+  durationMonths: { type: Number }, // Legacy field for backward compatibility
   active: { type: Boolean, default: true, index: true },
   order: { type: Number, default: 0 }
 }, { timestamps: true });

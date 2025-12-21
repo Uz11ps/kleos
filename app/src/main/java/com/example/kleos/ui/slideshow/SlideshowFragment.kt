@@ -55,10 +55,10 @@ class SlideshowFragment : Fragment() {
                     .putExtra("description", p.description ?: "")
                     .putExtra("university", p.university ?: "")
                     .putExtra("tuition", (p.tuition ?: 0.0).toString())
-                    .putExtra("duration", (p.durationMonths ?: 0).toString())
+                    .putExtra("duration", (p.durationYears ?: 0.0).toString())
                     .putExtra("language", p.language ?: "")
                     .putExtra("level", p.level ?: "")
-                    .putExtra("durationMonths", p.durationMonths ?: 0)
+                    .putExtra("durationYears", p.durationYears ?: 0.0)
                 startActivity(intent)
             }, 150)
         }
@@ -114,8 +114,14 @@ class SlideshowFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val items = withContext(Dispatchers.IO) {
-                runCatching { repository.list(q, language, level, university) }.getOrElse { emptyList() }
+                runCatching { 
+                    repository.list(q, language, level, university)
+                }.onFailure { e ->
+                    android.util.Log.e("SlideshowFragment", "Error loading programs", e)
+                    e.printStackTrace()
+                }.getOrElse { emptyList() }
             }
+            android.util.Log.d("SlideshowFragment", "Loaded ${items.size} programs")
             adapter.submitList(items)
         }
     }
@@ -161,18 +167,24 @@ class SlideshowFragment : Fragment() {
                 .putExtra("description", program.description ?: "")
                 .putExtra("university", program.university ?: "")
                 .putExtra("tuition", (program.tuition ?: 0.0).toString())
-                .putExtra("duration", (program.durationMonths ?: 0).toString())
+                .putExtra("duration", (program.durationYears ?: 0.0).toString())
                 .putExtra("language", program.language ?: "")
                 .putExtra("level", program.level ?: "")
-                .putExtra("durationMonths", program.durationMonths ?: 0)
+                .putExtra("durationYears", program.durationYears ?: 0.0)
             startActivity(intent)
         }
         recyclerView.adapter = resultsAdapter
         
         viewLifecycleOwner.lifecycleScope.launch {
             val items = withContext(Dispatchers.IO) {
-                runCatching { repository.list(q, language, level, university) }.getOrElse { emptyList() }
+                runCatching { 
+                    repository.list(q, language, level, university)
+                }.onFailure { e ->
+                    android.util.Log.e("SlideshowFragment", "Error loading programs in bottom sheet", e)
+                    e.printStackTrace()
+                }.getOrElse { emptyList() }
             }
+            android.util.Log.d("SlideshowFragment", "Loaded ${items.size} programs in bottom sheet")
             resultsAdapter.submitList(items)
             val count = items.size
             summaryText.text = "Найдено: $count ${if (count == 1) "программа" else if (count in 2..4) "программы" else "программ"}"
