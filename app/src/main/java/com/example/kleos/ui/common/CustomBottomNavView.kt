@@ -40,6 +40,7 @@ class CustomBottomNavView @JvmOverloads constructor(
         elevation = 16f * resources.displayMetrics.density
         translationZ = 16f * resources.displayMetrics.density
         setupIcons()
+        updateIcons() // Обновляем иконки после инициализации, чтобы активная иконка была белой
     }
 
     private fun setupIcons() {
@@ -116,17 +117,15 @@ class CustomBottomNavView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val widthSize = MeasureSpec.getSize(widthMeasureSpec)
-        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
-
         // Фиксированные размеры: 228dp x 70dp
         val desiredWidth = (228 * resources.displayMetrics.density).toInt()
         val desiredHeight = (70 * resources.displayMetrics.density).toInt()
 
-        val width = resolveSize(desiredWidth, widthMeasureSpec)
-        val height = resolveSize(desiredHeight, heightMeasureSpec)
-
-        setMeasuredDimension(width, height)
+        // Устанавливаем фиксированные размеры
+        setMeasuredDimension(
+            MeasureSpec.makeMeasureSpec(desiredWidth, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(desiredHeight, MeasureSpec.EXACTLY)
+        )
 
         // Измеряем иконки
         val iconSize = (26 * resources.displayMetrics.density).toInt()
@@ -167,14 +166,14 @@ class CustomBottomNavView @JvmOverloads constructor(
         val rect = RectF(0f, 0f, width, height)
         canvas.drawRoundRect(rect, cornerRadius, cornerRadius, backgroundPaint)
 
-        // Рисуем черный круг для активной иконки
+        // Рисуем черный круг для активной иконки (64x64dp)
         if (iconViews.isNotEmpty()) {
             val iconSize = iconViews[0].measuredWidth.toFloat()
             val totalIconsWidth = iconSize * iconViews.size
             val spacing = (width - totalIconsWidth) / (iconViews.size + 1)
             val activeIconX = spacing + iconSize / 2f + selectedPosition * (iconSize + spacing)
             val activeIconY = height / 2f
-            val circleRadius = iconSize / 2f + (8 * resources.displayMetrics.density)
+            val circleRadius = 32f * resources.displayMetrics.density // Радиус 32dp для круга 64x64dp
 
             canvas.drawCircle(activeIconX, activeIconY, circleRadius, activeCirclePaint)
         }

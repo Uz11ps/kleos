@@ -40,35 +40,45 @@ class NewsRepository {
 
     private fun formatDate(iso: String?): String {
         if (iso.isNullOrBlank()) return ""
-        // Try ISO8601 → "d MMMM" (14 декабря) for Russian, "d MMMM" for English
+        // Try ISO8601 → "dd.MM.yyyy" (01.01.2000)
         return try {
             val inFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
                 timeZone = TimeZone.getTimeZone("UTC")
             }
-            val locale = Locale.getDefault()
-            // Format: "14 декабря" for Russian, "14 December" for English
-            val outFmt = if (locale.language == "ru") {
-                SimpleDateFormat("d MMMM", locale)
-            } else {
-                SimpleDateFormat("d MMMM", locale)
-            }
+            val outFmt = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
             val d = inFmt.parse(iso)
-            if (d != null) outFmt.format(d) else iso.substring(0, minOf(10, iso.length))
+            if (d != null) outFmt.format(d) else {
+                // Если не удалось распарсить, пробуем извлечь дату из строки
+                if (iso.length >= 10) {
+                    val datePart = iso.substring(0, 10)
+                    datePart.replace("-", ".")
+                } else {
+                    iso.substring(0, minOf(10, iso.length))
+                }
+            }
         } catch (_: Exception) {
             try {
                 val inFmt2 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
                     timeZone = TimeZone.getTimeZone("UTC")
                 }
-                val locale = Locale.getDefault()
-                val outFmt = if (locale.language == "ru") {
-                    SimpleDateFormat("d MMMM", locale)
-                } else {
-                    SimpleDateFormat("d MMMM", locale)
-                }
+                val outFmt = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
                 val d = inFmt2.parse(iso)
-                if (d != null) outFmt.format(d) else iso.substring(0, minOf(10, iso.length))
+                if (d != null) outFmt.format(d) else {
+                    if (iso.length >= 10) {
+                        val datePart = iso.substring(0, 10)
+                        datePart.replace("-", ".")
+                    } else {
+                        iso.substring(0, minOf(10, iso.length))
+                    }
+                }
             } catch (_: Exception) {
-                iso.substring(0, minOf(10, iso.length))
+                // Если не удалось распарсить, пробуем извлечь дату из строки
+                if (iso.length >= 10) {
+                    val datePart = iso.substring(0, 10)
+                    datePart.replace("-", ".")
+                } else {
+                    iso.substring(0, minOf(10, iso.length))
+                }
             }
         }
     }

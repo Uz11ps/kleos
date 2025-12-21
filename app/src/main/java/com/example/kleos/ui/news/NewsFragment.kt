@@ -77,19 +77,37 @@ class NewsFragment : Fragment() {
     }
 
     private fun updateTabStyles(activeTab: String) {
-        val activeBg = R.drawable.bg_tab_active_news
-        val inactiveBg = R.drawable.bg_tab_inactive_news
-        val activeTextColor = R.color.onboarding_background
-        val inactiveTextColor = R.color.white
-
-        binding.tabAll.setBackgroundResource(if (activeTab == "all") activeBg else inactiveBg)
-        binding.tabAll.setTextColor(resources.getColor(if (activeTab == "all") activeTextColor else inactiveTextColor, null))
-
-        binding.tabNews.setBackgroundResource(if (activeTab == "news") activeBg else inactiveBg)
-        binding.tabNews.setTextColor(resources.getColor(if (activeTab == "news") activeTextColor else inactiveTextColor, null))
-
-        binding.tabInteresting.setBackgroundResource(if (activeTab == "interesting") activeBg else inactiveBg)
-        binding.tabInteresting.setTextColor(resources.getColor(if (activeTab == "interesting") activeTextColor else inactiveTextColor, null))
+        // Белый цвет с прозрачностью 26% (#42FFFFFF)
+        val inactiveBackgroundColor = android.graphics.Color.parseColor("#42FFFFFF")
+        // Белый цвет без прозрачности для активного элемента
+        val activeBackgroundColor = android.graphics.Color.WHITE
+        // Черный цвет для активного текста
+        val activeTextColor = android.graphics.Color.parseColor("#0E080F")
+        // Белый цвет для неактивного текста
+        val inactiveTextColor = android.graphics.Color.WHITE
+        
+        // Кнопка "Все"
+        val tabAllBgColor = if (activeTab == "all") activeBackgroundColor else inactiveBackgroundColor
+        binding.tabAll.setBackgroundTintList(android.content.res.ColorStateList.valueOf(tabAllBgColor))
+        binding.tabAll.setTextColor(
+            if (activeTab == "all") activeTextColor else inactiveTextColor
+        )
+        
+        // Кнопка "Новости"
+        binding.tabNews.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+            if (activeTab == "news") activeBackgroundColor else inactiveBackgroundColor
+        ))
+        binding.tabNews.setTextColor(
+            if (activeTab == "news") activeTextColor else inactiveTextColor
+        )
+        
+        // Кнопка "Интересное"
+        binding.tabInteresting.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+            if (activeTab == "interesting") activeBackgroundColor else inactiveBackgroundColor
+        ))
+        binding.tabInteresting.setTextColor(
+            if (activeTab == "interesting") activeTextColor else inactiveTextColor
+        )
     }
 
     private fun setupRecyclerView() {

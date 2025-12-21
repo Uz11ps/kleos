@@ -75,26 +75,36 @@ class HomeFragment : Fragment() {
     }
     
     private fun updateTabStyles(activeTab: String) {
-        // Сброс всех табов
-        binding.tabAll.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (activeTab == "all") android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT
-        )
+        // Белый цвет с прозрачностью 26% (#42FFFFFF)
+        val inactiveBackgroundColor = android.graphics.Color.parseColor("#42FFFFFF")
+        // Белый цвет без прозрачности для активного элемента
+        val activeBackgroundColor = android.graphics.Color.WHITE
+        // Черный цвет для активного текста
+        val activeTextColor = android.graphics.Color.parseColor("#0E080F")
+        // Белый цвет для неактивного текста
+        val inactiveTextColor = android.graphics.Color.WHITE
+        
+        // Кнопка "Все"
+        val tabAllBgColor = if (activeTab == "all") activeBackgroundColor else inactiveBackgroundColor
+        binding.tabAll.setBackgroundTintList(android.content.res.ColorStateList.valueOf(tabAllBgColor))
         binding.tabAll.setTextColor(
-            if (activeTab == "all") android.graphics.Color.parseColor("#0E080F") else android.graphics.Color.WHITE
+            if (activeTab == "all") activeTextColor else inactiveTextColor
         )
         
+        // Кнопка "Новости"
         binding.tabNews.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (activeTab == "news") android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT
+            if (activeTab == "news") activeBackgroundColor else inactiveBackgroundColor
         )
         binding.tabNews.setTextColor(
-            if (activeTab == "news") android.graphics.Color.parseColor("#0E080F") else android.graphics.Color.WHITE
+            if (activeTab == "news") activeTextColor else inactiveTextColor
         )
         
+        // Кнопка "Интересное"
         binding.tabInteresting.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (activeTab == "interesting") android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT
+            if (activeTab == "interesting") activeBackgroundColor else inactiveBackgroundColor
         )
         binding.tabInteresting.setTextColor(
-            if (activeTab == "interesting") android.graphics.Color.parseColor("#0E080F") else android.graphics.Color.WHITE
+            if (activeTab == "interesting") activeTextColor else inactiveTextColor
         )
     }
     

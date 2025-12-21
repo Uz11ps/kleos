@@ -72,7 +72,7 @@
     <!-- Карточка с информацией о программе -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/programCard"
-        android:layout_width="0dp"
+        android:layout_width="342dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginTop="32dp"
@@ -90,6 +90,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:minHeight="48dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -99,7 +100,8 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:src="@drawable/ic_program_language"
-                android:layout_marginEnd="12dp" />
+                android:layout_marginEnd="12dp"
+                android:scaleType="fitCenter" />
 
             <TextView
                 android:id="@+id/languageText"
@@ -108,9 +110,10 @@
                 android:layout_weight="1"
                 android:text="English"
                 android:textColor="@android:color/white"
-                android:textSize="16sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center_vertical" />
         </LinearLayout>
 
         <!-- Разделитель 1 -->
@@ -118,8 +121,8 @@
             android:id="@+id/divider1"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="0dp"
             android:background="@drawable/divider_program_item"
             app:layout_constraintTop_toBottomOf="@id/languageRow"
             app:layout_constraintStart_toStartOf="parent"
@@ -132,16 +135,18 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:minHeight="48dp"
             app:layout_constraintTop_toBottomOf="@id/divider1"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
             <ImageView
                 android:id="@+id/levelIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:src="@drawable/ic_program_degree"
-                android:layout_marginEnd="12dp" />
+                android:layout_marginEnd="12dp"
+                android:scaleType="fitCenter" />
 
             <TextView
                 android:id="@+id/levelText"
@@ -150,9 +155,10 @@
                 android:layout_weight="1"
                 android:text="Бакалавриат"
                 android:textColor="@android:color/white"
-                android:textSize="16sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center_vertical" />
         </LinearLayout>
 
         <!-- Разделитель 2 -->
@@ -160,8 +166,8 @@
             android:id="@+id/divider2"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="0dp"
             android:background="@drawable/divider_program_item"
             app:layout_constraintTop_toBottomOf="@id/levelRow"
             app:layout_constraintStart_toStartOf="parent"
@@ -174,6 +180,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:minHeight="48dp"
             app:layout_constraintTop_toBottomOf="@id/divider2"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -183,7 +190,8 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:src="@drawable/ic_program_clock"
-                android:layout_marginEnd="12dp" />
+                android:layout_marginEnd="12dp"
+                android:scaleType="fitCenter" />
 
             <TextView
                 android:id="@+id/durationText"
@@ -192,9 +200,10 @@
                 android:layout_weight="1"
                 android:text="6 лет"
                 android:textColor="@android:color/white"
-                android:textSize="16sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center_vertical" />
         </LinearLayout>
 
         <!-- Разделитель 3 -->
@@ -202,8 +211,8 @@
             android:id="@+id/divider3"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="0dp"
             android:background="@drawable/divider_program_item"
             app:layout_constraintTop_toBottomOf="@id/durationRow"
             app:layout_constraintStart_toStartOf="parent"
@@ -216,6 +225,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:minHeight="48dp"
             app:layout_constraintTop_toBottomOf="@id/divider3"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -224,9 +234,10 @@
             <ImageView
                 android:id="@+id/tuitionIcon"
                 android:layout_width="28dp"
-                android:layout_height="19dp"
+                android:layout_height="28dp"
                 android:src="@drawable/ic_program_money"
-                android:layout_marginEnd="12dp" />
+                android:layout_marginEnd="12dp"
+                android:scaleType="fitCenter" />
 
             <TextView
                 android:id="@+id/tuitionText"
@@ -235,9 +246,10 @@
                 android:layout_weight="1"
                 android:text="от $5,000 / год"
                 android:textColor="@android:color/white"
-                android:textSize="16sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center_vertical" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -245,18 +257,15 @@
     <!-- Кнопка "Подать заявку" -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/applyButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="312dp"
+        android:layout_height="64dp"
         android:layout_marginStart="20dp"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="20dp"
         android:text="Подать заявку"
         android:textColor="@android:color/black"
-        android:textSize="18sp"
-        android:textStyle="bold"
+        android:textSize="24sp"
         android:backgroundTint="@android:color/white"
-        android:paddingTop="18dp"
-        android:paddingBottom="18dp"
         app:cornerRadius="12dp"
         app:layout_constraintTop_toBottomOf="@id/programCard"
         app:layout_constraintStart_toStartOf="parent"
@@ -268,13 +277,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="20dp"
         android:text="Заполнение займёт ~5 минут"
         android:textColor="#CBD5E1"
         android:textSize="14sp"
+        android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/applyButton"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

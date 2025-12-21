@@ -41,6 +41,14 @@ class ContentCardAdapter(
         // Устанавливаем цвет фона карточки
         holder.binding.root.setCardBackgroundColor(item.backgroundColor)
         
+        // Устанавливаем бейдж для категории
+        val badgeBackground = when (item.category) {
+            "Новости" -> R.drawable.bg_category_badge_news
+            "Интересное" -> R.drawable.bg_category_badge_interesting
+            else -> R.drawable.bg_category_badge_news
+        }
+        holder.binding.categoryText.setBackgroundResource(badgeBackground)
+        
         // Обработка клика
         holder.itemView.setOnClickListener {
             onItemClick?.invoke(item)

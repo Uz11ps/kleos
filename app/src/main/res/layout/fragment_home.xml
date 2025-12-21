@@ -136,7 +136,6 @@
             android:textColor="#0E080F"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:backgroundTint="@android:color/white"
             android:insetLeft="0dp"
             android:insetRight="0dp"
             android:insetTop="0dp"
