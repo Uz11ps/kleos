@@ -24,11 +24,26 @@ class GalleryAdapter(
     override fun onBindViewHolder(holder: GalleryViewHolder, position: Int) {
         val item = items[position]
         holder.binding.titleText.text = item.title
+        holder.binding.categoryText.text = "Галерея"
+        
+        // Форматируем дату из description или используем текущую дату
+        val dateText = item.description?.takeIf { it.matches(Regex("\\d{2}\\.\\d{2}\\.\\d{4}")) } 
+            ?: java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+        holder.binding.dateText.text = dateText
+        
+        // Обработка клика на кнопку со стрелкой
+        holder.binding.arrowButton.setOnClickListener {
+            com.example.kleos.ui.utils.AnimationUtils.pressButton(it)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                com.example.kleos.ui.utils.AnimationUtils.releaseButton(it)
+                onItemClick(item)
+            }, 150)
+        }
         
         // Анимация появления карточки с задержкой
         com.example.kleos.ui.utils.AnimationUtils.cardEnter(holder.itemView, position * 80L)
         
-        // Анимация при нажатии
+        // Анимация при нажатии на всю карточку
         holder.itemView.setOnClickListener { 
             com.example.kleos.ui.utils.AnimationUtils.pressButton(it)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({

@@ -43,4 +43,19 @@
     
     <!-- Ripple/hover color (20% opacity of primary blue) -->
     <color name="kleos_blue_ripple">#332563EB</color>
+    
+    <!-- Onboarding background color -->
+    <color name="onboarding_background">#0E080F</color>
+    
+    <!-- FAQ Dialog accent color -->
+    <color name="faq_accent_pink">#FF6B9D</color>
+    
+    <!-- FAQ Dialog colors -->
+    <color name="faq_dialog_bg">#A3240A24</color>
+    <color name="faq_dialog_text_bg">#40EDC9EA</color>
+    <color name="faq_dialog_border">#886184</color>
+    
+    <!-- Program Results Bottom Sheet colors -->
+    <color name="program_results_bg">#A3240A24</color>
+    <color name="program_results_card_bg">#40EDC9EA</color>
 </resources>

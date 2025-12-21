@@ -42,6 +42,14 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Обработка кнопки меню
+        binding.menuButton.setOnClickListener {
+            (activity as? MainActivity)?.let { mainActivity ->
+                mainActivity.openDrawer()
+            }
+        }
+        
         val session = SessionManager(requireContext())
         
         // Проверяем авторизацию

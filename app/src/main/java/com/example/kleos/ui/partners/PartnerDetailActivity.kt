@@ -22,31 +22,32 @@ class PartnerDetailActivity : AppCompatActivity() {
 
         val name = intent.getStringExtra("name").orEmpty()
         val description = intent.getStringExtra("description").orEmpty()
-        val logoUrl = intent.getStringExtra("logoUrl")
         val siteUrl = intent.getStringExtra("url")
 
-        binding.title.text = name
-        binding.description.text = description
-        if (!logoUrl.isNullOrBlank()) {
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val stream = URL(logoUrl).openStream()
-                    val bmp = BitmapFactory.decodeStream(stream)
-                    withContext(Dispatchers.Main) {
-                        binding.logo.setImageBitmap(bmp)
-                    }
-                } catch (_: Exception) {}
-            }
-        }
+        // Устанавливаем название партнера
+        binding.title.text = name.ifBlank { "Партнер" }
+        
+        // Устанавливаем описание партнера
+        binding.description.text = description.ifBlank { "Описание партнера" }
+        
+        // Обработка кнопки "Открыть сайт"
         binding.openSiteButton.setOnClickListener {
-            try {
-                val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(siteUrl))
-                startActivity(i)
-            } catch (_: Exception) {
-                Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show()
+            if (!siteUrl.isNullOrBlank()) {
+                try {
+                    val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(siteUrl))
+                    startActivity(i)
+                } catch (_: Exception) {
+                    Toast.makeText(this, "Неверный URL", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Сайт недоступен", Toast.LENGTH_SHORT).show()
             }
         }
-        binding.backButton.setOnClickListener { finish() }
+        
+        // Обработка кнопки назад
+        binding.backButton.setOnClickListener { 
+            finish() 
+        }
     }
 }
 

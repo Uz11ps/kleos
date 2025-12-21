@@ -45,6 +45,33 @@
 
     <style name="Theme.Kleos.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Dark" />
     
+    <!-- Стиль для BottomSheetDialog без затемнения фона -->
+    <style name="Theme.Kleos.BottomSheetDialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:backgroundDimAmount">0</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="bottomSheetStyle">@style/Widget.Kleos.BottomSheet</item>
+    </style>
+    
+    <!-- Стиль для самого BottomSheet без серого фона -->
+    <style name="Widget.Kleos.BottomSheet" parent="Widget.MaterialComponents.BottomSheet">
+        <item name="backgroundTint">@android:color/white</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Kleos.BottomSheet</item>
+        <item name="android:background">@drawable/bottom_sheet_background</item>
+    </style>
+    
+    <!-- Форма для BottomSheet с закругленными углами сверху -->
+    <style name="ShapeAppearance.Kleos.BottomSheet" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">24dp</item>
+        <item name="cornerSizeTopRight">24dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+    
     <!-- Современная типографика 2025 -->
     <style name="TextAppearance.Kleos.Display" parent="TextAppearance.MaterialComponents.Headline4">
         <item name="android:fontFamily">sans-serif-medium</item>
@@ -93,11 +120,29 @@
         <item name="android:letterSpacing">0.02</item>
     </style>
     
-    <!-- Стиль для BottomNavigationView - убираем границы и тени -->
+    <!-- Стиль для BottomNavigationView - белая плавающая панель -->
     <style name="Widget.Kleos.BottomNavigationView" parent="Widget.MaterialComponents.BottomNavigationView">
-        <item name="android:elevation">0dp</item>
-        <item name="elevation">0dp</item>
-        <item name="android:background">@color/dark_background</item>
+        <item name="android:elevation">8dp</item>
+        <item name="elevation">8dp</item>
+        <item name="android:background">@android:color/white</item>
+        <item name="android:layout_marginStart">20dp</item>
+        <item name="android:layout_marginEnd">20dp</item>
+        <item name="android:layout_marginBottom">16dp</item>
+    </style>
+    
+    <!-- Стиль для NavigationView - темный фон с белым текстом -->
+    <style name="Widget.Kleos.NavigationView" parent="Widget.MaterialComponents.NavigationView">
+        <item name="itemTextColor">@android:color/white</item>
+        <item name="itemIconTint">@android:color/white</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="itemTextAppearance">@style/TextAppearance.Kleos.NavigationMenu</item>
+    </style>
+    
+    <!-- Стиль текста для меню навигации - увеличенный размер (примерно в 1.7 раза) -->
+    <style name="TextAppearance.Kleos.NavigationMenu" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textSize">27sp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:fontFamily">sans-serif</item>
     </style>
     
     <!-- Современные стили кнопок 2025 -->

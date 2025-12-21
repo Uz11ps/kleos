@@ -1,21 +1,17 @@
 package com.example.kleos.ui.home
 
 import android.os.Bundle
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.example.kleos.data.model.NewsItem
-import com.example.kleos.databinding.FragmentHomeBinding
-import com.example.kleos.databinding.DialogInviteBinding
 import com.example.kleos.data.auth.SessionManager
-import com.example.kleos.ui.language.t
-import androidx.lifecycle.lifecycleScope
+import com.example.kleos.data.model.NewsItem
 import com.example.kleos.data.news.NewsRepository
+import com.example.kleos.databinding.FragmentHomeBinding
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,10 +19,11 @@ import kotlinx.coroutines.withContext
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
+    
+    private var currentTab = "all" // all, news, interesting
+    private val newsRepository = NewsRepository()
+    private lateinit var adapter: ContentCardAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,77 +37,127 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        // Анимация появления заголовка
-        com.example.kleos.ui.utils.AnimationUtils.slideUpFade(binding.helloText, 500, 0)
+        setupTabs()
+        setupRecyclerView()
+        loadUserData()
+        loadContent()
         
-        // Анимация появления карточки пользователя
-        com.example.kleos.ui.utils.AnimationUtils.bounceIn(binding.userCard, 600)
+        // Обработка клика на меню
+        binding.menuButton.setOnClickListener {
+            // Открываем drawer menu
+            (activity as? com.example.kleos.MainActivity)?.let { mainActivity ->
+                mainActivity.openDrawer()
+            }
+        }
+    }
+    
+    private fun setupTabs() {
+        // Устанавливаем активный таб "Все"
+        updateTabStyles("all")
         
-        val adapter = NewsAdapter(emptyList()) { item ->
-            // Переход на детальную страницу новости
+        binding.tabAll.setOnClickListener {
+            currentTab = "all"
+            updateTabStyles("all")
+            loadContent()
+        }
+        
+        binding.tabNews.setOnClickListener {
+            currentTab = "news"
+            updateTabStyles("news")
+            loadContent()
+        }
+        
+        binding.tabInteresting.setOnClickListener {
+            currentTab = "interesting"
+            updateTabStyles("interesting")
+            loadContent()
+        }
+    }
+    
+    private fun updateTabStyles(activeTab: String) {
+        // Сброс всех табов
+        binding.tabAll.backgroundTintList = android.content.res.ColorStateList.valueOf(
+            if (activeTab == "all") android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT
+        )
+        binding.tabAll.setTextColor(
+            if (activeTab == "all") android.graphics.Color.parseColor("#0E080F") else android.graphics.Color.WHITE
+        )
+        
+        binding.tabNews.backgroundTintList = android.content.res.ColorStateList.valueOf(
+            if (activeTab == "news") android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT
+        )
+        binding.tabNews.setTextColor(
+            if (activeTab == "news") android.graphics.Color.parseColor("#0E080F") else android.graphics.Color.WHITE
+        )
+        
+        binding.tabInteresting.backgroundTintList = android.content.res.ColorStateList.valueOf(
+            if (activeTab == "interesting") android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT
+        )
+        binding.tabInteresting.setTextColor(
+            if (activeTab == "interesting") android.graphics.Color.parseColor("#0E080F") else android.graphics.Color.WHITE
+        )
+    }
+    
+    private fun setupRecyclerView() {
+        adapter = ContentCardAdapter(emptyList()) { item ->
+            // Переход на детальную страницу
             val bundle = Bundle().apply {
                 putString("newsId", item.id)
                 putString("title", item.title)
-                putString("content", item.content ?: "")
-                putString("dateText", item.dateText)
-                putString("imageUrl", item.imageUrl ?: "")
             }
             findNavController().navigate(
                 com.example.kleos.R.id.newsDetailFragment,
                 bundle
             )
         }
-        binding.newsRecycler.layoutManager = LinearLayoutManager(requireContext())
-        binding.newsRecycler.adapter = adapter
-
-        // Загрузка новостей из API
-        val repo = NewsRepository()
-        viewLifecycleOwner.lifecycleScope.launch {
-            val items = withContext(Dispatchers.IO) {
-                runCatching { repo.fetch() }.getOrElse { emptyList() }
-            }
-            adapter.submitList(items)
-        }
-
-        // Greeting and user card binding
+        binding.contentRecycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.contentRecycler.adapter = adapter
+    }
+    
+    private fun loadUserData() {
         val session = SessionManager(requireContext())
         val user = session.getCurrentUser()
-        val name = (user?.fullName?.takeIf { it.isNotBlank() } ?: getString(com.example.kleos.R.string.guest)).trim()
-        binding.helloText.text = getString(com.example.kleos.R.string.hello_name, name)
-        val idNumeric = user?.id
-            ?.filter { it.isDigit() }
-            ?.padStart(6, '0')
-            ?.takeLast(6) ?: "000000"
-        val idTemplate = requireContext().t(com.example.kleos.R.string.id_prefix)
-        binding.userIdText.text = String.format(idTemplate, idNumeric)
-        binding.userNameText.text = name.ifBlank { requireContext().t(com.example.kleos.R.string.guest) }
+        val name = user?.fullName?.takeIf { it.isNotBlank() } ?: "Данил"
+        
+        binding.greetingText.text = "С возвращением,"
+        binding.userNameText.text = name
     }
-
-    override fun onResume() {
-        super.onResume()
-        val prefs = requireContext().getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
-        val shown = prefs.getBoolean("invite_dialog_shown", false)
-        if (!shown && isAdded) {
-            val dialogBinding = DialogInviteBinding.inflate(layoutInflater)
-            val dialog = MaterialAlertDialogBuilder(requireContext())
-                .setView(dialogBinding.root)
-                .setCancelable(false)
-                .create()
-
-            dialogBinding.closeButton.setOnClickListener {
-                dialog.dismiss()
-                prefs.edit().putBoolean("invite_dialog_shown", true).apply()
+    
+    private fun loadContent() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val newsItems = withContext(Dispatchers.IO) {
+                runCatching { newsRepository.fetch() }.getOrElse { emptyList() }
             }
-            dialogBinding.inviteButton.setOnClickListener {
-                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, getString(com.example.kleos.R.string.invite_share_text))
+            
+            val contentCards = newsItems.mapIndexed { index, news ->
+                val category = when {
+                    currentTab == "news" -> "Новости"
+                    currentTab == "interesting" -> "Интересное"
+                    index % 2 == 0 -> "Новости"
+                    else -> "Интересное"
                 }
-                startActivity(Intent.createChooser(shareIntent, getString(com.example.kleos.R.string.invite_share_title)))
-                dialog.dismiss()
-                prefs.edit().putBoolean("invite_dialog_shown", true).apply()
+                
+                val backgroundColor = when {
+                    category == "Новости" -> android.graphics.Color.parseColor("#E8D5FF") // Лавандовый
+                    else -> android.graphics.Color.parseColor("#FFD700") // Желтый
+                }
+                
+                ContentCard(
+                    id = news.id,
+                    category = category,
+                    title = news.title,
+                    date = news.dateText,
+                    backgroundColor = backgroundColor
+                )
+            }.filter { card ->
+                when (currentTab) {
+                    "news" -> card.category == "Новости"
+                    "interesting" -> card.category == "Интересное"
+                    else -> true
+                }
             }
-            dialog.show()
+            
+            adapter.submitList(contentCards)
         }
     }
 

@@ -26,7 +26,16 @@ class ChatViewModel : ViewModel() {
     fun refresh() {
         viewModelScope.launch {
             runCatching { repository.loadMessages() }
-                .onSuccess { _messages.value = it }
+                .onSuccess { loadedMessages ->
+                    // Сохраняем начальное сообщение, если оно есть
+                    val currentMessages = _messages.value ?: emptyList()
+                    val initialMessage = currentMessages.firstOrNull { it.id == "initial" }
+                    if (initialMessage != null && loadedMessages.none { it.id == "initial" }) {
+                        _messages.value = listOf(initialMessage) + loadedMessages
+                    } else {
+                        _messages.value = loadedMessages
+                    }
+                }
                 .onFailure { /* можно добавить телеметрию/тосты */ }
         }
     }
@@ -54,6 +63,13 @@ class ChatViewModel : ViewModel() {
     fun stopPolling() {
         pollingJob?.cancel()
         pollingJob = null
+    }
+    
+    fun addInitialMessage(message: Message) {
+        val currentMessages = _messages.value ?: emptyList()
+        if (currentMessages.none { it.id == message.id }) {
+            _messages.value = listOf(message) + currentMessages
+        }
     }
 }
 

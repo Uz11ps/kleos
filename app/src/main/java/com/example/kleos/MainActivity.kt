@@ -6,7 +6,7 @@ import android.content.Intent
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.navigation.NavigationView
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.example.kleos.ui.common.CustomBottomNavView
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -15,6 +15,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
 import com.example.kleos.databinding.ActivityMainBinding
 import com.example.kleos.databinding.DialogInviteBinding
 import com.example.kleos.data.auth.SessionManager
@@ -42,10 +43,20 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.appBarMain.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
-        supportActionBar?.setDisplayUseLogoEnabled(true)
-        supportActionBar?.setLogo(R.drawable.kleos_fon)
+        supportActionBar?.setDisplayUseLogoEnabled(false)
+        supportActionBar?.hide() // Скрываем toolbar для нового дизайна
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
+        
+        // Устанавливаем ширину NavigationView равной ширине экрана, чтобы убрать щель справа
+        navView.post {
+            val displayMetrics = resources.displayMetrics
+            val screenWidth = displayMetrics.widthPixels
+            val layoutParams = navView.layoutParams
+            layoutParams.width = screenWidth
+            navView.layoutParams = layoutParams
+        }
+        
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
@@ -70,16 +81,13 @@ class MainActivity : AppCompatActivity() {
             navView.menu.findItem(R.id.nav_gallery)?.isVisible = true
             navView.menu.findItem(R.id.nav_universities)?.isVisible = true
         }
-        // Заполним шапку бургера логином
+        // Обработка кнопки закрытия в header
         runCatching {
             val header = navView.getHeaderView(0)
-            val greetTv = header.findViewById<android.widget.TextView>(R.id.headerGreetingText)
-            val emailTv = header.findViewById<android.widget.TextView>(R.id.headerEmailText)
-            val userNow = sessionManager.getCurrentUser()
-            val nameNow = (userNow?.fullName?.takeIf { it.isNotBlank() } ?: getString(R.string.guest)).trim()
-            val greetTmpl = this@MainActivity.t(R.string.hi_name)
-            greetTv?.text = String.format(greetTmpl, nameNow)
-            emailTv?.text = userNow?.email ?: ""
+            val closeButton = header.findViewById<android.widget.ImageButton>(R.id.closeButton)
+            closeButton?.setOnClickListener {
+                drawerLayout.closeDrawer(GravityCompat.START)
+            }
         }.onFailure { /* ignore */ }
         navView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
@@ -114,8 +122,33 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val bottomNav: BottomNavigationView = findViewById(R.id.bottom_nav)
-        bottomNav.setupWithNavController(navController)
+        val bottomNav: CustomBottomNavView = findViewById(R.id.bottom_nav)
+        
+        // Настраиваем обработчик выбора элементов навигации
+        bottomNav.setOnItemSelectedListener { position ->
+            when (position) {
+                0 -> navController.navigate(R.id.nav_admission)
+                1 -> navController.navigate(R.id.nav_home)
+                2 -> navController.navigate(R.id.nav_gallery)
+            }
+        }
+        
+        // Синхронизируем выбранный элемент с текущим destination
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+                R.id.nav_admission -> bottomNav.setSelectedItem(0)
+                R.id.nav_home -> bottomNav.setSelectedItem(1)
+                R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+            }
+        }
+        
+        // Синхронизируем начальную позицию с текущим destination
+        val currentDestination = navController.currentDestination?.id
+        when (currentDestination) {
+            R.id.nav_admission -> bottomNav.setSelectedItem(0)
+            R.id.nav_home -> bottomNav.setSelectedItem(1)
+            R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+        }
         
         // Загружаем профиль пользователя, если он залогинен, и обновляем видимость меню
         if (sessionManager.isLoggedIn()) {
@@ -133,14 +166,7 @@ class MainActivity : AppCompatActivity() {
             updateMenuVisibility()
         }
 
-        // Показ приглашения после входа (если передан флаг из AuthActivity)
-        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
-        val shouldShowInvite = intent.getBooleanExtra("show_invite", false)
-        if (shouldShowInvite) {
-            showInviteDialog {
-                prefs.edit().putBoolean("invite_dialog_shown", true).apply()
-            }
-        }
+        // Показ приглашения после входа отключен
 
         // Автопереход на форму поступления с выбранной программой
         val prefillProgram = intent.getStringExtra("prefill_program")
@@ -199,7 +225,7 @@ class MainActivity : AppCompatActivity() {
     
     fun updateMenuVisibility() {
         val navView: NavigationView = binding.navView
-        val bottomNav: BottomNavigationView = findViewById(R.id.bottom_nav)
+        val bottomNav: CustomBottomNavView = findViewById(R.id.bottom_nav)
         val isLoggedIn = sessionManager.isLoggedIn()
         val userRole = sessionManager.getUserRole()
         
@@ -224,15 +250,18 @@ class MainActivity : AppCompatActivity() {
             universitiesItem.isVisible = true
             universitiesItem.isEnabled = true
         }
-        navView.menu.findItem(R.id.nav_chat)?.isVisible = hasChatAccess
+        // Поддержка и Допуск всегда видны в меню
+        navView.menu.findItem(R.id.nav_chat)?.isVisible = true
         navView.menu.findItem(R.id.nav_profile)?.isVisible = hasProfileAccess
-        navView.menu.findItem(R.id.nav_admission)?.isVisible = hasAdmissionAccess
+        navView.menu.findItem(R.id.nav_admission)?.isVisible = true
         
         // Управление видимостью пунктов меню в нижней навигации
-        // Галерея всегда видна для всех пользователей
-        bottomNav.menu.findItem(R.id.nav_gallery)?.isVisible = true
-        bottomNav.menu.findItem(R.id.nav_chat)?.isVisible = hasChatAccess
-        bottomNav.menu.findItem(R.id.nav_profile)?.isVisible = hasProfileAccess
-        // nav_admission убран из нижней навигации (только в боковом меню) из-за ограничения в 5 элементов
+        // Новый CustomBottomNavView всегда показывает все три элемента (кисть, дом, картинка)
+        // Видимость управляется через навигацию - если пользователь не имеет доступа,
+        // он просто не сможет перейти на соответствующий экран
+    }
+    
+    fun openDrawer() {
+        binding.drawerLayout.openDrawer(GravityCompat.START)
     }
 }

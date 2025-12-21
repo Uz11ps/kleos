@@ -10,7 +10,7 @@
     <string name="menu_profile">Профиль</string>
     <string name="menu_partners">Партнеры</string>
     <string name="menu_chat">Поддержка</string>
-    <string name="menu_admission">Поступление</string>
+    <string name="menu_admission">Допуск</string>
     <string name="action_logout">Выход</string>
     <string name="menu_news">Новости</string>
     <string name="choose_language">Выберите язык</string>
@@ -18,10 +18,15 @@
     <string name="lang_english">English</string>
     <string name="lang_chinese">中文（简体）</string>
     <string name="no_suitable_question">Нет подходящего вопроса? Оставить заявку</string>
+    <string name="support_title">Вопросы и помощь</string>
+    <string name="support_subtitle">Не нашли нужный ответ?</string>
+    <string name="leave_request">Оставить заявку</string>
+    <string name="faq_hint">Краткая подсказка, если нужна</string>
 
     <!-- Chat -->
-    <string name="hint_message">Сообщение</string>
+    <string name="hint_message">Текст</string>
     <string name="action_send">Отправить</string>
+    <string name="what_interests_you">Что вас интересует?</string>
 
     <!-- Partners -->
     <string name="loading">Загрузка…</string>
@@ -85,10 +90,11 @@
 
     <!-- Programs/Filters -->
     <string name="filters_title">Фильтры</string>
-    <string name="filter_search_program">Поиск программ</string>
+    <string name="filter_search_program">Поиск программы</string>
     <string name="filter_language">Язык</string>
     <string name="filter_education_level">Уровень образования</string>
     <string name="filter_university">Университет</string>
+    <string name="find_variants">Найти варианты</string>
 
     <!-- FAQ arrays (RU) -->
     <string-array name="faq_questions">

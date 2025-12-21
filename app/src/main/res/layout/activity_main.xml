@@ -5,7 +5,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
+    android:fitsSystemWindows="false"
     tools:openDrawer="start">
 
     <include
@@ -14,12 +14,53 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
+    <FrameLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/activity_main_drawer" />
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <!-- Фон меню -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_drawer_menu"
+            android:elevation="0dp" />
+
+        <!-- Размытый кружок сверху справа в бургере -->
+        <com.example.kleos.ui.onboarding.BlurredCircleView
+            android:id="@+id/blurredCircleTopDrawer"
+            android:layout_width="318dp"
+            android:layout_height="318dp"
+            android:layout_gravity="top|end"
+            android:layout_marginEnd="-90dp"
+            android:layout_marginTop="-50dp"
+            android:elevation="1dp"
+            android:visibility="visible" />
+
+        <!-- Размытый кружок снизу слева в бургере -->
+        <com.example.kleos.ui.onboarding.BlurredCircleView
+            android:id="@+id/blurredCircleBottomDrawer"
+            android:layout_width="318dp"
+            android:layout_height="318dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="-90dp"
+            android:layout_marginBottom="-50dp"
+            android:elevation="1dp"
+            android:visibility="visible" />
+
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/nav_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fitsSystemWindows="false"
+            android:elevation="2dp"
+            android:background="@android:color/transparent"
+            style="@style/Widget.Kleos.NavigationView"
+            app:headerLayout="@layout/nav_header_main"
+            app:menu="@menu/activity_main_drawer" />
+
+    </FrameLayout>
+
 </androidx.drawerlayout.widget.DrawerLayout>

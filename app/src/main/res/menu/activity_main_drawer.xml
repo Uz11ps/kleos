@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
+    <group android:checkableBehavior="none">
         <item
             android:id="@+id/nav_home"
             android:title="@string/menu_home" />
@@ -12,18 +12,10 @@
             android:title="@string/menu_news" />
         <item
             android:id="@+id/nav_gallery"
-            android:icon="@drawable/ic_menu_gallery"
             android:title="@string/menu_gallery" />
-        <item
-            android:id="@+id/nav_universities"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="@string/menu_universities" />
         <item
             android:id="@+id/nav_slideshow"
             android:title="@string/menu_slideshow" />
-        <item
-            android:id="@+id/nav_profile"
-            android:title="@string/menu_profile" />
         <item
             android:id="@+id/nav_partners"
             android:title="@string/menu_partners" />

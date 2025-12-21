@@ -33,7 +33,6 @@
     <string name="action_logout">Logout</string>
     <string name="api_base_url">http://10.0.2.2:8080/</string>
     <string name="choose_language">Choose language</string>
-    <string name="forgot_password">Forgot Your Password?</string>
     <string name="continue_as_guest">Continue as guest</string>
     <string name="dont_have_account">Dont have account?</string>
     <string name="invite_now">Invite Now</string>
@@ -48,8 +47,13 @@
     <string name="no_suitable_question">No suitable question? Submit a request</string>
 
     <!-- Chat -->
-    <string name="hint_message">Message</string>
+    <string name="support_title">Questions and Help</string>
+    <string name="support_subtitle">Didn\'t find the answer you need?</string>
+    <string name="leave_request">Leave a request</string>
+    <string name="faq_hint">Brief hint, if needed</string>
+    <string name="hint_message">Text</string>
     <string name="action_send">Send</string>
+    <string name="what_interests_you">What interests you?</string>
 
     <!-- Partners -->
     <string name="loading">Loading…</string>
@@ -63,9 +67,17 @@
     <string name="id_prefix">ID: %1$s</string>
 
     <!-- Auth -->
+    <string name="welcome_title">Welcome</string>
+    <string name="welcome_subtitle">Log in or create a profile</string>
     <string name="forgot_password_not_impl">Password reset is not implemented yet</string>
     <string name="title_sign_up">Sign Up</string>
     <string name="title_sign_in">Sign In</string>
+    <string name="remember_password">Remember password</string>
+    <string name="no_account_register">Still no account? Register</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="reset_password">Reset password</string>
+    <string name="label_login">Login</string>
+    <string name="have_account_login">Already have an account? Sign in</string>
 
     <!-- Admission form -->
     <string name="admission_apply_now">Apply Now</string>
@@ -113,6 +125,7 @@
     <string name="filter_language">Language</string>
     <string name="filter_education_level">Level of education</string>
     <string name="filter_university">University</string>
+    <string name="find_variants">Find variants</string>
 
     <!-- FAQ arrays (EN default) -->
     <string-array name="faq_questions">

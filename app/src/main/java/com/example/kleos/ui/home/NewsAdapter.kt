@@ -29,6 +29,36 @@ class NewsAdapter(
         holder.binding.titleText.text = item.title
         holder.binding.dateText.text = item.dateText
         
+        // Определяем тип карточки (новость или интересное) по ID
+        val isInteresting = item.id.hashCode() % 2 != 0
+        
+        if (isInteresting) {
+            // Интересное - желтый фон
+            holder.itemView.setBackgroundResource(com.example.kleos.R.drawable.bg_interesting_card)
+            holder.binding.categoryBadge.text = "Интересное"
+            holder.binding.categoryBadge.setBackgroundResource(com.example.kleos.R.drawable.bg_category_badge_interesting)
+            holder.binding.titleText.setTextColor(android.graphics.Color.BLACK)
+            holder.binding.dateText.setTextColor(android.graphics.Color.BLACK)
+        } else {
+            // Новости - синий фон
+            holder.itemView.setBackgroundResource(com.example.kleos.R.drawable.bg_news_card)
+            holder.binding.categoryBadge.text = "Новости"
+            holder.binding.categoryBadge.setBackgroundResource(com.example.kleos.R.drawable.bg_category_badge_news)
+            holder.binding.titleText.setTextColor(android.graphics.Color.WHITE)
+            holder.binding.dateText.setTextColor(android.graphics.Color.WHITE)
+        }
+        
+        // Обработка клика на кнопку со стрелкой
+        holder.binding.arrowButton.setOnClickListener {
+            AnimationUtils.pressButton(it)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                AnimationUtils.releaseButton(it)
+                if (onItemClick != null) {
+                    onItemClick(item)
+                }
+            }, 150)
+        }
+        
         // Анимация появления карточки с задержкой
         AnimationUtils.cardEnter(holder.itemView, position * 100L)
         

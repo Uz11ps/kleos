@@ -49,150 +49,66 @@ class AdmissionFormFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        
         if (!isAdded) return
-
-        // Автозаполнение email из сессии пользователя
-        val sessionManager = com.example.kleos.data.auth.SessionManager(requireContext())
-        val currentUser = sessionManager.getCurrentUser()
-        if (!currentUser?.email.isNullOrBlank() && binding.emailEditText.text.isNullOrBlank()) {
-            binding.emailEditText.setText(currentUser?.email)
+        
+        // Скрываем bottom navigation на этой странице
+        hideBottomNavigation()
+        
+        // Обработка кнопки назад
+        binding.backButton.setOnClickListener {
+            requireActivity().onBackPressed()
+        }
+        
+        // Обработка кнопки меню
+        binding.menuButton.setOnClickListener {
+            (activity as? com.example.kleos.MainActivity)?.let { mainActivity ->
+                mainActivity.openDrawer()
+            }
         }
 
         // Анимация появления заголовка
-        val titleView = binding.root.findViewById<View>(com.example.kleos.R.id.titleText)
-        titleView?.let { AnimationUtils.slideUpFade(it, 0) }
+        AnimationUtils.slideUpFade(binding.titleText, 0)
         
-        // Безопасное получение parent элементов для анимации
-        fun getParentLayout(editText: View): ViewGroup? {
-            val parent = editText.parent
-            return if (parent is com.google.android.material.textfield.TextInputLayout) {
-                parent as ViewGroup
-            } else {
-                null
+        // Анимация появления полей
+        val editTexts = listOf(
+            binding.firstNameEditText,
+            binding.lastNameEditText,
+            binding.patronymicEditText,
+            binding.dateOfBirthEditText,
+            binding.placeOfBirthEditText,
+            binding.nationalityEditText,
+            binding.phoneEditText
+        )
+        
+        editTexts.forEachIndexed { index, editText ->
+            editText.parent?.let { parent ->
+                if (parent is View) {
+                    AnimationUtils.slideUpFade(parent, (index * 50).toLong())
+                }
             }
-        }
-        
-        // Анимация появления всех инпутов с задержкой
-        val inputLayouts = mutableListOf<ViewGroup>()
-        
-        try {
-            listOf(
-                binding.firstNameEditText,
-                binding.lastNameEditText,
-                binding.patronymicEditText,
-                binding.dateOfBirthEditText,
-                binding.nationalityEditText,
-                binding.passportNumberEditText,
-                binding.phoneEditText,
-                binding.emailEditText,
-                binding.passportIssueEditText,
-                binding.visaCityEditText,
-                binding.passportExpiryEditText,
-                binding.programEditText,
-                binding.commentEditText
-            ).forEach { editText ->
-                getParentLayout(editText)?.let { inputLayouts.add(it) }
-            }
-        } catch (e: Exception) {
-            // Игнорируем ошибки при получении parent элементов
-        }
-        
-        inputLayouts.forEachIndexed { index, layout ->
-            AnimationUtils.slideUpFade(layout, (index * 50).toLong())
         }
         
         // Анимация появления кнопки
         view.postDelayed({
             if (isAdded && _binding != null) {
-                AnimationUtils.bounceIn(binding.submitButton, inputLayouts.size * 50L)
+                AnimationUtils.bounceIn(binding.submitButton, editTexts.size * 50L)
             }
         }, 100)
 
         applyDateMask(binding.dateOfBirthEditText)
-        applyDateMask(binding.passportExpiryEditText)
-
-        // Автоподстановка выбранной программы из Intent/аргументов
-        val argProgram = arguments?.getString("program")
-            ?: requireActivity().intent?.getStringExtra("prefill_program")
-        if (!argProgram.isNullOrBlank() && binding.programEditText.text.isNullOrBlank()) {
-            binding.programEditText.setText(argProgram)
-        }
-
-        if (!isAdded) return
-
-        // Load countries and consent text
-        loadCountriesAndConsent()
 
         // Phone mask per language
         val lang = resources.configuration.locales[0]?.language ?: "en"
         binding.phoneEditText.addTextChangedListener(
             com.example.kleos.ui.common.PhoneMaskTextWatcher(binding.phoneEditText, lang)
         )
-        // Apply dynamic i18n overrides to hints (if provided from admin)
-        if (isAdded) {
-            binding.firstNameEditText.hint = requireContext().t(com.example.kleos.R.string.label_first_name)
-            binding.lastNameEditText.hint = requireContext().t(com.example.kleos.R.string.label_last_name)
-            binding.patronymicEditText.hint = requireContext().t(com.example.kleos.R.string.label_patronymic)
-            binding.emailEditText.hint = requireContext().t(com.example.kleos.R.string.label_email)
-        }
-        
-        // Setup consent checkbox listener
-        binding.consentCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            binding.submitButton.isEnabled = isChecked
-        }
-        
-        // Setup consent link click listener
-        binding.consentLinkText.setOnClickListener {
-            showConsentDialog()
-        }
-        
-        // Add underline to consent link text programmatically
-        binding.consentLinkText.paintFlags = android.graphics.Paint.UNDERLINE_TEXT_FLAG
 
-        // Анимация при фокусе на инпутах
-        val editTexts = listOf(
-            binding.firstNameEditText,
-            binding.lastNameEditText,
-            binding.patronymicEditText,
-            binding.dateOfBirthEditText,
-            binding.phoneEditText,
-            binding.emailEditText,
-            binding.passportExpiryEditText,
-            binding.programEditText,
-            binding.commentEditText,
-            binding.nationalityEditText,
-            binding.passportNumberEditText,
-            binding.passportIssueEditText,
-            binding.visaCityEditText
-        )
+        // Load countries for nationality dropdown
+        loadCountriesAndConsent()
         
-        editTexts.forEach { editText ->
-            editText.setOnFocusChangeListener { v, hasFocus ->
-                if (!isAdded) return@setOnFocusChangeListener
-                
-                val parent = v.parent
-                if (parent is View) {
-                    if (hasFocus) {
-                        // Плавное увеличение при фокусе
-                        parent.animate()
-                            .scaleX(1.02f)
-                            .scaleY(1.02f)
-                            .setDuration(300)
-                            .setInterpolator(DecelerateInterpolator())
-                            .start()
-                    } else {
-                        // Плавное уменьшение при потере фокуса
-                        parent.animate()
-                            .scaleX(1f)
-                            .scaleY(1f)
-                            .setDuration(300)
-                            .setInterpolator(DecelerateInterpolator())
-                            .start()
-                    }
-                }
-            }
-        }
+        // Включаем кнопку отправки по умолчанию
+        binding.submitButton.isEnabled = true
         
         binding.submitButton.setOnClickListener {
             // Анимация нажатия на кнопку
@@ -203,41 +119,37 @@ class AdmissionFormFragment : Fragment() {
             val firstName = binding.firstNameEditText.text?.toString().orEmpty()
             val lastName = binding.lastNameEditText.text?.toString().orEmpty()
             val patronymic = binding.patronymicEditText.text?.toString()?.takeIf { it.isNotBlank() }
-            val phone = binding.phoneEditText.text?.toString().orEmpty()
-            val email = binding.emailEditText.text?.toString().orEmpty()
             val dateOfBirth = binding.dateOfBirthEditText.text?.toString()
             val placeOfBirth = binding.placeOfBirthEditText.text?.toString()
             val nationality = (binding.nationalityEditText as? MaterialAutoCompleteTextView)?.text?.toString()
-            val passportNumber = binding.passportNumberEditText.text?.toString()
-            val passportIssue = binding.passportIssueEditText.text?.toString()
-            val program = binding.programEditText.text?.toString().orEmpty()
-            val visaCity = binding.visaCityEditText.text?.toString()
-            val comment = binding.commentEditText.text?.toString()
-            if (firstName.isBlank() || lastName.isBlank() || phone.isBlank() || email.isBlank() || program.isBlank() || nationality.isNullOrBlank()) {
+            val phone = binding.phoneEditText.text?.toString().orEmpty()
+            
+            // Валидация обязательных полей
+            if (firstName.isBlank() || lastName.isBlank() || dateOfBirth.isNullOrBlank() || placeOfBirth.isNullOrBlank() || nationality.isNullOrBlank() || phone.isBlank()) {
                 if (isAdded && _binding != null) {
                     AnimationUtils.releaseButton(binding.submitButton)
                     AnimationUtils.shake(binding.submitButton)
-                    Toast.makeText(requireContext(), "Заполните обязательные поля", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Заполните все обязательные поля", Toast.LENGTH_SHORT).show()
                 }
                 return@setOnClickListener
             }
-            if (!binding.consentCheckBox.isChecked) {
+            
+            // Валидация формата телефона (минимум 10 цифр)
+            val phoneDigits = phone.filter { it.isDigit() }
+            if (phoneDigits.length < 10) {
                 if (isAdded && _binding != null) {
                     AnimationUtils.releaseButton(binding.submitButton)
-                    AnimationUtils.shake(binding.consentCheckBox)
-                    Toast.makeText(requireContext(), "Необходимо согласие на обработку персональных данных", Toast.LENGTH_SHORT).show()
+                    AnimationUtils.shake(binding.phoneEditText)
+                    Toast.makeText(requireContext(), "Введите корректный номер телефона", Toast.LENGTH_SHORT).show()
                 }
                 return@setOnClickListener
             }
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                if (isAdded && _binding != null) {
-                    AnimationUtils.releaseButton(binding.submitButton)
-                    val emailParent = binding.emailEditText.parent
-                    AnimationUtils.shake(if (emailParent is View) emailParent else binding.submitButton)
-                    Toast.makeText(requireContext(), "Некорректный email", Toast.LENGTH_SHORT).show()
-                }
-                return@setOnClickListener
-            }
+            
+            // Получаем email из сессии пользователя
+            val sessionManager = com.example.kleos.data.auth.SessionManager(requireContext())
+            val currentUser = sessionManager.getCurrentUser()
+            val email = currentUser?.email ?: ""
+            
             val application = AdmissionApplication(
                 id = UUID.randomUUID().toString(),
                 firstName = firstName,
@@ -248,12 +160,12 @@ class AdmissionFormFragment : Fragment() {
                 dateOfBirth = dateOfBirth,
                 placeOfBirth = placeOfBirth,
                 nationality = nationality,
-                passportNumber = passportNumber,
-                passportIssue = passportIssue,
-                passportExpiry = binding.passportExpiryEditText.text?.toString(),
-                visaCity = visaCity,
-                program = program,
-                comment = comment
+                passportNumber = null,
+                passportIssue = null,
+                passportExpiry = null,
+                visaCity = null,
+                program = "",
+                comment = null
             )
             admissionsRepository.submit(application)
             
@@ -265,22 +177,10 @@ class AdmissionFormFragment : Fragment() {
             
             Toast.makeText(requireContext(), "Заявка отправлена", Toast.LENGTH_SHORT).show()
             
-            // Плавное скрытие заполненных полей
+            // Очистка полей после отправки
             editTexts.forEach { editText ->
                 if (!editText.text.isNullOrBlank() && isAdded) {
-                    editText.animate()
-                        .alpha(0.3f)
-                        .setDuration(200)
-                        .withEndAction {
-                            if (isAdded && _binding != null) {
-                                editText.setText("")
-                                editText.animate()
-                                    .alpha(1f)
-                                    .setDuration(200)
-                                    .start()
-                            }
-                        }
-                        .start()
+                    editText.setText("")
                 }
             }
         }
@@ -352,7 +252,29 @@ class AdmissionFormFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Показываем bottom navigation обратно при выходе со страницы
+        showBottomNavigation()
         _binding = null
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Скрываем bottom navigation при возврате на страницу
+        hideBottomNavigation()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Показываем bottom navigation при уходе со страницы
+        showBottomNavigation()
+    }
+    
+    private fun hideBottomNavigation() {
+        activity?.findViewById<com.example.kleos.ui.common.CustomBottomNavView>(com.example.kleos.R.id.bottom_nav)?.visibility = android.view.View.GONE
+    }
+
+    private fun showBottomNavigation() {
+        activity?.findViewById<com.example.kleos.ui.common.CustomBottomNavView>(com.example.kleos.R.id.bottom_nav)?.visibility = android.view.View.VISIBLE
     }
 
     private fun applyDateMask(editText: TextInputEditText) {

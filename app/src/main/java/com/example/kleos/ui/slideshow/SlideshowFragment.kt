@@ -12,6 +12,9 @@ import com.example.kleos.databinding.FragmentSlideshowBinding
 import com.example.kleos.data.programs.ProgramsRepository
 import com.example.kleos.ui.programs.ProgramDetailActivity
 import com.example.kleos.ui.programs.ProgramsAdapter
+import com.example.kleos.ui.programs.ProgramResultsAdapter
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.example.kleos.ui.utils.BottomSheetManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,6 +26,7 @@ class SlideshowFragment : Fragment() {
 
     private val repository = ProgramsRepository()
     private lateinit var adapter: ProgramsAdapter
+    private var currentBottomSheetDialog: BottomSheetDialog? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,6 +56,9 @@ class SlideshowFragment : Fragment() {
                     .putExtra("university", p.university ?: "")
                     .putExtra("tuition", (p.tuition ?: 0.0).toString())
                     .putExtra("duration", (p.durationMonths ?: 0).toString())
+                    .putExtra("language", p.language ?: "")
+                    .putExtra("level", p.level ?: "")
+                    .putExtra("durationMonths", p.durationMonths ?: 0)
                 startActivity(intent)
             }, 150)
         }
@@ -73,17 +80,37 @@ class SlideshowFragment : Fragment() {
         
         binding.searchButton.setOnClickListener { 
             com.example.kleos.ui.utils.AnimationUtils.shake(binding.searchButton)
-            loadPrograms() 
+            // Если это же окно уже открыто, закрываем его
+            if (currentBottomSheetDialog?.isShowing == true && currentBottomSheetDialog == BottomSheetManager.getCurrentDialog()) {
+                BottomSheetManager.dismissCurrent()
+                currentBottomSheetDialog = null
+            } else {
+                showResultsBottomSheet()
+            }
         }
-        // первичная загрузка без фильтров
+        
+        // Загружаем программы с фильтрами из аргументов или без фильтров
         loadPrograms()
     }
 
     private fun loadPrograms() {
-        val q = binding.filterQueryEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
-        val language = binding.filterLanguageEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
-        val level = binding.filterLevelEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
-        val university = binding.filterUniversityEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+        // Получаем параметры фильтров из arguments (если перешли с экрана фильтров)
+        val q = arguments?.getString("searchQuery")?.takeIf { it.isNotEmpty() }
+            ?: binding.filterQueryEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+        val language = arguments?.getString("language")?.takeIf { it.isNotEmpty() }
+            ?: binding.filterLanguageEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+        val level = arguments?.getString("level")?.takeIf { it.isNotEmpty() }
+            ?: binding.filterLevelEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+        val university = arguments?.getString("university")?.takeIf { it.isNotEmpty() }
+            ?: binding.filterUniversityEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+
+        // Если параметры пришли из arguments, заполняем поля фильтров
+        if (arguments != null) {
+            q?.let { binding.filterQueryEditText.setText(it) }
+            language?.let { binding.filterLanguageEditText.setText(it) }
+            level?.let { binding.filterLevelEditText.setText(it) }
+            university?.let { binding.filterUniversityEditText.setText(it) }
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             val items = withContext(Dispatchers.IO) {
@@ -92,9 +119,72 @@ class SlideshowFragment : Fragment() {
             adapter.submitList(items)
         }
     }
+    
+    private fun showResultsBottomSheet() {
+        val q = binding.filterQueryEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+        val language = binding.filterLanguageEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+        val level = binding.filterLevelEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+        val university = binding.filterUniversityEditText.text?.toString()?.trim().orEmpty().ifBlank { null }
+        
+        val bottomSheetDialog = BottomSheetDialog(requireContext())
+        currentBottomSheetDialog = bottomSheetDialog
+        
+        // Очищаем ссылку при закрытии диалога
+        bottomSheetDialog.setOnDismissListener {
+            if (currentBottomSheetDialog == bottomSheetDialog) {
+                currentBottomSheetDialog = null
+            }
+        }
+        val bottomSheetView = layoutInflater.inflate(com.example.kleos.R.layout.bottom_sheet_programs_results, null)
+        bottomSheetDialog.setContentView(bottomSheetView)
+        
+        // Убираем затемнение фона
+        bottomSheetDialog.window?.setDimAmount(0f)
+        
+        bottomSheetDialog.setOnShowListener {
+            val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            bottomSheet?.let { view ->
+                val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(view)
+                behavior.peekHeight = (resources.displayMetrics.heightPixels * 0.75).toInt()
+                behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED
+            }
+        }
+        
+        val recyclerView = bottomSheetView.findViewById<androidx.recyclerview.widget.RecyclerView>(com.example.kleos.R.id.programsRecyclerView)
+        val summaryText = bottomSheetView.findViewById<android.widget.TextView>(com.example.kleos.R.id.resultsSummary)
+        
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        val resultsAdapter = ProgramResultsAdapter(emptyList()) { program ->
+            bottomSheetDialog.dismiss()
+            val intent = Intent(requireContext(), ProgramDetailActivity::class.java)
+                .putExtra("title", program.title)
+                .putExtra("description", program.description ?: "")
+                .putExtra("university", program.university ?: "")
+                .putExtra("tuition", (program.tuition ?: 0.0).toString())
+                .putExtra("duration", (program.durationMonths ?: 0).toString())
+                .putExtra("language", program.language ?: "")
+                .putExtra("level", program.level ?: "")
+                .putExtra("durationMonths", program.durationMonths ?: 0)
+            startActivity(intent)
+        }
+        recyclerView.adapter = resultsAdapter
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            val items = withContext(Dispatchers.IO) {
+                runCatching { repository.list(q, language, level, university) }.getOrElse { emptyList() }
+            }
+            resultsAdapter.submitList(items)
+            val count = items.size
+            summaryText.text = "Найдено: $count ${if (count == 1) "программа" else if (count in 2..4) "программы" else "программ"}"
+            BottomSheetManager.showDialog(bottomSheetDialog)
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Закрываем открытое окно при уничтожении view
+        currentBottomSheetDialog?.dismiss()
+        currentBottomSheetDialog = null
         _binding = null
     }
 }

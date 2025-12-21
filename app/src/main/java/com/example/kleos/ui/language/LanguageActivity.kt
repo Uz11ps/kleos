@@ -78,10 +78,22 @@ class LanguageActivity : AppCompatActivity() {
 
     private fun setLangAndStart(code: String) {
         LocaleManager.setLocale(this, code)
-        val intent = Intent(this, MainActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        startActivity(intent)
-        overridePendingTransition(com.example.kleos.R.anim.scale_in, com.example.kleos.R.anim.fade_out)
+        
+        // Проверяем, откуда был открыт LanguageActivity
+        val isFromAuth = intent.getBooleanExtra("from_auth", false)
+        
+        if (isFromAuth) {
+            // Если открыт из AuthActivity, возвращаемся обратно
+            finish()
+            overridePendingTransition(com.example.kleos.R.anim.scale_in, com.example.kleos.R.anim.fade_out)
+        } else {
+            // Иначе переходим в MainActivity (как было раньше)
+            val intent = Intent(this, MainActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            startActivity(intent)
+            finish()
+            overridePendingTransition(com.example.kleos.R.anim.scale_in, com.example.kleos.R.anim.fade_out)
+        }
     }
 }
 

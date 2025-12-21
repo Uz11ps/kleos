@@ -32,6 +32,13 @@ class GalleryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Обработка кнопки меню
+        binding.menuButton.setOnClickListener {
+            (activity as? com.example.kleos.MainActivity)?.let { mainActivity ->
+                mainActivity.openDrawer()
+            }
+        }
+        
         val adapter = GalleryAdapter(emptyList()) { item ->
             val bundle = Bundle().apply {
                 putString("itemId", item.id)
@@ -43,7 +50,7 @@ class GalleryFragment : Fragment() {
             findNavController().navigate(com.example.kleos.R.id.galleryDetailFragment, bundle)
         }
         
-        binding.galleryRecycler.layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.galleryRecycler.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
         binding.galleryRecycler.adapter = adapter
 
         val repo = GalleryRepository()
