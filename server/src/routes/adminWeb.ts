@@ -234,6 +234,15 @@ async function adminLayout(opts: {
       .grid{display:grid;gap:16px}
       @media (min-width: 900px){
         .grid.cols-2{grid-template-columns: 1fr 1fr}
+        .grid.cols-3{grid-template-columns: repeat(3, 1fr)}
+        .grid.cols-4{grid-template-columns: repeat(4, 1fr)}
+      }
+      @media (max-width: 1200px){
+        .grid.cols-4{grid-template-columns: repeat(2, 1fr)}
+      }
+      @media (max-width: 600px){
+        .grid.cols-4{grid-template-columns: 1fr}
+        .grid.cols-3{grid-template-columns: 1fr}
       }
 
       .form-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
@@ -575,6 +584,12 @@ router.get('/admin/users', adminAuthMiddleware, async (req, res) => {
     query.role = 'user';
   }
   
+  // Получаем статистику по всем пользователям (без фильтров)
+  const totalUsers = await User.countDocuments();
+  const totalStudents = await User.countDocuments({ role: 'student' });
+  const totalRegularUsers = await User.countDocuments({ role: 'user' });
+  const totalAdmins = await User.countDocuments({ role: 'admin' });
+  
   const users = await User.find(query).sort({ createdAt: -1 }).lean();
   const rows = users.map(u => {
     const studentId = (u as any).studentId || '';
@@ -668,28 +683,48 @@ router.get('/admin/users', adminAuthMiddleware, async (req, res) => {
       <h1>👥 Users</h1>
     </div>
     
+    <!-- Статистика -->
+    <div class="grid cols-4" style="margin-bottom:24px;">
+      <div class="card">
+        <div style="font-size:32px;font-weight:700;color:var(--accent);margin-bottom:8px;">${totalUsers}</div>
+        <div style="color:var(--muted);">Всего пользователей</div>
+      </div>
+      <div class="card">
+        <div style="font-size:32px;font-weight:700;color:var(--accent-2);margin-bottom:8px;">${totalStudents}</div>
+        <div style="color:var(--muted);">Студентов</div>
+      </div>
+      <div class="card">
+        <div style="font-size:32px;font-weight:700;color:#10b981;margin-bottom:8px;">${totalRegularUsers}</div>
+        <div style="color:var(--muted);">Обычных пользователей</div>
+      </div>
+      <div class="card">
+        <div style="font-size:32px;font-weight:700;color:#f59e0b;margin-bottom:8px;">${totalAdmins}</div>
+        <div style="color:var(--muted);">Администраторов</div>
+      </div>
+    </div>
+    
     <div class="card" style="margin-bottom:20px;">
       <h2>Search & Filter</h2>
       <form method="get" action="/admin/users" style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end;">
         <div class="input-group">
-          <label>Search by name or email</label>
-          <input name="search" type="text" placeholder="Search..." value="${search}" />
+          <label>Поиск по имени, email или телефону</label>
+          <input name="search" type="text" placeholder="Введите имя, email или номер телефона..." value="${search}" />
         </div>
         <div class="input-group">
-          <label>Filter</label>
+          <label>Фильтр</label>
           <select name="filter">
-            <option value="all"${filter === 'all' ? ' selected' : ''}>All Users</option>
-            <option value="students"${filter === 'students' ? ' selected' : ''}>Students Only</option>
-            <option value="users"${filter === 'users' ? ' selected' : ''}>Regular Users Only</option>
+            <option value="all"${filter === 'all' ? ' selected' : ''}>Все пользователи</option>
+            <option value="students"${filter === 'students' ? ' selected' : ''}>Только студенты</option>
+            <option value="users"${filter === 'users' ? ' selected' : ''}>Только обычные пользователи</option>
           </select>
         </div>
-        <button type="submit" class="btn-primary">Search</button>
+        <button type="submit" class="btn-primary">Поиск</button>
       </form>
-      ${search || filter !== 'all' ? `<div style="margin-top:12px;"><a href="/admin/users" class="btn-secondary">Clear filters</a></div>` : ''}
+      ${search || filter !== 'all' ? `<div style="margin-top:12px;"><a href="/admin/users" class="btn-secondary">Очистить фильтры</a></div>` : ''}
     </div>
     
     <div class="card">
-      <h2>Users List (${users.length} found)</h2>
+      <h2>Список пользователей (найдено: ${users.length})</h2>
       <div class="card" style="margin-bottom:20px;background:var(--card);border:2px dashed var(--border);">
         <h3 style="margin-top:0;">➕ Создать нового пользователя</h3>
         <form method="post" action="/admin/users/create" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
