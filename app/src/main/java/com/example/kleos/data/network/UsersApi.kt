@@ -19,7 +19,8 @@ data class UserProfileDto(
     val penalties: String?,
     val notes: String?,
     val studentId: String?,
-    val emailVerified: Boolean
+    val emailVerified: Boolean,
+    val avatarUrl: String? = null
 )
 
 data class UpdateProfileRequest(

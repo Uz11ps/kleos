@@ -73,7 +73,8 @@ router.get('/me', auth(), async (req, res) => {
     penalties: user.penalties || '',
     notes: user.notes || '',
     studentId: user.studentId || '',
-    emailVerified: user.emailVerified
+    emailVerified: user.emailVerified,
+    avatarUrl: (user as any).avatarUrl || null
   });
 });
 

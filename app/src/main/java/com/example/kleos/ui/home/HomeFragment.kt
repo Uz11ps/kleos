@@ -153,6 +153,63 @@ class HomeFragment : Fragment() {
         // Делаем никнейм кликабельным
         binding.userNameText.isClickable = true
         binding.userNameText.isFocusable = true
+        
+        // Загружаем аватарку пользователя
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val profile = withContext(Dispatchers.IO) {
+                    com.example.kleos.data.profile.ProfileRepository().getProfile()
+                }
+                if (!profile.avatarUrl.isNullOrEmpty()) {
+                    loadAvatar(binding.profileImage, profile.avatarUrl)
+                }
+            } catch (e: Exception) {
+                // Игнорируем ошибки загрузки аватара
+            }
+        }
+    }
+    
+    private fun loadAvatar(imageView: android.widget.ImageView, imageUrl: String) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Формируем полный URL, если он относительный
+                val fullUrl = if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+                    imageUrl
+                } else {
+                    val baseUrl = com.example.kleos.BuildConfig.API_BASE_URL.trimEnd('/')
+                    if (imageUrl.startsWith("/")) {
+                        "$baseUrl$imageUrl"
+                    } else {
+                        "$baseUrl/$imageUrl"
+                    }
+                }
+                
+                // Используем OkHttp клиент из ApiClient для правильной авторизации
+                val okHttpClient = com.example.kleos.data.network.ApiClient.okHttpClient
+                val request = okhttp3.Request.Builder()
+                    .url(fullUrl)
+                    .get()
+                    .build()
+                
+                val response = okHttpClient.newCall(request).execute()
+                
+                if (response.isSuccessful && response.body != null) {
+                    response.body?.use { body ->
+                        val inputStream = body.byteStream()
+                        val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                        withContext(Dispatchers.Main) {
+                            if (bitmap != null && !bitmap.isRecycled) {
+                                imageView.setImageBitmap(bitmap)
+                                imageView.background = null // Убираем фон, чтобы показать изображение
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HomeFragment", "Error loading avatar: ${e.message}", e)
+                // В случае ошибки оставляем дефолтную иконку
+            }
+        }
     }
     
     private fun loadContent() {
@@ -179,7 +236,8 @@ class HomeFragment : Fragment() {
                     category = category,
                     title = news.title,
                     date = news.dateText,
-                    backgroundColor = backgroundColor
+                    backgroundColor = backgroundColor,
+                    imageUrl = news.imageUrl
                 )
             }.filter { card ->
                 when (currentTab) {

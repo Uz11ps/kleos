@@ -24,6 +24,22 @@ class GalleryDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Управление цветом статус-бара
+        val originalStatusBarColor = activity?.window?.statusBarColor
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+        
+        // Обработка кнопки назад
+        binding.backButton.setOnClickListener {
+            requireActivity().onBackPressed()
+        }
+        
+        // Обработка кнопки меню
+        binding.menuButton.setOnClickListener {
+            (activity as? com.example.kleos.MainActivity)?.let { mainActivity ->
+                mainActivity.openDrawer()
+            }
+        }
+        
         val itemTitle = arguments?.getString("itemTitle") ?: ""
         val itemDescription = arguments?.getString("itemDescription") ?: ""
         val itemMediaUrl = arguments?.getString("itemMediaUrl") ?: ""
@@ -35,9 +51,17 @@ class GalleryDetailFragment : Fragment() {
         // For now, just show the URL
         binding.mediaUrlText.text = itemMediaUrl
     }
-
+    
+    override fun onResume() {
+        super.onResume()
+        // Устанавливаем цвет статус-бара при возврате на страницу
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+    }
+    
     override fun onDestroyView() {
         super.onDestroyView()
+        // Восстанавливаем цвет статус-бара
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
         _binding = null
     }
 }

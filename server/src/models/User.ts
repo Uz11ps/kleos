@@ -21,7 +21,9 @@ const userSchema = new Schema({
   penalties: { type: String },
   notes: { type: String },
   // FCM токен для push-уведомлений
-  fcmToken: { type: String, index: true, sparse: true }
+  fcmToken: { type: String, index: true, sparse: true },
+  // URL аватарки пользователя
+  avatarUrl: { type: String }
 }, { timestamps: true });
 
 export const User = model('User', userSchema);

@@ -586,7 +586,13 @@ router.get('/admin/users', adminAuthMiddleware, async (req, res) => {
         <div style="font-size:12px;color:var(--muted);margin-top:4px;">${u._id}</div>
       </td>
       <td>
-        <form method="post" action="/admin/users/${u._id}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+        <form method="post" action="/admin/users/${u._id}" enctype="multipart/form-data" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+          <div class="input-group" style="grid-column:1/-1;">
+            <label>Аватарка</label>
+            ${(u as any).avatarUrl ? `<div style="margin-bottom:8px;"><img src="${(u as any).avatarUrl}" alt="Avatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--border);" /></div>` : '<div style="margin-bottom:8px;width:80px;height:80px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);">Нет фото</div>'}
+            <input type="file" name="avatarFile" accept="image/*" />
+            <small style="color:var(--muted);font-size:12px;">Максимальный размер: 10MB. Поддерживаемые форматы: JPG, PNG, GIF</small>
+          </div>
           <div class="input-group">
             <label class="required">Полное имя</label>
             <input name="fullName" value="${(u.fullName || '').toString().replace(/"/g, '&quot;')}" required />
@@ -778,7 +784,7 @@ router.get('/admin/users', adminAuthMiddleware, async (req, res) => {
 });
 
 // Update user
-router.post('/admin/users/:id', adminAuthMiddleware, async (req: any, res: any) => {
+router.post('/admin/users/:id', adminAuthMiddleware, uploadImages.single('avatarFile'), async (req: any, res: any) => {
   const schema = z.object({
     fullName: z.string().optional(),
     role: z.enum(['user','student','admin']).optional(),
@@ -797,6 +803,11 @@ router.post('/admin/users/:id', adminAuthMiddleware, async (req: any, res: any) 
   const update: any = { ...parsed };
   if ('emailVerified' in parsed) {
     update.emailVerified = parsed.emailVerified === 'on';
+  }
+  // Если загружен файл аватара, сохраняем его URL
+  if (req.file) {
+    const base = process.env.PUBLIC_BASE_URL || '';
+    update.avatarUrl = `${base}/uploads/images/${req.file.filename}`;
   }
   await User.updateOne({ _id: req.params.id }, update);
   res.redirect('/admin/users');

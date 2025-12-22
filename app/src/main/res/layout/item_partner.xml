@@ -7,7 +7,34 @@
     android:layout_marginTop="12dp"
     android:layout_marginEnd="20dp"
     android:layout_marginBottom="12dp"
-    android:background="@drawable/bg_partner_card">
+    android:background="@drawable/bg_partner_card"
+    android:clipToPadding="false"
+    android:clipChildren="false">
+
+    <!-- Фоновое изображение -->
+    <ImageView
+        android:id="@+id/backgroundImage"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:contentDescription="Partner logo"
+        android:visibility="gone"
+        android:adjustViewBounds="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Затемнение для читаемости текста -->
+    <View
+        android:id="@+id/overlayView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/bg_partner_card"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Кнопка со стрелкой в правом верхнем углу -->
     <ImageButton

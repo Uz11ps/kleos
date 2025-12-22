@@ -22,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.Request
 
 class ProfileFragment : Fragment() {
 
@@ -129,6 +130,15 @@ class ProfileFragment : Fragment() {
                     else -> getString(com.example.kleos.R.string.role_user)
                 }
                 binding.profileRoleText.text = roleText
+                
+                // Загружаем аватарку, если она есть
+                if (!profile.avatarUrl.isNullOrEmpty()) {
+                    loadAvatar(binding.profileAvatar, profile.avatarUrl)
+                } else {
+                    // Сбрасываем на дефолтную иконку
+                    binding.profileAvatar.setImageResource(com.example.kleos.R.drawable.ic_profile)
+                    binding.profileAvatar.background = resources.getDrawable(com.example.kleos.R.drawable.bg_user_card, null)
+                }
                 
                 // Заполняем все поля
                 binding.nameEditText.setText(profile.fullName)
@@ -314,6 +324,49 @@ class ProfileFragment : Fragment() {
         super.onResume()
         // Устанавливаем цвет статус-бара при возврате на экран
         activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+    }
+    
+    private fun loadAvatar(imageView: android.widget.ImageView, imageUrl: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Формируем полный URL, если он относительный
+                val fullUrl = if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+                    imageUrl
+                } else {
+                    val baseUrl = com.example.kleos.BuildConfig.API_BASE_URL.trimEnd('/')
+                    if (imageUrl.startsWith("/")) {
+                        "$baseUrl$imageUrl"
+                    } else {
+                        "$baseUrl/$imageUrl"
+                    }
+                }
+                
+                // Используем OkHttp клиент из ApiClient для правильной авторизации
+                val okHttpClient = com.example.kleos.data.network.ApiClient.okHttpClient
+                val request = Request.Builder()
+                    .url(fullUrl)
+                    .get()
+                    .build()
+                
+                val response = okHttpClient.newCall(request).execute()
+                
+                if (response.isSuccessful && response.body != null) {
+                    response.body?.use { body ->
+                        val inputStream = body.byteStream()
+                        val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                        withContext(Dispatchers.Main) {
+                            if (bitmap != null && !bitmap.isRecycled) {
+                                imageView.setImageBitmap(bitmap)
+                                imageView.background = null // Убираем фон, чтобы показать изображение
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ProfileFragment", "Error loading avatar: ${e.message}", e)
+                // В случае ошибки оставляем дефолтную иконку
+            }
+        }
     }
     
     override fun onDestroyView() {

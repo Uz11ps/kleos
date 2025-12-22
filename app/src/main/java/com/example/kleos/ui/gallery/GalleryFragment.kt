@@ -32,6 +32,9 @@ class GalleryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Управление цветом статус-бара
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+        
         // Обработка кнопки меню
         binding.menuButton.setOnClickListener {
             (activity as? com.example.kleos.MainActivity)?.let { mainActivity ->
@@ -62,8 +65,16 @@ class GalleryFragment : Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Устанавливаем цвет статус-бара при возврате на страницу
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+    }
+    
     override fun onDestroyView() {
         super.onDestroyView()
+        // Восстанавливаем цвет статус-бара
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
         _binding = null
     }
 }
