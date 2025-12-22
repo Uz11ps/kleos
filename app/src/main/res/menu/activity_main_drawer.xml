@@ -25,6 +25,9 @@
         <item
             android:id="@+id/nav_admission"
             android:title="@string/menu_admission" />
+        <item
+            android:id="@+id/nav_profile"
+            android:title="@string/menu_profile" />
     </group>
     <item
         android:id="@+id/menu_sign_out"

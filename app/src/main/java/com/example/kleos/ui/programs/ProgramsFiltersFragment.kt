@@ -94,53 +94,120 @@ class ProgramsFiltersFragment : Fragment() {
     private fun loadFilterOptions() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Загружаем все программы для получения уникальных языков и уровней
+                android.util.Log.d("ProgramsFiltersFragment", "Loading filter options...")
+                // Загружаем все программы для получения уникальных языков, уровней и названий
                 val allPrograms = programsRepository.list(null, null, null, null)
+                android.util.Log.d("ProgramsFiltersFragment", "Loaded ${allPrograms.size} programs")
+                
                 val languages = allPrograms.mapNotNull { it.language }.distinct().sorted()
                 val levels = allPrograms.mapNotNull { it.level }.distinct().sorted()
+                val programTitles = allPrograms.mapNotNull { it.title }.distinct().sorted()
+                
+                android.util.Log.d("ProgramsFiltersFragment", "Languages: $languages")
+                android.util.Log.d("ProgramsFiltersFragment", "Levels: $levels")
+                android.util.Log.d("ProgramsFiltersFragment", "Program titles count: ${programTitles.size}")
                 
                 // Загружаем список университетов
                 val universities = universitiesRepository.list().map { it.name }.sorted()
+                android.util.Log.d("ProgramsFiltersFragment", "Universities count: ${universities.size}")
                 
                 // Обновляем UI на главном потоке
                 requireActivity().runOnUiThread {
-                    setupDropdowns(languages, levels, universities)
+                    setupDropdowns(languages, levels, universities, programTitles)
+                    android.util.Log.d("ProgramsFiltersFragment", "Dropdowns setup completed")
                 }
             } catch (e: Exception) {
+                android.util.Log.e("ProgramsFiltersFragment", "Error loading filter options", e)
+                e.printStackTrace()
                 // В случае ошибки используем пустые списки
                 requireActivity().runOnUiThread {
-                    setupDropdowns(emptyList(), emptyList(), emptyList())
+                    setupDropdowns(emptyList(), emptyList(), emptyList(), emptyList())
                 }
             }
         }
     }
     
-    private fun setupDropdowns(languages: List<String>, levels: List<String>, universities: List<String>) {
+    // Маппинги для переводов
+    private val languageMap = mapOf(
+        "ru" to "Русский",
+        "en" to "Английский",
+        "zh" to "Китайский"
+    )
+    
+    private val reverseLanguageMap = mapOf(
+        "Русский" to "ru",
+        "Английский" to "en",
+        "Китайский" to "zh"
+    )
+    
+    private val levelMap = mapOf(
+        "Bachelor's degree" to "Бакалавриат",
+        "Master's degree" to "Магистратура",
+        "Research degree" to "Докторантура",
+        "Speciality degree" to "Специалитет"
+    )
+    
+    private val reverseLevelMap = mapOf(
+        "Бакалавриат" to "Bachelor's degree",
+        "Магистратура" to "Master's degree",
+        "Докторантура" to "Research degree",
+        "Специалитет" to "Speciality degree"
+    )
+    
+    private fun setupDropdowns(languages: List<String>, levels: List<String>, universities: List<String>, programTitles: List<String>) {
+        // Переводы для языков
+        val translatedLanguages = languages.map { languageMap[it] ?: it }
+        
+        // Переводы для уровней образования
+        val translatedLevels = levels.map { levelMap[it] ?: it }
+        
         // Настройка выпадающего списка для языка
-        val languageAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, languages)
-        (binding.languageEditText as? MaterialAutoCompleteTextView)?.setAdapter(languageAdapter)
+        val languageAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, translatedLanguages)
+        (binding.languageEditText as? MaterialAutoCompleteTextView)?.apply {
+            setAdapter(languageAdapter)
+            threshold = 0 // Показывать список сразу при фокусе
+        }
         
         // Настройка выпадающего списка для уровня обучения
-        val levelAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, levels)
-        (binding.levelEditText as? MaterialAutoCompleteTextView)?.setAdapter(levelAdapter)
+        val levelAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, translatedLevels)
+        (binding.levelEditText as? MaterialAutoCompleteTextView)?.apply {
+            setAdapter(levelAdapter)
+            threshold = 0 // Показывать список сразу при фокусе
+        }
         
         // Настройка выпадающего списка для университета
         val universityAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, universities)
-        (binding.universityEditText as? MaterialAutoCompleteTextView)?.setAdapter(universityAdapter)
+        (binding.universityEditText as? MaterialAutoCompleteTextView)?.apply {
+            setAdapter(universityAdapter)
+            threshold = 0 // Показывать список сразу при фокусе
+        }
+        
+        // Настройка выпадающего списка для названия программы
+        val programTitleAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, programTitles)
+        (binding.searchEditText as? MaterialAutoCompleteTextView)?.apply {
+            setAdapter(programTitleAdapter)
+            threshold = 1 // Показывать список после ввода 1 символа
+        }
     }
 
     private fun resetFilters() {
-        binding.searchEditText.setText("")
-        binding.languageEditText.setText("")
-        binding.levelEditText.setText("")
-        binding.universityEditText.setText("")
+        (binding.searchEditText as? MaterialAutoCompleteTextView)?.setText("")
+        (binding.languageEditText as? MaterialAutoCompleteTextView)?.setText("")
+        (binding.levelEditText as? MaterialAutoCompleteTextView)?.setText("")
+        (binding.universityEditText as? MaterialAutoCompleteTextView)?.setText("")
     }
 
     private fun applyFilters() {
-        val searchQuery = binding.searchEditText.text?.toString()?.trim().orEmpty()
-        val language = binding.languageEditText.text?.toString()?.trim().orEmpty()
-        val level = binding.levelEditText.text?.toString()?.trim().orEmpty()
-        val university = binding.universityEditText.text?.toString()?.trim().orEmpty()
+        val searchQuery = (binding.searchEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
+        
+        // Получаем значения и конвертируем переводы обратно в оригинальные значения
+        val languageText = (binding.languageEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
+        val language = reverseLanguageMap[languageText] ?: languageText
+        
+        val levelText = (binding.levelEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
+        val level = reverseLevelMap[levelText] ?: levelText
+        
+        val university = (binding.universityEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
 
         // Переход на экран результатов с параметрами фильтров
         val bundle = Bundle().apply {
@@ -184,9 +251,15 @@ class ProgramsFiltersFragment : Fragment() {
     }
     
     private fun showResultsBottomSheet() {
-        val searchQuery = binding.searchEditText.text?.toString()?.trim().orEmpty()
-        val language = (binding.languageEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
-        val level = (binding.levelEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
+        val searchQuery = (binding.searchEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
+        
+        // Получаем значения и конвертируем переводы обратно в оригинальные значения
+        val languageText = (binding.languageEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
+        val language = reverseLanguageMap[languageText] ?: languageText
+        
+        val levelText = (binding.levelEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
+        val level = reverseLevelMap[levelText] ?: levelText
+        
         val university = (binding.universityEditText as? MaterialAutoCompleteTextView)?.text?.toString()?.trim().orEmpty()
         
         val bottomSheetDialog = BottomSheetDialog(requireContext())
@@ -259,7 +332,11 @@ class ProgramsFiltersFragment : Fragment() {
                 val lvl = level.takeIf { it.isNotEmpty() }
                 val univ = university.takeIf { it.isNotEmpty() }
                 
+                android.util.Log.d("ProgramsFiltersFragment", "Searching programs with filters: q=$q, lang=$lang, level=$lvl, university=$univ")
+                
                 val programs = programsRepository.list(q, lang, lvl, univ)
+                
+                android.util.Log.d("ProgramsFiltersFragment", "Found ${programs.size} programs")
                 
                 requireActivity().runOnUiThread {
                     adapter.submitList(programs)
@@ -268,6 +345,8 @@ class ProgramsFiltersFragment : Fragment() {
                     BottomSheetManager.showDialog(bottomSheetDialog)
                 }
             } catch (e: Exception) {
+                android.util.Log.e("ProgramsFiltersFragment", "Error loading programs in bottom sheet", e)
+                e.printStackTrace()
                 requireActivity().runOnUiThread {
                     adapter.submitList(emptyList())
                     summaryText.text = "Найдено: 0 программ"

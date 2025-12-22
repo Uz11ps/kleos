@@ -40,6 +40,7 @@
         android:src="@drawable/ic_arrow_back"
         android:contentDescription="Back"
         android:padding="12dp"
+        android:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -54,6 +55,7 @@
         android:src="@drawable/ic_menu_hamburger"
         android:contentDescription="Menu"
         android:padding="12dp"
+        android:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

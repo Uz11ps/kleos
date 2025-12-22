@@ -20,6 +20,9 @@ class PartnerDetailActivity : AppCompatActivity() {
         binding = ActivityPartnerDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Устанавливаем цвет статус-бара для однородного фона
+        window.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+
         val name = intent.getStringExtra("name").orEmpty()
         val description = intent.getStringExtra("description").orEmpty()
         val siteUrl = intent.getStringExtra("url")
@@ -48,6 +51,24 @@ class PartnerDetailActivity : AppCompatActivity() {
         binding.backButton.setOnClickListener { 
             finish() 
         }
+        
+        // Обработка кнопки меню
+        binding.menuButton.setOnClickListener {
+            // В отдельной Activity кнопка меню просто закрывает экран
+            finish()
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Устанавливаем цвет статус-бара при возврате на экран
+        window.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // Восстанавливаем цвет статус-бара
+        window.statusBarColor = resources.getColor(com.example.kleos.R.color.dark_background, null)
     }
 }
 

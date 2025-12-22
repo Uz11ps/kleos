@@ -43,11 +43,19 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Устанавливаем цвет статус-бара для однородного фона
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+        
         // Обработка кнопки меню
         binding.menuButton.setOnClickListener {
             (activity as? MainActivity)?.let { mainActivity ->
                 mainActivity.openDrawer()
             }
+        }
+        
+        // Обработка кнопки назад
+        binding.backButton.setOnClickListener {
+            requireActivity().onBackPressed()
         }
         
         val session = SessionManager(requireContext())
@@ -90,7 +98,18 @@ class ProfileFragment : Fragment() {
                 val sessionManager = SessionManager(requireContext())
                 sessionManager.saveRole(profile.role)
                 
+                // Отображаем имя и роль в верхней части профиля
+                binding.profileNameText.text = profile.fullName
+                val roleText = when (profile.role) {
+                    "student" -> getString(com.example.kleos.R.string.role_student)
+                    "admin" -> getString(com.example.kleos.R.string.role_admin)
+                    else -> getString(com.example.kleos.R.string.role_user)
+                }
+                binding.profileRoleText.text = roleText
+                
+                // Заполняем все поля
                 binding.nameEditText.setText(profile.fullName)
+                binding.emailEditText.setText(profile.email)
                 binding.phoneEditText.setText(profile.phone ?: "")
                 binding.notesEditText.setText(profile.notes ?: "")
                 binding.paymentEditText.setText(profile.payment ?: "")
@@ -101,36 +120,33 @@ class ProfileFragment : Fragment() {
                 binding.universityEditText.setText(profile.university ?: "")
                 binding.studentIdEditText.setText(profile.studentId ?: "")
                 
-                // Блокируем редактирование для студентов
+                // Блокируем редактирование для студентов и обычных пользователей (только админы могут редактировать)
                 val isStudent = profile.role == "student"
-                binding.nameEditText.isEnabled = !isStudent
-                binding.nameEditText.isFocusable = !isStudent
-                binding.nameEditText.isFocusableInTouchMode = !isStudent
-                binding.phoneEditText.isEnabled = !isStudent
-                binding.phoneEditText.isFocusable = !isStudent
-                binding.phoneEditText.isFocusableInTouchMode = !isStudent
-                binding.notesEditText.isEnabled = !isStudent
-                binding.notesEditText.isFocusable = !isStudent
-                binding.notesEditText.isFocusableInTouchMode = !isStudent
-                binding.paymentEditText.isEnabled = !isStudent
-                binding.paymentEditText.isFocusable = !isStudent
-                binding.paymentEditText.isFocusableInTouchMode = !isStudent
-                binding.penaltiesEditText.isEnabled = !isStudent
-                binding.penaltiesEditText.isFocusable = !isStudent
-                binding.penaltiesEditText.isFocusableInTouchMode = !isStudent
-                binding.courseEditText.isEnabled = !isStudent
-                binding.courseEditText.isFocusable = !isStudent
-                binding.courseEditText.isFocusableInTouchMode = !isStudent
-                binding.specialityEditText.isEnabled = !isStudent
-                binding.specialityEditText.isFocusable = !isStudent
-                binding.specialityEditText.isFocusableInTouchMode = !isStudent
-                binding.statusEditText.isEnabled = !isStudent
-                binding.statusEditText.isFocusable = !isStudent
-                binding.statusEditText.isFocusableInTouchMode = !isStudent
-                binding.universityEditText.isEnabled = !isStudent
-                binding.universityEditText.isFocusable = !isStudent
-                binding.universityEditText.isFocusableInTouchMode = !isStudent
-                // studentId всегда только для чтения
+                val isAdmin = profile.role == "admin"
+                val canEdit = isAdmin // Только админы могут редактировать
+                // Делаем все поля только для чтения, если пользователь не админ
+                val fields = listOf(
+                    binding.nameEditText,
+                    binding.phoneEditText,
+                    binding.notesEditText,
+                    binding.paymentEditText,
+                    binding.penaltiesEditText,
+                    binding.courseEditText,
+                    binding.specialityEditText,
+                    binding.statusEditText,
+                    binding.universityEditText
+                )
+                
+                fields.forEach { editText ->
+                    editText.isEnabled = canEdit
+                    editText.isFocusable = canEdit
+                    editText.isFocusableInTouchMode = canEdit
+                }
+                
+                // Email и studentId всегда только для чтения
+                binding.emailEditText.isEnabled = false
+                binding.emailEditText.isFocusable = false
+                binding.emailEditText.isFocusableInTouchMode = false
                 binding.studentIdEditText.isEnabled = false
                 binding.studentIdEditText.isFocusable = false
                 binding.studentIdEditText.isFocusableInTouchMode = false
@@ -146,13 +162,13 @@ class ProfileFragment : Fragment() {
     }
 
     private fun setupAutoSave() {
-        // Проверяем роль пользователя - студенты не могут редактировать
+        // Проверяем роль пользователя - только админы могут редактировать
         val sessionManager = SessionManager(requireContext())
         val userRole = sessionManager.getUserRole()
-        val isStudent = userRole == "student"
+        val isAdmin = userRole == "admin"
         
-        if (isStudent) {
-            // Для студентов отключаем автосохранение
+        if (!isAdmin) {
+            // Для не-админов отключаем автосохранение
             return
         }
         
@@ -209,13 +225,13 @@ class ProfileFragment : Fragment() {
     }
 
     private fun saveProfile() {
-        // Проверяем роль пользователя - студенты не могут редактировать
+        // Проверяем роль пользователя - только админы могут редактировать
         val sessionManager = SessionManager(requireContext())
         val userRole = sessionManager.getUserRole()
-        val isStudent = userRole == "student"
+        val isAdmin = userRole == "admin"
         
-        if (isStudent) {
-            // Для студентов блокируем сохранение
+        if (!isAdmin) {
+            // Для не-админов блокируем сохранение
             return
         }
         
@@ -304,8 +320,16 @@ class ProfileFragment : Fragment() {
         saveProfile() // Сохраняем при уходе с экрана
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Устанавливаем цвет статус-бара при возврате на экран
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+    }
+    
     override fun onDestroyView() {
         super.onDestroyView()
+        // Восстанавливаем цвет статус-бара
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.dark_background, null)
         refreshJob?.cancel()
         saveJob?.cancel()
         _binding = null

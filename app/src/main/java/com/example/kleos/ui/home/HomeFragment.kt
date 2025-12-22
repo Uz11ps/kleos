@@ -49,6 +49,16 @@ class HomeFragment : Fragment() {
                 mainActivity.openDrawer()
             }
         }
+        
+        // Обработка клика на аватарку - переход на профиль
+        binding.profileImage.setOnClickListener {
+            findNavController().navigate(com.example.kleos.R.id.nav_profile)
+        }
+        
+        // Обработка клика на область профиля - переход на профиль
+        binding.profileHeader.setOnClickListener {
+            findNavController().navigate(com.example.kleos.R.id.nav_profile)
+        }
     }
     
     private fun setupTabs() {

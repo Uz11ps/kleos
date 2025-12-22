@@ -118,6 +118,9 @@
     <string name="profile_status">Status</string>
     <string name="profile_university">University</string>
     <string name="profile_student_id">Student ID</string>
+    <string name="role_student">Student</string>
+    <string name="role_admin">Administrator</string>
+    <string name="role_user">User</string>
 
     <!-- Programs/Filters -->
     <string name="filters_title">Filters</string>

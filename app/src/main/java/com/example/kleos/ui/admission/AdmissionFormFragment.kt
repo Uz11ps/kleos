@@ -78,7 +78,14 @@ class AdmissionFormFragment : Fragment() {
             binding.dateOfBirthEditText,
             binding.placeOfBirthEditText,
             binding.nationalityEditText,
-            binding.phoneEditText
+            binding.emailEditText,
+            binding.phoneEditText,
+            binding.passportNumberEditText,
+            binding.passportIssueEditText,
+            binding.passportExpiryEditText,
+            binding.visaCityEditText,
+            binding.programEditText,
+            binding.commentEditText
         )
         
         editTexts.forEachIndexed { index, editText ->
@@ -97,15 +104,29 @@ class AdmissionFormFragment : Fragment() {
         }, 100)
 
         applyDateMask(binding.dateOfBirthEditText)
+        applyDateMask(binding.passportIssueEditText)
+        applyDateMask(binding.passportExpiryEditText)
 
         // Phone mask per language
         val lang = resources.configuration.locales[0]?.language ?: "en"
         binding.phoneEditText.addTextChangedListener(
             com.example.kleos.ui.common.PhoneMaskTextWatcher(binding.phoneEditText, lang)
         )
+        
+        // Заполняем email из сессии пользователя, если он залогинен
+        val sessionManager = com.example.kleos.data.auth.SessionManager(requireContext())
+        val currentUser = sessionManager.getCurrentUser()
+        if (currentUser != null && currentUser.email.isNotBlank()) {
+            binding.emailEditText.setText(currentUser.email)
+        }
 
         // Load countries for nationality dropdown
         loadCountriesAndConsent()
+        
+        // Обработка клика на ссылку согласия
+        binding.consentLinkText.setOnClickListener {
+            showConsentDialog()
+        }
         
         // Включаем кнопку отправки по умолчанию
         binding.submitButton.isEnabled = true
@@ -122,14 +143,31 @@ class AdmissionFormFragment : Fragment() {
             val dateOfBirth = binding.dateOfBirthEditText.text?.toString()
             val placeOfBirth = binding.placeOfBirthEditText.text?.toString()
             val nationality = (binding.nationalityEditText as? MaterialAutoCompleteTextView)?.text?.toString()
+            val email = binding.emailEditText.text?.toString().orEmpty()
             val phone = binding.phoneEditText.text?.toString().orEmpty()
+            val passportNumber = binding.passportNumberEditText.text?.toString()?.takeIf { it.isNotBlank() }
+            val passportIssue = binding.passportIssueEditText.text?.toString()?.takeIf { it.isNotBlank() }
+            val passportExpiry = binding.passportExpiryEditText.text?.toString()?.takeIf { it.isNotBlank() }
+            val visaCity = binding.visaCityEditText.text?.toString()?.takeIf { it.isNotBlank() }
+            val program = binding.programEditText.text?.toString().orEmpty()
+            val comment = binding.commentEditText.text?.toString()?.takeIf { it.isNotBlank() }
             
             // Валидация обязательных полей
-            if (firstName.isBlank() || lastName.isBlank() || dateOfBirth.isNullOrBlank() || placeOfBirth.isNullOrBlank() || nationality.isNullOrBlank() || phone.isBlank()) {
+            if (firstName.isBlank() || lastName.isBlank() || dateOfBirth.isNullOrBlank() || placeOfBirth.isNullOrBlank() || nationality.isNullOrBlank() || email.isBlank() || phone.isBlank()) {
                 if (isAdded && _binding != null) {
                     AnimationUtils.releaseButton(binding.submitButton)
                     AnimationUtils.shake(binding.submitButton)
                     Toast.makeText(requireContext(), "Заполните все обязательные поля", Toast.LENGTH_SHORT).show()
+                }
+                return@setOnClickListener
+            }
+            
+            // Валидация формата email
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                if (isAdded && _binding != null) {
+                    AnimationUtils.releaseButton(binding.submitButton)
+                    AnimationUtils.shake(binding.emailEditText)
+                    Toast.makeText(requireContext(), "Введите корректный email", Toast.LENGTH_SHORT).show()
                 }
                 return@setOnClickListener
             }
@@ -145,10 +183,15 @@ class AdmissionFormFragment : Fragment() {
                 return@setOnClickListener
             }
             
-            // Получаем email из сессии пользователя
-            val sessionManager = com.example.kleos.data.auth.SessionManager(requireContext())
-            val currentUser = sessionManager.getCurrentUser()
-            val email = currentUser?.email ?: ""
+            // Валидация чекбокса согласия
+            if (!binding.consentCheckBox.isChecked) {
+                if (isAdded && _binding != null) {
+                    AnimationUtils.releaseButton(binding.submitButton)
+                    AnimationUtils.shake(binding.consentCheckBox)
+                    Toast.makeText(requireContext(), "Необходимо согласие на обработку персональных данных", Toast.LENGTH_SHORT).show()
+                }
+                return@setOnClickListener
+            }
             
             val application = AdmissionApplication(
                 id = UUID.randomUUID().toString(),
@@ -160,12 +203,12 @@ class AdmissionFormFragment : Fragment() {
                 dateOfBirth = dateOfBirth,
                 placeOfBirth = placeOfBirth,
                 nationality = nationality,
-                passportNumber = null,
-                passportIssue = null,
-                passportExpiry = null,
-                visaCity = null,
-                program = "",
-                comment = null
+                passportNumber = passportNumber,
+                passportIssue = passportIssue,
+                passportExpiry = passportExpiry,
+                visaCity = visaCity,
+                program = program,
+                comment = comment
             )
             admissionsRepository.submit(application)
             
@@ -183,6 +226,8 @@ class AdmissionFormFragment : Fragment() {
                     editText.setText("")
                 }
             }
+            // Сбрасываем чекбокс согласия
+            binding.consentCheckBox.isChecked = false
         }
     }
 

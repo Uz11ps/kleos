@@ -128,7 +128,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
 
-                <EditText
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/searchEditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -142,6 +142,9 @@
                     android:typeface="sans"
                     android:fontFamily="sans-serif"
                     android:singleLine="true"
+                    android:inputType="text"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     android:imeOptions="actionSearch"
                     app:layout_constraintStart_toEndOf="@id/searchIcon"
                     app:layout_constraintEnd_toEndOf="parent"

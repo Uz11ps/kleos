@@ -32,11 +32,22 @@ class NewsDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        val newsId = arguments?.getString("newsId") ?: ""
+        // Устанавливаем цвет статус-бара для однородного фона
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
         
-        binding.toolbar.setNavigationOnClickListener {
+        // Обработка кнопки назад
+        binding.backButton.setOnClickListener {
             findNavController().navigateUp()
         }
+        
+        // Обработка кнопки меню
+        binding.menuButton.setOnClickListener {
+            (activity as? com.example.kleos.MainActivity)?.let { mainActivity ->
+                mainActivity.openDrawer()
+            }
+        }
+        
+        val newsId = arguments?.getString("newsId") ?: ""
         
         if (newsId.isNotEmpty()) {
             loadNewsDetail(newsId)
@@ -49,6 +60,12 @@ class NewsDetailFragment : Fragment() {
             
             displayNews(title, content, dateText, imageUrl)
         }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Устанавливаем цвет статус-бара при возврате на экран
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
     }
     
     private fun loadNewsDetail(newsId: String) {
@@ -103,6 +120,8 @@ class NewsDetailFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Восстанавливаем цвет статус-бара
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.dark_background, null)
         _binding = null
     }
 }

@@ -37,6 +37,9 @@ class NewsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Устанавливаем цвет статус-бара для однородного фона
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+        
         // Обработка кнопки назад
         binding.backButton.setOnClickListener {
             requireActivity().onBackPressed()
@@ -53,7 +56,13 @@ class NewsFragment : Fragment() {
         setupRecyclerView()
         loadNews()
     }
-
+    
+    override fun onResume() {
+        super.onResume()
+        // Устанавливаем цвет статус-бара при возврате на экран
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+    }
+    
     private fun setupTabs() {
         updateTabStyles("all")
 
@@ -149,6 +158,8 @@ class NewsFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Восстанавливаем цвет статус-бара
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.dark_background, null)
         _binding = null
     }
 }

@@ -87,6 +87,9 @@
     <string name="profile_status">Статус</string>
     <string name="profile_university">Университет</string>
     <string name="profile_student_id">Студенческий ID</string>
+    <string name="role_student">Студент</string>
+    <string name="role_admin">Администратор</string>
+    <string name="role_user">Пользователь</string>
 
     <!-- Programs/Filters -->
     <string name="filters_title">Фильтры</string>
