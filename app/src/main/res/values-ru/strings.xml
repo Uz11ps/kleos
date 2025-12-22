@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Kleos education</string>
     <string name="action_login">Войти</string>
-    <string name="action_register">Зарегистрироваться</string>
+    <string name="action_register">Регистрация</string>
     <string name="menu_home">Главная</string>
     <string name="menu_gallery">Галерея</string>
     <string name="menu_universities">Университеты</string>

@@ -46,6 +46,7 @@
         android:id="@+id/titleText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="80dp"
         android:text="Программа"
         android:textColor="@android:color/white"
@@ -53,21 +54,20 @@
         android:textStyle="bold"
         android:fontFamily="sans-serif-medium"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Подзаголовок "Название универа" -->
     <TextView
         android:id="@+id/universityText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="8dp"
         android:text="Название универа"
         android:textColor="#CBD5E1"
         android:textSize="16sp"
         app:layout_constraintTop_toBottomOf="@id/titleText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Карточка с информацией о программе -->
     <androidx.constraintlayout.widget.ConstraintLayout

@@ -2,6 +2,7 @@ package com.example.kleos
 
 import android.os.Bundle
 import android.view.Menu
+import android.view.View
 import android.content.Intent
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -133,21 +134,32 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // Синхронизируем выбранный элемент с текущим destination
+        // Синхронизируем выбранный элемент с текущим destination и управляем видимостью нижней навигации
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            when (destination.id) {
-                R.id.nav_admission -> bottomNav.setSelectedItem(0)
-                R.id.nav_home -> bottomNav.setSelectedItem(1)
-                R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+            // Скрываем нижнюю навигацию на странице профиля
+            if (destination.id == R.id.nav_profile) {
+                bottomNav.visibility = View.GONE
+            } else {
+                bottomNav.visibility = View.VISIBLE
+                when (destination.id) {
+                    R.id.nav_admission -> bottomNav.setSelectedItem(0)
+                    R.id.nav_home -> bottomNav.setSelectedItem(1)
+                    R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+                }
             }
         }
         
         // Синхронизируем начальную позицию с текущим destination
         val currentDestination = navController.currentDestination?.id
-        when (currentDestination) {
-            R.id.nav_admission -> bottomNav.setSelectedItem(0)
-            R.id.nav_home -> bottomNav.setSelectedItem(1)
-            R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+        if (currentDestination == R.id.nav_profile) {
+            bottomNav.visibility = View.GONE
+        } else {
+            bottomNav.visibility = View.VISIBLE
+            when (currentDestination) {
+                R.id.nav_admission -> bottomNav.setSelectedItem(0)
+                R.id.nav_home -> bottomNav.setSelectedItem(1)
+                R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+            }
         }
         
         // Загружаем профиль пользователя, если он залогинен, и обновляем видимость меню

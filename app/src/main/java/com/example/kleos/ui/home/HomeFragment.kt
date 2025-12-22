@@ -52,12 +52,17 @@ class HomeFragment : Fragment() {
         
         // Обработка клика на аватарку - переход на профиль
         binding.profileImage.setOnClickListener {
-            findNavController().navigate(com.example.kleos.R.id.nav_profile)
+            navigateToProfile()
         }
         
         // Обработка клика на область профиля - переход на профиль
         binding.profileHeader.setOnClickListener {
-            findNavController().navigate(com.example.kleos.R.id.nav_profile)
+            navigateToProfile()
+        }
+        
+        // Обработка клика на никнейм - переход на профиль
+        binding.userNameText.setOnClickListener {
+            navigateToProfile()
         }
     }
     
@@ -134,6 +139,10 @@ class HomeFragment : Fragment() {
         binding.contentRecycler.adapter = adapter
     }
     
+    private fun navigateToProfile() {
+        findNavController().navigate(com.example.kleos.R.id.nav_profile)
+    }
+    
     private fun loadUserData() {
         val session = SessionManager(requireContext())
         val user = session.getCurrentUser()
@@ -141,6 +150,9 @@ class HomeFragment : Fragment() {
         
         binding.greetingText.text = "С возвращением,"
         binding.userNameText.text = name
+        // Делаем никнейм кликабельным
+        binding.userNameText.isClickable = true
+        binding.userNameText.isFocusable = true
     }
     
     private fun loadContent() {

@@ -102,6 +102,15 @@ class AuthActivity : AppCompatActivity() {
             // Открываем Bottom Sheet с формой регистрации
             showRegisterBottomSheet()
         }
+        
+        // Обработчик клика на "Или войдите как гость"
+        binding.guestLoginText.setOnClickListener {
+            // Вход как гость: создаём сессию с именем guest и техническим токеном
+            val session = SessionManager(this)
+            session.saveUser(fullName = getString(com.example.kleos.R.string.guest), email = "guest@local")
+            session.saveToken(java.util.UUID.randomUUID().toString())
+            proceedToMain()
+        }
     }
     
     private fun setupFormScreen() {

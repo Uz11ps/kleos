@@ -66,6 +66,16 @@ class ProfileFragment : Fragment() {
             return
         }
 
+        // Проверяем, является ли пользователь гостем
+        val currentUser = session.getCurrentUser()
+        val isGuest = currentUser?.email == "guest@local"
+        
+        if (isGuest) {
+            // Показываем экран входа для гостей
+            showGuestLoginScreen()
+            return
+        }
+
         // Phone mask per language
         val lang = resources.configuration.locales[0]?.language ?: "en"
         binding.phoneEditText.addTextChangedListener(
@@ -81,13 +91,26 @@ class ProfileFragment : Fragment() {
         // Периодическое обновление данных с сервера
         startPeriodicRefresh()
 
-        binding.logoutButton.setOnClickListener {
-            AuthRepository.Local(requireContext()).logout()
-            startActivity(Intent(requireContext(), AuthActivity::class.java))
+    }
+
+    private fun showGuestLoginScreen() {
+        // Скрываем обычный профиль
+        binding.scrollView.visibility = View.GONE
+        binding.backButton.visibility = View.GONE
+        binding.menuButton.visibility = View.GONE
+        
+        // Показываем экран входа для гостей
+        binding.guestLoginContainer.visibility = View.VISIBLE
+        
+        // Обработчик клика на кнопку входа
+        binding.guestLoginButton.setOnClickListener {
+            val intent = Intent(requireContext(), AuthActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
             requireActivity().finish()
         }
     }
-
+    
     private fun loadProfile() {
         lifecycleScope.launch {
             try {
@@ -111,14 +134,9 @@ class ProfileFragment : Fragment() {
                 binding.nameEditText.setText(profile.fullName)
                 binding.emailEditText.setText(profile.email)
                 binding.phoneEditText.setText(profile.phone ?: "")
-                binding.notesEditText.setText(profile.notes ?: "")
-                binding.paymentEditText.setText(profile.payment ?: "")
-                binding.penaltiesEditText.setText(profile.penalties ?: "")
                 binding.courseEditText.setText(profile.course ?: "")
                 binding.specialityEditText.setText(profile.speciality ?: "")
-                binding.statusEditText.setText(profile.status ?: "")
                 binding.universityEditText.setText(profile.university ?: "")
-                binding.studentIdEditText.setText(profile.studentId ?: "")
                 
                 // Блокируем редактирование для студентов и обычных пользователей (только админы могут редактировать)
                 val isStudent = profile.role == "student"
@@ -128,12 +146,8 @@ class ProfileFragment : Fragment() {
                 val fields = listOf(
                     binding.nameEditText,
                     binding.phoneEditText,
-                    binding.notesEditText,
-                    binding.paymentEditText,
-                    binding.penaltiesEditText,
                     binding.courseEditText,
                     binding.specialityEditText,
-                    binding.statusEditText,
                     binding.universityEditText
                 )
                 
@@ -143,13 +157,10 @@ class ProfileFragment : Fragment() {
                     editText.isFocusableInTouchMode = canEdit
                 }
                 
-                // Email и studentId всегда только для чтения
+                // Email всегда только для чтения
                 binding.emailEditText.isEnabled = false
                 binding.emailEditText.isFocusable = false
                 binding.emailEditText.isFocusableInTouchMode = false
-                binding.studentIdEditText.isEnabled = false
-                binding.studentIdEditText.isFocusable = false
-                binding.studentIdEditText.isFocusableInTouchMode = false
                 
                 // Обновляем видимость меню в MainActivity после обновления роли
                 (activity as? MainActivity)?.updateMenuVisibility()
@@ -175,12 +186,8 @@ class ProfileFragment : Fragment() {
         val fields = listOf(
             binding.nameEditText,
             binding.phoneEditText,
-            binding.notesEditText,
-            binding.paymentEditText,
-            binding.penaltiesEditText,
             binding.courseEditText,
             binding.specialityEditText,
-            binding.statusEditText,
             binding.universityEditText
         )
 
@@ -251,12 +258,8 @@ class ProfileFragment : Fragment() {
                 profileRepository.updateProfile(
                     fullName = binding.nameEditText.text?.toString()?.takeIf { it.isNotBlank() },
                     phone = phoneText.takeIf { isValidPhone && it.isNotBlank() },
-                    notes = binding.notesEditText.text?.toString()?.takeIf { it.isNotBlank() },
-                    payment = binding.paymentEditText.text?.toString()?.takeIf { it.isNotBlank() },
-                    penalties = binding.penaltiesEditText.text?.toString()?.takeIf { it.isNotBlank() },
                     course = binding.courseEditText.text?.toString()?.takeIf { it.isNotBlank() },
                     speciality = binding.specialityEditText.text?.toString()?.takeIf { it.isNotBlank() },
-                    status = binding.statusEditText.text?.toString()?.takeIf { it.isNotBlank() },
                     university = binding.universityEditText.text?.toString()?.takeIf { it.isNotBlank() }
                 )
             }
@@ -284,28 +287,15 @@ class ProfileFragment : Fragment() {
                     if (!binding.phoneEditText.hasFocus()) {
                         binding.phoneEditText.setText(profile.phone ?: "")
                     }
-                    if (!binding.notesEditText.hasFocus()) {
-                        binding.notesEditText.setText(profile.notes ?: "")
-                    }
-                    if (!binding.paymentEditText.hasFocus()) {
-                        binding.paymentEditText.setText(profile.payment ?: "")
-                    }
-                    if (!binding.penaltiesEditText.hasFocus()) {
-                        binding.penaltiesEditText.setText(profile.penalties ?: "")
-                    }
                     if (!binding.courseEditText.hasFocus()) {
                         binding.courseEditText.setText(profile.course ?: "")
                     }
                     if (!binding.specialityEditText.hasFocus()) {
                         binding.specialityEditText.setText(profile.speciality ?: "")
                     }
-                    if (!binding.statusEditText.hasFocus()) {
-                        binding.statusEditText.setText(profile.status ?: "")
-                    }
                     if (!binding.universityEditText.hasFocus()) {
                         binding.universityEditText.setText(profile.university ?: "")
                     }
-                    binding.studentIdEditText.setText(profile.studentId ?: "")
                 } catch (e: Exception) {
                     // Игнорируем ошибки обновления
                 }

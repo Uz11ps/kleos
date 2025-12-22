@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/onboarding_background"
     android:clipChildren="false"
     android:clipToPadding="false">
 
@@ -55,6 +56,43 @@
         android:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Экран входа для гостей -->
+    <LinearLayout
+        android:id="@+id/guestLoginContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.5">
+
+        <TextView
+            android:id="@+id/guestLoginTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Войдите в аккаунт"
+            android:textColor="@android:color/white"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="32dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/guestLoginButton"
+            style="@style/Widget.Kleos.Button.Rounded"
+            android:layout_width="312dp"
+            android:layout_height="64dp"
+            android:text="@string/action_login"
+            android:textSize="24sp"
+            android:textAllCaps="false"
+            android:textColor="@color/dark_background"
+            android:backgroundTint="@android:color/white"
+            app:cornerRadius="16dp" />
+    </LinearLayout>
 
     <ScrollView
         android:id="@+id/scrollView"
@@ -121,17 +159,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/profileNameText" />
 
-        <!-- Разделитель -->
-        <View
-            android:id="@+id/divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="24dp"
-            android:background="#334155"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/profileRoleText" />
-
         <!-- Полное имя -->
         <TextView
             android:id="@+id/nameLabel"
@@ -145,7 +172,7 @@
             android:textStyle="normal"
             android:fontFamily="sans-serif"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider" />
+            app:layout_constraintTop_toBottomOf="@id/profileRoleText" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/nameInputLayout"
@@ -438,67 +465,6 @@
                 app:layout_constraintBottom_toBottomOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Статус -->
-        <TextView
-            android:id="@+id/statusLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="24dp"
-            android:text="@string/profile_status"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:textStyle="normal"
-            android:fontFamily="sans-serif"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/specialityInputLayout" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/statusInputLayout"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_filter_input"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/statusLabel">
-
-            <ImageView
-                android:id="@+id/statusIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_profile_nav"
-                android:tint="@android:color/white"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/statusEditText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:background="@android:color/transparent"
-                android:hint="@string/profile_status"
-                android:textColor="@android:color/white"
-                android:textColorHint="#CBD5E1"
-                android:textSize="16sp"
-                android:textStyle="normal"
-                android:fontFamily="sans-serif"
-                android:singleLine="true"
-                android:inputType="text"
-                app:layout_constraintStart_toEndOf="@id/statusIcon"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
         <!-- Университет -->
         <TextView
             android:id="@+id/universityLabel"
@@ -512,7 +478,7 @@
             android:textStyle="normal"
             android:fontFamily="sans-serif"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/statusInputLayout" />
+            app:layout_constraintTop_toBottomOf="@id/specialityInputLayout" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/universityInputLayout"
@@ -560,261 +526,6 @@
                 app:layout_constraintBottom_toBottomOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Студенческий ID -->
-        <TextView
-            android:id="@+id/studentIdLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="24dp"
-            android:text="@string/profile_student_id"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:textStyle="normal"
-            android:fontFamily="sans-serif"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/universityInputLayout" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/studentIdInputLayout"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_filter_input"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/studentIdLabel">
-
-            <ImageView
-                android:id="@+id/studentIdIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_profile_nav"
-                android:tint="@android:color/white"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/studentIdEditText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:background="@android:color/transparent"
-                android:hint="@string/profile_student_id"
-                android:textColor="@android:color/white"
-                android:textColorHint="#CBD5E1"
-                android:textSize="16sp"
-                android:textStyle="normal"
-                android:fontFamily="sans-serif"
-                android:singleLine="true"
-                android:inputType="text"
-                android:enabled="false"
-                app:layout_constraintStart_toEndOf="@id/studentIdIcon"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Оплата -->
-        <TextView
-            android:id="@+id/paymentLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="24dp"
-            android:text="@string/profile_payment"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:textStyle="normal"
-            android:fontFamily="sans-serif"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/studentIdInputLayout" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/paymentInputLayout"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_filter_input"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/paymentLabel">
-
-            <ImageView
-                android:id="@+id/paymentIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_dollar"
-                android:tint="@android:color/white"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/paymentEditText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:background="@android:color/transparent"
-                android:hint="@string/profile_payment"
-                android:textColor="@android:color/white"
-                android:textColorHint="#CBD5E1"
-                android:textSize="16sp"
-                android:textStyle="normal"
-                android:fontFamily="sans-serif"
-                android:singleLine="true"
-                android:inputType="text"
-                app:layout_constraintStart_toEndOf="@id/paymentIcon"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Штрафы -->
-        <TextView
-            android:id="@+id/penaltiesLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="24dp"
-            android:text="@string/profile_penalties"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:textStyle="normal"
-            android:fontFamily="sans-serif"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/paymentInputLayout" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/penaltiesInputLayout"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_filter_input"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/penaltiesLabel">
-
-            <ImageView
-                android:id="@+id/penaltiesIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_dollar"
-                android:tint="@android:color/white"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/penaltiesEditText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:background="@android:color/transparent"
-                android:hint="@string/profile_penalties"
-                android:textColor="@android:color/white"
-                android:textColorHint="#CBD5E1"
-                android:textSize="16sp"
-                android:textStyle="normal"
-                android:fontFamily="sans-serif"
-                android:singleLine="true"
-                android:inputType="text"
-                app:layout_constraintStart_toEndOf="@id/penaltiesIcon"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Заметки -->
-        <TextView
-            android:id="@+id/notesLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="24dp"
-            android:text="@string/profile_notes"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:textStyle="normal"
-            android:fontFamily="sans-serif"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/penaltiesInputLayout" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/notesInputLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/bg_filter_input"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/notesLabel">
-
-            <ImageView
-                android:id="@+id/notesIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_pencil"
-                android:tint="@android:color/white"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/notesEditText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="4dp"
-                android:background="@android:color/transparent"
-                android:hint="@string/profile_notes"
-                android:textColor="@android:color/white"
-                android:textColorHint="#CBD5E1"
-                android:textSize="16sp"
-                android:textStyle="normal"
-                android:fontFamily="sans-serif"
-                android:minLines="2"
-                android:gravity="top"
-                android:inputType="textMultiLine"
-                app:layout_constraintStart_toEndOf="@id/notesIcon"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/logoutButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/action_logout"
-            android:layout_marginTop="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/notesInputLayout" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

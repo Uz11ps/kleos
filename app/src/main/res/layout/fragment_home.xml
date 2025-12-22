@@ -44,9 +44,9 @@
         app:layout_constraintEnd_toStartOf="@id/menuButton">
 
         <com.google.android.material.card.MaterialCardView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            app:cardCornerRadius="24dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            app:cardCornerRadius="30dp"
             app:cardElevation="0dp"
             app:cardBackgroundColor="@android:color/transparent">
 
@@ -54,7 +54,8 @@
                 android:id="@+id/profileImage"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scaleType="centerCrop"
+                android:layout_marginTop="-7dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_profile"
                 android:background="@drawable/bg_user_card"
                 android:contentDescription="Profile" />
@@ -71,8 +72,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="С возвращением,"
-                android:textColor="#CBD5E1"
-                android:textSize="14sp" />
+                android:textColor="#929292"
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/userNameText"
@@ -81,7 +82,8 @@
                 android:text="Данил"
                 android:textColor="#F8FAFC"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:clickable="true"
+                android:focusable="true" />
         </LinearLayout>
     </LinearLayout>
 
