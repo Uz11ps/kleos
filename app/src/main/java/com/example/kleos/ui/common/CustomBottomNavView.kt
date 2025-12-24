@@ -118,13 +118,23 @@ class CustomBottomNavView @JvmOverloads constructor(
         // Обновляем иконки в зависимости от выбранной позиции
         // Для активной иконки используем белые версии, для неактивных - черные
         
-        // Иконка университета (позиция 0)
-        iconViews[0].setImageResource(
-            if (selectedPosition == 0) R.drawable.ic_university_filter else R.drawable.ic_university_filter
-        )
-        iconViews[0].colorFilter = if (selectedPosition == 0) null else android.graphics.ColorMatrixColorFilter(
-            android.graphics.ColorMatrix().apply { setSaturation(0.5f) }
-        )
+        // Иконка университета (позиция 0) - всегда черная
+        iconViews[0].setImageResource(R.drawable.ic_university_filter)
+        // Для активной иконки делаем белой через colorFilter, для неактивной оставляем черной
+        iconViews[0].colorFilter = if (selectedPosition == 0) {
+            // Активная иконка - белая (инвертируем черный в белый)
+            android.graphics.ColorMatrixColorFilter(
+                android.graphics.ColorMatrix(floatArrayOf(
+                    -1f, 0f, 0f, 0f, 255f,  // R: инвертируем и добавляем белый
+                    0f, -1f, 0f, 0f, 255f,  // G: инвертируем и добавляем белый
+                    0f, 0f, -1f, 0f, 255f,  // B: инвертируем и добавляем белый
+                    0f, 0f, 0f, 1f, 0f      // A: прозрачность без изменений
+                ))
+            )
+        } else {
+            // Неактивная иконка - черная (без фильтра, так как drawable уже черный)
+            null
+        }
         
         // Иконка дома (позиция 1)
         iconViews[1].setImageResource(

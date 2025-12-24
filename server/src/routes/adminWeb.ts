@@ -573,6 +573,34 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
         </div>
       </div>
       
+      ${newUsers.length > 0 ? `
+      <div class="card" style="margin-bottom:24px;">
+        <h2>🆕 New Users (Last 24 hours)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Registered</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${newUsers.map(u => `
+                <tr>
+                  <td>${(u.fullName || '').toString().replace(/</g, '&lt;')}</td>
+                  <td>${(u.email || '').toString().replace(/</g, '&lt;')}</td>
+                  <td>${(u.role || 'user').toString()}</td>
+                  <td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : 'N/A'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ` : ''}
+      
       <div class="card">
         <h2>Quick Actions</h2>
         <div class="grid cols-3" style="margin-top:16px;">
@@ -1047,8 +1075,23 @@ router.post('/admin/partners/:id/delete', adminAuthMiddleware, async (req, res) 
 // Admissions UI
 router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
   const showAll = req.query.all === 'true';
+  const searchQuery = (req.query.search as string || '').trim();
+  
   // По умолчанию показываем все заявки
-  const filter = showAll ? {} : {};
+  let filter: any = showAll ? {} : {};
+  
+  // Добавляем поиск по ID, имени или email
+  if (searchQuery) {
+    const searchRegex = { $regex: searchQuery, $options: 'i' };
+    filter.$or = [
+      { _id: searchQuery },
+      { firstName: searchRegex },
+      { lastName: searchRegex },
+      { patronymic: searchRegex },
+      { email: searchRegex }
+    ];
+  }
+  
   const list = await Admission.find(filter).sort({ createdAt: -1 }).lean();
   const rows = list.map(a => {
     const status = a.status || 'new';
@@ -1109,17 +1152,25 @@ router.get('/admin/admissions', adminAuthMiddleware, async (req: any, res) => {
   }).join('');
   const body = `
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
         <h2 style="margin:0">Admissions</h2>
-        <div>
-          <a class="btn ${showAll ? 'primary' : ''}" href="/admin/admissions?all=true">Все</a>
-          <a class="btn ${showAll ? '' : 'primary'}" href="/admin/admissions" style="margin-left:8px">Новые</a>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <form method="get" action="/admin/admissions" style="display:flex;gap:8px;flex:1;min-width:250px;">
+            <input name="search" placeholder="Поиск по ID, имени или email" value="${searchQuery.replace(/"/g, '&quot;')}" style="flex:1;min-width:200px;" />
+            ${showAll ? '<input type="hidden" name="all" value="true" />' : ''}
+            <button class="btn primary" type="submit">🔍</button>
+            ${searchQuery ? `<a class="btn" href="/admin/admissions${showAll ? '?all=true' : ''}" style="text-decoration:none;">✕</a>` : ''}
+          </form>
+          <div>
+            <a class="btn ${showAll ? 'primary' : ''}" href="/admin/admissions${searchQuery ? `?search=${encodeURIComponent(searchQuery)}&all=true` : '?all=true'}">Все</a>
+            <a class="btn ${showAll ? '' : 'primary'}" href="/admin/admissions${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}" style="margin-left:8px">Новые</a>
+          </div>
         </div>
       </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th style="width:240px">ID</th><th>Data</th></tr></thead>
-          <tbody>${rows}</tbody>
+          <tbody>${rows.length > 0 ? rows : '<tr><td colspan="2" class="muted" style="text-align:center;padding:40px;">Заявки не найдены</td></tr>'}</tbody>
         </table>
       </div>
     </div>
@@ -1217,8 +1268,34 @@ router.post('/admin/admissions/:id', adminAuthMiddleware, async (req, res) => {
 });
 
 // Chats simple UI (uses public chats endpoints)
-router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
-  const chats = await Chat.find().populate('userId', 'studentId fullName email').sort({ lastMessageAt: -1 }).limit(200).lean();
+router.get('/admin/chats', adminAuthMiddleware, async (req: any, res) => {
+  const searchQuery = (req.query.search as string || '').trim();
+  
+  // Если есть поисковый запрос, сначала находим пользователей
+  let userIds: any[] = [];
+  if (searchQuery) {
+    const { User } = await import('../models/User.js');
+    const searchRegex = { $regex: searchQuery, $options: 'i' };
+    const users = await User.find({
+      $or: [
+        { studentId: searchRegex },
+        { fullName: searchRegex },
+        { email: searchRegex }
+      ]
+    }).select('_id').lean();
+    userIds = users.map(u => (u as any)._id);
+  }
+  
+  // Строим фильтр для чатов
+  let chatFilter: any = {};
+  if (searchQuery && userIds.length > 0) {
+    chatFilter.userId = { $in: userIds };
+  } else if (searchQuery && userIds.length === 0) {
+    // Если поиск не дал результатов, возвращаем пустой список
+    chatFilter._id = { $in: [] };
+  }
+  
+  const chats = await Chat.find(chatFilter).populate('userId', 'studentId fullName email').sort({ lastMessageAt: -1 }).limit(200).lean();
   // Получаем все непрочитанные сообщения одним запросом
   const chatIds = chats.map(c => (c as any)._id);
   let unreadCounts: Record<string, number> = {};
@@ -1261,8 +1338,15 @@ router.get('/admin/chats', adminAuthMiddleware, async (_req, res) => {
   });
   const body = `
     <div class="card">
-      <h2>💬 Чаты поддержки</h2>
-      <div style="margin-top:16px">${items.length > 0 ? items.join('') : '<div class="muted" style="padding:20px;text-align:center;">Нет активных чатов</div>'}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+        <h2 style="margin:0">💬 Чаты поддержки</h2>
+        <form method="get" action="/admin/chats" style="display:flex;gap:8px;flex:1;min-width:250px;">
+          <input name="search" placeholder="Поиск по ID, имени или email" value="${searchQuery.replace(/"/g, '&quot;')}" style="flex:1;min-width:200px;" />
+          <button class="btn primary" type="submit">🔍</button>
+          ${searchQuery ? `<a class="btn" href="/admin/chats" style="text-decoration:none;">✕</a>` : ''}
+        </form>
+      </div>
+      <div style="margin-top:16px">${items.length > 0 ? items.join('') : '<div class="muted" style="padding:20px;text-align:center;">Чаты не найдены</div>'}</div>
     </div>
   `;
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
