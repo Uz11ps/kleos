@@ -532,7 +532,10 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
   // Новые пользователи за последние 24 часа
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
   const newUsers = await User.find({ createdAt: { $gte: yesterday } }).sort({ createdAt: -1 }).limit(10);
+  
+  console.log(`[Dashboard] Found ${newUsers.length} new users in last 24 hours`);
   
   // Кто зашел в админку первый раз сегодня
   const firstLoginToday = await User.find({ 
@@ -573,7 +576,6 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
         </div>
       </div>
       
-      ${newUsers.length > 0 ? `
       <div class="card" style="margin-bottom:24px;">
         <h2>🆕 New Users (Last 24 hours)</h2>
         <div class="table-wrap">
@@ -587,19 +589,18 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
               </tr>
             </thead>
             <tbody>
-              ${newUsers.map(u => `
+              ${newUsers.length > 0 ? newUsers.map(u => `
                 <tr>
                   <td>${(u.fullName || '').toString().replace(/</g, '&lt;')}</td>
                   <td>${(u.email || '').toString().replace(/</g, '&lt;')}</td>
                   <td>${(u.role || 'user').toString()}</td>
                   <td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : 'N/A'}</td>
                 </tr>
-              `).join('')}
+              `).join('') : '<tr><td colspan="4" class="muted" style="text-align:center;padding:40px;">No new users in the last 24 hours</td></tr>'}
             </tbody>
           </table>
         </div>
       </div>
-      ` : ''}
       
       <div class="card">
         <h2>Quick Actions</h2>
