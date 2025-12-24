@@ -29,7 +29,7 @@ class PartnerAdapter(
     override fun onBindViewHolder(holder: PartnerViewHolder, position: Int) {
         val item = items[position]
         holder.binding.titleText.text = item.name
-        holder.binding.categoryText.text = "Партнеры"
+        holder.binding.categoryText.text = holder.itemView.context.getString(com.example.kleos.R.string.category_partners)
         
         // Сбрасываем изображение перед загрузкой нового
         holder.binding.backgroundImage.setImageBitmap(null)

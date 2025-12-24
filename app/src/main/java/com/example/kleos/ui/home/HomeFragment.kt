@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.kleos.R
 import com.example.kleos.data.auth.SessionManager
 import com.example.kleos.data.model.NewsItem
 import com.example.kleos.data.news.NewsRepository
@@ -148,7 +149,7 @@ class HomeFragment : Fragment() {
         val user = session.getCurrentUser()
         val name = user?.fullName?.takeIf { it.isNotBlank() } ?: "Данил"
         
-        binding.greetingText.text = "С возвращением,"
+        binding.greetingText.text = getString(R.string.home_welcome_back)
         binding.userNameText.text = name
         // Делаем никнейм кликабельным
         binding.userNameText.isClickable = true
@@ -214,40 +215,54 @@ class HomeFragment : Fragment() {
     
     private fun loadContent() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val newsItems = withContext(Dispatchers.IO) {
-                runCatching { newsRepository.fetch() }.getOrElse { emptyList() }
-            }
-            
-            val contentCards = newsItems.mapIndexed { index, news ->
-                val category = when {
-                    currentTab == "news" -> "Новости"
-                    currentTab == "interesting" -> "Интересное"
-                    index % 2 == 0 -> "Новости"
-                    else -> "Интересное"
+            try {
+                val newsItems = withContext(Dispatchers.IO) {
+                    runCatching { newsRepository.fetch() }.getOrElse { e ->
+                        android.util.Log.e("HomeFragment", "Error loading news", e)
+                        emptyList()
+                    }
                 }
                 
-                val backgroundColor = when {
-                    category == "Новости" -> android.graphics.Color.parseColor("#E8D5FF") // Лавандовый
-                    else -> android.graphics.Color.parseColor("#FFD700") // Желтый
+                android.util.Log.d("HomeFragment", "Loaded ${newsItems.size} news items, currentTab: $currentTab")
+                
+                val newsCategory = getString(R.string.category_news)
+                val interestingCategory = getString(R.string.category_interesting)
+                
+                val contentCards = newsItems.mapIndexed { index, news ->
+                    val category = when {
+                        currentTab == "news" -> newsCategory
+                        currentTab == "interesting" -> interestingCategory
+                        index % 2 == 0 -> newsCategory
+                        else -> interestingCategory
+                    }
+                    
+                    val backgroundColor = when {
+                        category == newsCategory -> android.graphics.Color.parseColor("#E8D5FF") // Лавандовый
+                        else -> android.graphics.Color.parseColor("#FFD700") // Желтый
+                    }
+                    
+                    ContentCard(
+                        id = news.id,
+                        category = category,
+                        title = news.title,
+                        date = news.dateText,
+                        backgroundColor = backgroundColor,
+                        imageUrl = news.imageUrl
+                    )
+                }.filter { card ->
+                    when (currentTab) {
+                        "news" -> card.category == newsCategory
+                        "interesting" -> card.category == interestingCategory
+                        else -> true
+                    }
                 }
                 
-                ContentCard(
-                    id = news.id,
-                    category = category,
-                    title = news.title,
-                    date = news.dateText,
-                    backgroundColor = backgroundColor,
-                    imageUrl = news.imageUrl
-                )
-            }.filter { card ->
-                when (currentTab) {
-                    "news" -> card.category == "Новости"
-                    "interesting" -> card.category == "Интересное"
-                    else -> true
-                }
+                android.util.Log.d("HomeFragment", "Filtered to ${contentCards.size} cards")
+                adapter.submitList(contentCards)
+            } catch (e: Exception) {
+                android.util.Log.e("HomeFragment", "Error in loadContent", e)
+                adapter.submitList(emptyList())
             }
-            
-            adapter.submitList(contentCards)
         }
     }
 

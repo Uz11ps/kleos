@@ -14,6 +14,9 @@
             android:id="@+id/nav_gallery"
             android:title="@string/menu_gallery" />
         <item
+            android:id="@+id/nav_universities"
+            android:title="@string/menu_universities" />
+        <item
             android:id="@+id/nav_slideshow"
             android:title="@string/menu_slideshow" />
         <item

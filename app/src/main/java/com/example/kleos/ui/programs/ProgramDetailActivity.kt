@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.kleos.MainActivity
+import com.example.kleos.R
 import com.example.kleos.databinding.ActivityProgramDetailBinding
 
 class ProgramDetailActivity : AppCompatActivity() {
@@ -24,10 +25,10 @@ class ProgramDetailActivity : AppCompatActivity() {
         val durationYearsValue = intent.getDoubleExtra("durationYears", 0.0)
 
         // Заголовок "Программа" всегда одинаковый
-        binding.titleText.text = "Программа"
+        binding.titleText.text = getString(R.string.program_title)
         
         // Название университета
-        binding.universityText.text = university.ifBlank { "Название универа" }
+        binding.universityText.text = university.ifBlank { getString(R.string.program_university_name) }
         
         // Получаем элементы напрямую из layout
         val languageText = binding.languageText

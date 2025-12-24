@@ -161,7 +161,7 @@
             android:textSize="16sp"
             android:paddingTop="16dp"
             android:paddingBottom="16dp"
-            android:text="Найти"/>
+            android:text="@string/button_find"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/programsRecycler"

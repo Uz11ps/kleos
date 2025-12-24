@@ -13,15 +13,20 @@ class NewsRepository {
     private val api = ApiClient.retrofit.create(NewsApi::class.java)
 
     suspend fun fetch(): List<NewsItem> = withContext(Dispatchers.IO) {
-        val dtos = api.list()
-        return@withContext dtos.map { dto ->
-            NewsItem(
-                id = dto.id,
-                title = dto.title,
-                dateText = formatDate(dto.publishedAt),
-                content = dto.content,
-                imageUrl = dto.imageUrl
-            )
+        runCatching {
+            val dtos = api.list()
+            dtos.map { dto ->
+                NewsItem(
+                    id = dto.id,
+                    title = dto.title,
+                    dateText = formatDate(dto.publishedAt),
+                    content = dto.content,
+                    imageUrl = dto.imageUrl
+                )
+            }
+        }.getOrElse { e ->
+            android.util.Log.e("NewsRepository", "Error fetching news", e)
+            emptyList()
         }
     }
 

@@ -10,7 +10,7 @@
     <com.google.android.material.textview.MaterialTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Choose language"
+        android:text="@string/choose_language"
         android:textAppearance="@style/TextAppearance.Kleos.Display"
         android:textColor="@color/white"
         android:paddingBottom="24dp"/>

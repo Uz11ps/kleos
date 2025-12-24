@@ -16,6 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import android.content.Intent
 import com.example.kleos.ui.programs.ProgramDetailActivity
+import com.example.kleos.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -341,7 +342,7 @@ class ProgramsFiltersFragment : Fragment() {
                 requireActivity().runOnUiThread {
                     adapter.submitList(programs)
                     val count = programs.size
-                    summaryText.text = "Найдено: $count ${if (count == 1) "программа" else if (count in 2..4) "программы" else "программ"}"
+                    summaryText.text = resources.getString(R.string.admission_found_programs, count)
                     BottomSheetManager.showDialog(bottomSheetDialog)
                 }
             } catch (e: Exception) {
@@ -349,7 +350,7 @@ class ProgramsFiltersFragment : Fragment() {
                 e.printStackTrace()
                 requireActivity().runOnUiThread {
                     adapter.submitList(emptyList())
-                    summaryText.text = "Найдено: 0 программ"
+                    summaryText.text = resources.getString(R.string.admission_found_programs, 0)
                     BottomSheetManager.showDialog(bottomSheetDialog)
                 }
             }

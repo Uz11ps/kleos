@@ -147,6 +147,11 @@ class ProfileFragment : Fragment() {
                 binding.courseEditText.setText(profile.course ?: "")
                 binding.specialityEditText.setText(profile.speciality ?: "")
                 binding.universityEditText.setText(profile.university ?: "")
+                binding.studentIdEditText.setText(profile.studentId ?: "")
+                binding.statusEditText.setText(profile.status ?: "")
+                binding.paymentEditText.setText(profile.payment ?: "")
+                binding.penaltiesEditText.setText(profile.penalties ?: "")
+                binding.notesEditText.setText(profile.notes ?: "")
                 
                 // Блокируем редактирование для студентов и обычных пользователей (только админы могут редактировать)
                 val isStudent = profile.role == "student"
@@ -158,7 +163,12 @@ class ProfileFragment : Fragment() {
                     binding.phoneEditText,
                     binding.courseEditText,
                     binding.specialityEditText,
-                    binding.universityEditText
+                    binding.universityEditText,
+                    binding.studentIdEditText,
+                    binding.statusEditText,
+                    binding.paymentEditText,
+                    binding.penaltiesEditText,
+                    binding.notesEditText
                 )
                 
                 fields.forEach { editText ->
@@ -198,7 +208,12 @@ class ProfileFragment : Fragment() {
             binding.phoneEditText,
             binding.courseEditText,
             binding.specialityEditText,
-            binding.universityEditText
+            binding.universityEditText,
+            binding.studentIdEditText,
+            binding.statusEditText,
+            binding.paymentEditText,
+            binding.penaltiesEditText,
+            binding.notesEditText
         )
 
         fields.forEach { editText ->
@@ -270,7 +285,11 @@ class ProfileFragment : Fragment() {
                     phone = phoneText.takeIf { isValidPhone && it.isNotBlank() },
                     course = binding.courseEditText.text?.toString()?.takeIf { it.isNotBlank() },
                     speciality = binding.specialityEditText.text?.toString()?.takeIf { it.isNotBlank() },
-                    university = binding.universityEditText.text?.toString()?.takeIf { it.isNotBlank() }
+                    university = binding.universityEditText.text?.toString()?.takeIf { it.isNotBlank() },
+                    status = binding.statusEditText.text?.toString()?.takeIf { it.isNotBlank() },
+                    payment = binding.paymentEditText.text?.toString()?.takeIf { it.isNotBlank() },
+                    penalties = binding.penaltiesEditText.text?.toString()?.takeIf { it.isNotBlank() },
+                    notes = binding.notesEditText.text?.toString()?.takeIf { it.isNotBlank() }
                 )
             }
             
@@ -305,6 +324,21 @@ class ProfileFragment : Fragment() {
                     }
                     if (!binding.universityEditText.hasFocus()) {
                         binding.universityEditText.setText(profile.university ?: "")
+                    }
+                    if (!binding.studentIdEditText.hasFocus()) {
+                        binding.studentIdEditText.setText(profile.studentId ?: "")
+                    }
+                    if (!binding.statusEditText.hasFocus()) {
+                        binding.statusEditText.setText(profile.status ?: "")
+                    }
+                    if (!binding.paymentEditText.hasFocus()) {
+                        binding.paymentEditText.setText(profile.payment ?: "")
+                    }
+                    if (!binding.penaltiesEditText.hasFocus()) {
+                        binding.penaltiesEditText.setText(profile.penalties ?: "")
+                    }
+                    if (!binding.notesEditText.hasFocus()) {
+                        binding.notesEditText.setText(profile.notes ?: "")
                     }
                 } catch (e: Exception) {
                     // Игнорируем ошибки обновления

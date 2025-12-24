@@ -524,6 +524,24 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
   const totalAdmissions = await Admission.countDocuments();
   const newAdmissions = await Admission.countDocuments({ status: { $in: ['new', 'processing'] } });
   
+  // Статистика регистраций за сегодня
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayRegistrations = await User.countDocuments({ createdAt: { $gte: today } });
+  
+  // Новые пользователи за последние 24 часа
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const newUsers = await User.find({ createdAt: { $gte: yesterday } }).sort({ createdAt: -1 }).limit(10);
+  
+  // Кто зашел в админку первый раз сегодня
+  const firstLoginToday = await User.find({ 
+    $or: [
+      { lastAdminLogin: { $gte: today } },
+      { lastAdminLogin: { $exists: false } }
+    ]
+  }).sort({ createdAt: -1 }).limit(10);
+  
   const html = await adminLayout({
     title: 'Dashboard',
     active: 'dashboard',
@@ -538,7 +556,11 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
           <div style="color:var(--muted);">Total Users</div>
         </div>
         <div class="card">
-          <div style="font-size:32px;font-weight:700;color:var(--accent-2);margin-bottom:8px;">${totalStudents}</div>
+          <div style="font-size:32px;font-weight:700;color:var(--accent-2);margin-bottom:8px;">${todayRegistrations}</div>
+          <div style="color:var(--muted);">Registrations Today</div>
+        </div>
+        <div class="card">
+          <div style="font-size:32px;font-weight:700;color:#10b981;margin-bottom:8px;">${totalStudents}</div>
           <div style="color:var(--muted);">Students</div>
         </div>
         <div class="card">

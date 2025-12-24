@@ -17,11 +17,11 @@ class OnboardingActivity : AppCompatActivity() {
         // Отключаем анимации окна
         window.setWindowAnimations(0)
         
-        // Применяем сохраненную локаль или используем русскую по умолчанию
+        // Применяем сохраненную локаль или используем английскую по умолчанию
         val prefs = getSharedPreferences("kleos_prefs_lang", MODE_PRIVATE)
-        val saved = prefs.getString("app_locale", "ru")
+        val saved = prefs.getString("app_locale", "en")
         if (saved.isNullOrEmpty()) {
-            prefs.edit().putString("app_locale", "ru").apply()
+            prefs.edit().putString("app_locale", "en").apply()
             LocaleManager.applySavedLocale(this)
         } else {
             LocaleManager.applySavedLocale(this)

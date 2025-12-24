@@ -238,24 +238,22 @@ class AdmissionFormFragment : Fragment() {
                 val countriesResponse = settingsApi.getCountries()
                 countriesList = countriesResponse.countries
                 
-                val lang = resources.configuration.locales[0]?.language ?: "en"
-                val consentLang = if (lang == "ru") "ru" else "en"
-                val consentResponse = settingsApi.getConsentText(consentLang)
-                
-                if (lang == "ru") {
-                    consentTextRu = consentResponse.text
-                } else {
-                    consentTextEn = consentResponse.text
+                // Загружаем текст согласия для обоих языков
+                try {
+                    val consentResponseRu = settingsApi.getConsentText("ru")
+                    consentTextRu = consentResponseRu.text
+                } catch (e: Exception) {
+                    android.util.Log.e("AdmissionFormFragment", "Error loading Russian consent text", e)
                 }
                 
-                // Also load the other language for dialog
-                val otherLang = if (lang == "ru") "en" else "ru"
-                val otherConsentResponse = settingsApi.getConsentText(otherLang)
-                if (otherLang == "ru") {
-                    consentTextRu = otherConsentResponse.text
-                } else {
-                    consentTextEn = otherConsentResponse.text
+                try {
+                    val consentResponseEn = settingsApi.getConsentText("en")
+                    consentTextEn = consentResponseEn.text
+                } catch (e: Exception) {
+                    android.util.Log.e("AdmissionFormFragment", "Error loading English consent text", e)
                 }
+                
+                android.util.Log.d("AdmissionFormFragment", "Loaded consent texts - RU: ${consentTextRu.isNotBlank()}, EN: ${consentTextEn.isNotBlank()}")
                 
                 // Setup nationality dropdown on main thread
                 if (isAdded) {
@@ -264,6 +262,7 @@ class AdmissionFormFragment : Fragment() {
                     }
                 }
             } catch (e: Exception) {
+                android.util.Log.e("AdmissionFormFragment", "Error loading countries and consent", e)
                 // Fallback: use default countries if API fails
                 countriesList = listOf("Russia", "USA", "China", "Germany", "France", "UK", "Italy", "Spain", "Japan", "South Korea")
                 if (isAdded) {

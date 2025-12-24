@@ -113,6 +113,60 @@ class MainActivity : AppCompatActivity() {
                     restartToMain()
                     true
                 }
+                R.id.nav_chat, R.id.nav_profile, R.id.nav_admission -> {
+                    // Проверяем доступ перед навигацией
+                    val isLoggedIn = sessionManager.isLoggedIn()
+                    val currentUser = sessionManager.getCurrentUser()
+                    val isGuest = !isLoggedIn || currentUser?.email == "guest@local"
+                    val userRole = sessionManager.getUserRole()
+                    
+                    val hasChatAccess = !isGuest && (userRole == "user" || userRole == "student")
+                    val hasProfileAccess = !isGuest && userRole == "student"
+                    val hasAdmissionAccess = !isGuest && (userRole == "user" || userRole == "student")
+                    
+                    when (item.itemId) {
+                        R.id.nav_chat -> {
+                            if (hasChatAccess) {
+                                val handled = item.onNavDestinationSelected(navController)
+                                if (handled) {
+                                    binding.drawerLayout.closeDrawers()
+                                }
+                                handled
+                            } else {
+                                Snackbar.make(binding.root, "Доступ запрещен. Пожалуйста, войдите в систему.", Snackbar.LENGTH_SHORT).show()
+                                binding.drawerLayout.closeDrawers()
+                                false
+                            }
+                        }
+                        R.id.nav_profile -> {
+                            if (hasProfileAccess) {
+                                val handled = item.onNavDestinationSelected(navController)
+                                if (handled) {
+                                    binding.drawerLayout.closeDrawers()
+                                }
+                                handled
+                            } else {
+                                Snackbar.make(binding.root, "Доступ только для студентов.", Snackbar.LENGTH_SHORT).show()
+                                binding.drawerLayout.closeDrawers()
+                                false
+                            }
+                        }
+                        R.id.nav_admission -> {
+                            if (hasAdmissionAccess) {
+                                val handled = item.onNavDestinationSelected(navController)
+                                if (handled) {
+                                    binding.drawerLayout.closeDrawers()
+                                }
+                                handled
+                            } else {
+                                Snackbar.make(binding.root, "Доступ запрещен. Пожалуйста, войдите в систему.", Snackbar.LENGTH_SHORT).show()
+                                binding.drawerLayout.closeDrawers()
+                                false
+                            }
+                        }
+                        else -> false
+                    }
+                }
                 else -> {
                     val handled = item.onNavDestinationSelected(navController)
                     if (handled) {
@@ -125,40 +179,86 @@ class MainActivity : AppCompatActivity() {
 
         val bottomNav: CustomBottomNavView = findViewById(R.id.bottom_nav)
         
+        // Определяем, является ли пользователь гостем
+        val isLoggedIn = sessionManager.isLoggedIn()
+        val currentUser = sessionManager.getCurrentUser()
+        val isGuest = !isLoggedIn || currentUser?.email == "guest@local"
+        
+        // Устанавливаем режим гостя для навбара
+        bottomNav.setGuestMode(isGuest)
+        
         // Настраиваем обработчик выбора элементов навигации
         bottomNav.setOnItemSelectedListener { position ->
-            when (position) {
-                0 -> navController.navigate(R.id.nav_admission)
-                1 -> navController.navigate(R.id.nav_home)
-                2 -> navController.navigate(R.id.nav_gallery)
+            val userRole = sessionManager.getUserRole()
+            val hasAdmissionAccess = !isGuest && (userRole == "user" || userRole == "student")
+            
+            if (isGuest) {
+                // Для гостя: позиция 0 = дом, позиция 1 = галерея
+                when (position) {
+                    0 -> navController.navigate(R.id.nav_home)
+                    1 -> navController.navigate(R.id.nav_gallery)
+                }
+            } else {
+                // Для зарегистрированных пользователей: позиция 0 = университет, 1 = дом, 2 = галерея
+                when (position) {
+                    0 -> navController.navigate(R.id.nav_universities)
+                    1 -> navController.navigate(R.id.nav_home)
+                    2 -> navController.navigate(R.id.nav_gallery)
+                }
             }
         }
         
         // Синхронизируем выбранный элемент с текущим destination и управляем видимостью нижней навигации
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            // Скрываем нижнюю навигацию на странице профиля
+            val isLoggedInNow = sessionManager.isLoggedIn()
+            val currentUserNow = sessionManager.getCurrentUser()
+            val isGuestNow = !isLoggedInNow || currentUserNow?.email == "guest@local"
+            
+            // Обновляем режим гостя при изменении destination
+            bottomNav.setGuestMode(isGuestNow)
+            
+            // Скрываем нижнюю навигацию только на странице профиля
             if (destination.id == R.id.nav_profile) {
                 bottomNav.visibility = View.GONE
             } else {
                 bottomNav.visibility = View.VISIBLE
-                when (destination.id) {
-                    R.id.nav_admission -> bottomNav.setSelectedItem(0)
-                    R.id.nav_home -> bottomNav.setSelectedItem(1)
-                    R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+                if (isGuestNow) {
+                    // Для гостя: логическая позиция 0 = дом, логическая позиция 1 = галерея
+                    when (destination.id) {
+                        R.id.nav_home -> bottomNav.setSelectedItem(0) // Логическая позиция 0 для дома
+                        R.id.nav_gallery -> bottomNav.setSelectedItem(1) // Логическая позиция 1 для галереи
+                    }
+                } else {
+                    // Для зарегистрированных пользователей
+                    when (destination.id) {
+                        R.id.nav_universities -> bottomNav.setSelectedItem(0)
+                        R.id.nav_home -> bottomNav.setSelectedItem(1)
+                        R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+                    }
                 }
             }
         }
         
         // Синхронизируем начальную позицию с текущим destination
         val currentDestination = navController.currentDestination?.id
+        
         if (currentDestination == R.id.nav_profile) {
             bottomNav.visibility = View.GONE
         } else {
             bottomNav.visibility = View.VISIBLE
-            when (currentDestination) {
-                R.id.nav_admission -> bottomNav.setSelectedItem(0)
-                R.id.nav_home -> bottomNav.setSelectedItem(1)
-                R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+            if (isGuest) {
+                // Для гостя: логическая позиция 0 = дом, логическая позиция 1 = галерея
+                when (currentDestination) {
+                    R.id.nav_home -> bottomNav.setSelectedItem(0) // Логическая позиция 0 для дома
+                    R.id.nav_gallery -> bottomNav.setSelectedItem(1) // Логическая позиция 1 для галереи
+                }
+            } else {
+                // Для зарегистрированных пользователей
+                when (currentDestination) {
+                    R.id.nav_universities -> bottomNav.setSelectedItem(0)
+                    R.id.nav_home -> bottomNav.setSelectedItem(1)
+                    R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+                }
             }
         }
         
@@ -239,38 +339,63 @@ class MainActivity : AppCompatActivity() {
         val navView: NavigationView = binding.navView
         val bottomNav: CustomBottomNavView = findViewById(R.id.bottom_nav)
         val isLoggedIn = sessionManager.isLoggedIn()
+        val currentUser = sessionManager.getCurrentUser()
+        
+        // Проверяем, является ли пользователь гостем
+        val isGuest = !isLoggedIn || currentUser?.email == "guest@local"
         val userRole = sessionManager.getUserRole()
         
         // Логика доступа:
-        // - Гость (не залогинен): нет доступа к чату, профилю и поступлению
+        // - Гость (не залогинен или guest@local): нет доступа к чату, профилю и поступлению
         // - Пользователь (role = "user"): есть доступ к чату и поступлению, но нет доступа к профилю
         // - Студент (role = "student"): есть доступ и к чату, и к профилю, и к поступлению
         
-        val hasChatAccess = isLoggedIn && (userRole == "user" || userRole == "student")
-        val hasProfileAccess = isLoggedIn && userRole == "student"
-        val hasAdmissionAccess = isLoggedIn && (userRole == "user" || userRole == "student")
+        val hasChatAccess = !isGuest && (userRole == "user" || userRole == "student")
+        val hasProfileAccess = !isGuest && userRole == "student"
+        val hasAdmissionAccess = !isGuest && (userRole == "user" || userRole == "student")
         
-        // Управление видимостью пунктов меню в боковом меню
-        // Галерея и Университеты всегда видны для всех пользователей
-        val galleryItem = navView.menu.findItem(R.id.nav_gallery)
-        if (galleryItem != null) {
-            galleryItem.isVisible = true
-            galleryItem.isEnabled = true
-        }
-        val universitiesItem = navView.menu.findItem(R.id.nav_universities)
-        if (universitiesItem != null) {
-            universitiesItem.isVisible = true
-            universitiesItem.isEnabled = true
-        }
-        // Поддержка и Допуск всегда видны в меню
-        navView.menu.findItem(R.id.nav_chat)?.isVisible = true
+        // Управление видимостью пунктов меню в боковом меню (drawer)
+        // Галерея, Новости, Университеты, Программы, Партнеры всегда видны для всех пользователей
+        navView.menu.findItem(R.id.nav_gallery)?.isVisible = true
+        navView.menu.findItem(R.id.nav_news)?.isVisible = true
+        navView.menu.findItem(R.id.nav_universities)?.isVisible = true
+        navView.menu.findItem(R.id.nav_slideshow)?.isVisible = true
+        navView.menu.findItem(R.id.nav_partners)?.isVisible = true
+        
+        // Поддержка (чат) - только для залогиненных пользователей (user или student)
+        navView.menu.findItem(R.id.nav_chat)?.isVisible = hasChatAccess
+        
+        // Профиль - только для студентов
         navView.menu.findItem(R.id.nav_profile)?.isVisible = hasProfileAccess
-        navView.menu.findItem(R.id.nav_admission)?.isVisible = true
         
-        // Управление видимостью пунктов меню в нижней навигации
-        // Новый CustomBottomNavView всегда показывает все три элемента (кисть, дом, картинка)
-        // Видимость управляется через навигацию - если пользователь не имеет доступа,
-        // он просто не сможет перейти на соответствующий экран
+        // Допуск (поступление) - только для залогиненных пользователей (user или student)
+        navView.menu.findItem(R.id.nav_admission)?.isVisible = hasAdmissionAccess
+        
+        // Управление видимостью нижней навигации
+        // Нижнее меню показываем всем пользователям (включая гостей), кроме страницы профиля
+        val currentDestination = findNavController(R.id.nav_host_fragment_content_main).currentDestination?.id
+        
+        // Устанавливаем режим гостя для навбара
+        bottomNav.setGuestMode(isGuest)
+        
+        if (currentDestination == R.id.nav_profile) {
+            bottomNav.visibility = View.GONE
+        } else {
+            bottomNav.visibility = View.VISIBLE
+            // Синхронизируем выбранный элемент
+            if (isGuest) {
+                when (currentDestination) {
+                    R.id.nav_home -> bottomNav.setSelectedItem(0) // Логическая позиция 0 для дома
+                    R.id.nav_gallery -> bottomNav.setSelectedItem(1) // Логическая позиция 1 для галереи
+                }
+            } else {
+                when (currentDestination) {
+                    R.id.nav_universities -> bottomNav.setSelectedItem(0)
+                    R.id.nav_home -> bottomNav.setSelectedItem(1)
+                    R.id.nav_gallery -> bottomNav.setSelectedItem(2)
+                }
+            }
+        }
     }
     
     fun openDrawer() {

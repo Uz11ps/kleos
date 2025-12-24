@@ -31,7 +31,7 @@ class GalleryAdapter(
     override fun onBindViewHolder(holder: GalleryViewHolder, position: Int) {
         val item = items[position]
         holder.binding.titleText.text = item.title
-        holder.binding.categoryText.text = "Галерея"
+        holder.binding.categoryText.text = holder.itemView.context.getString(com.example.kleos.R.string.category_gallery)
         
         // Форматируем дату из description или используем текущую дату
         val dateText = item.description?.takeIf { it.matches(Regex("\\d{2}\\.\\d{2}\\.\\d{4}")) } 

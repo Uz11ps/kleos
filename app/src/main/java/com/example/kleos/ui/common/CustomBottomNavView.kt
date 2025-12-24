@@ -18,6 +18,7 @@ class CustomBottomNavView @JvmOverloads constructor(
 
     private var selectedPosition: Int = 1 // По умолчанию выбран дом (средняя позиция)
     private var onItemSelectedListener: ((Int) -> Unit)? = null
+    private var isGuestMode: Boolean = false // Режим гостя - скрываем первую иконку
 
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = ContextCompat.getColor(context, android.R.color.white)
@@ -44,12 +45,12 @@ class CustomBottomNavView @JvmOverloads constructor(
     }
 
     private fun setupIcons() {
-        // Иконка кисти (левая)
-        val brushIcon = ImageView(context).apply {
-            setImageResource(R.drawable.ic_nav_brush)
+        // Иконка университета (левая)
+        val universityIcon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_university_filter)
             scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
         }
-        addView(brushIcon)
+        addView(universityIcon)
 
         // Иконка дома (средняя)
         val homeIcon = ImageView(context).apply {
@@ -65,25 +66,49 @@ class CustomBottomNavView @JvmOverloads constructor(
         }
         addView(galleryIcon)
 
-        iconViews.addAll(listOf(brushIcon, homeIcon, galleryIcon))
+        iconViews.addAll(listOf(universityIcon, homeIcon, galleryIcon))
 
         // Устанавливаем обработчики кликов
-        brushIcon.setOnClickListener { selectItem(0) }
+        universityIcon.setOnClickListener { selectItem(0) }
         homeIcon.setOnClickListener { selectItem(1) }
         galleryIcon.setOnClickListener { selectItem(2) }
     }
 
     fun selectItem(position: Int) {
-        if (position == selectedPosition) return
-        selectedPosition = position
+        // Для гостя позиции смещены: 0 = дом, 1 = галерея
+        val actualPosition = if (isGuestMode) {
+            when (position) {
+                0 -> 1 // Дом
+                1 -> 2 // Галерея
+                else -> position
+            }
+        } else {
+            position
+        }
+        
+        if (actualPosition == selectedPosition) return
+        selectedPosition = actualPosition
         updateIcons()
+        // Передаем оригинальную позицию в listener для правильной навигации
         onItemSelectedListener?.invoke(position)
         invalidate()
     }
 
     fun setSelectedItem(position: Int) {
-        if (position != selectedPosition) {
-            selectedPosition = position
+        // position - это логическая позиция (0, 1, 2 для обычных пользователей)
+        // Для гостя: position 0 = дом (реальная позиция 1), position 1 = галерея (реальная позиция 2)
+        val actualPosition = if (isGuestMode) {
+            when (position) {
+                0 -> 1 // Дом
+                1 -> 2 // Галерея
+                else -> position
+            }
+        } else {
+            position
+        }
+        
+        if (actualPosition != selectedPosition) {
+            selectedPosition = actualPosition
             updateIcons()
             invalidate()
         }
@@ -93,11 +118,13 @@ class CustomBottomNavView @JvmOverloads constructor(
         // Обновляем иконки в зависимости от выбранной позиции
         // Для активной иконки используем белые версии, для неактивных - черные
         
-        // Иконка кисти (позиция 0)
+        // Иконка университета (позиция 0)
         iconViews[0].setImageResource(
-            if (selectedPosition == 0) R.drawable.ic_nav_brush_active else R.drawable.ic_nav_brush
+            if (selectedPosition == 0) R.drawable.ic_university_filter else R.drawable.ic_university_filter
         )
-        iconViews[0].colorFilter = null
+        iconViews[0].colorFilter = if (selectedPosition == 0) null else android.graphics.ColorMatrixColorFilter(
+            android.graphics.ColorMatrix().apply { setSaturation(0.5f) }
+        )
         
         // Иконка дома (позиция 1)
         iconViews[1].setImageResource(
@@ -114,6 +141,23 @@ class CustomBottomNavView @JvmOverloads constructor(
 
     fun setOnItemSelectedListener(listener: (Int) -> Unit) {
         onItemSelectedListener = listener
+    }
+    
+    fun setGuestMode(isGuest: Boolean) {
+        if (isGuestMode != isGuest) {
+            isGuestMode = isGuest
+            // Обновляем видимость первой иконки
+            if (iconViews.isNotEmpty()) {
+                iconViews[0].visibility = if (isGuest) android.view.View.GONE else android.view.View.VISIBLE
+            }
+            // Если гость и выбрана позиция 0 (Допуск), переключаемся на дом
+            if (isGuest && selectedPosition == 0) {
+                selectedPosition = 0 // Для гостя позиция 0 теперь дом
+                updateIcons()
+            }
+            invalidate()
+            requestLayout()
+        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -132,7 +176,9 @@ class CustomBottomNavView @JvmOverloads constructor(
         val iconMeasureSpec = MeasureSpec.makeMeasureSpec(iconSize, MeasureSpec.EXACTLY)
 
         iconViews.forEach { icon ->
-            icon.measure(iconMeasureSpec, iconMeasureSpec)
+            if (icon.visibility != android.view.View.GONE) {
+                icon.measure(iconMeasureSpec, iconMeasureSpec)
+            }
         }
     }
 
@@ -140,21 +186,26 @@ class CustomBottomNavView @JvmOverloads constructor(
         val width = r - l
         val height = b - t
 
-        // Размещаем иконки равномерно по горизонтали
-        val iconSize = iconViews[0].measuredWidth
-        val totalIconsWidth = iconSize * iconViews.size
-        val spacing = (width - totalIconsWidth) / (iconViews.size + 1)
+        // Размещаем только видимые иконки равномерно по горизонтали
+        val visibleIcons = iconViews.filter { it.visibility != android.view.View.GONE }
+        if (visibleIcons.isEmpty()) return
+        
+        val iconSize = visibleIcons[0].measuredWidth
+        val totalIconsWidth = iconSize * visibleIcons.size
+        val spacing = (width - totalIconsWidth) / (visibleIcons.size + 1)
 
         var currentX = spacing.toFloat()
         val centerY = height / 2f
 
         iconViews.forEach { icon ->
-            val left = currentX.toInt()
-            val top = (centerY - iconSize / 2f).toInt()
-            val right = left + iconSize
-            val bottom = top + iconSize
-            icon.layout(left, top, right, bottom)
-            currentX += iconSize + spacing
+            if (icon.visibility != android.view.View.GONE) {
+                val left = currentX.toInt()
+                val top = (centerY - iconSize / 2f).toInt()
+                val right = left + iconSize
+                val bottom = top + iconSize
+                icon.layout(left, top, right, bottom)
+                currentX += iconSize + spacing
+            }
         }
     }
 
@@ -167,11 +218,25 @@ class CustomBottomNavView @JvmOverloads constructor(
         canvas.drawRoundRect(rect, cornerRadius, cornerRadius, backgroundPaint)
 
         // Рисуем черный круг для активной иконки (64x64dp)
-        if (iconViews.isNotEmpty()) {
-            val iconSize = iconViews[0].measuredWidth.toFloat()
-            val totalIconsWidth = iconSize * iconViews.size
-            val spacing = (width - totalIconsWidth) / (iconViews.size + 1)
-            val activeIconX = spacing + iconSize / 2f + selectedPosition * (iconSize + spacing)
+        val visibleIcons = iconViews.filter { it.visibility != android.view.View.GONE }
+        if (visibleIcons.isNotEmpty() && selectedPosition < iconViews.size) {
+            val iconSize = visibleIcons[0].measuredWidth.toFloat()
+            val totalIconsWidth = iconSize * visibleIcons.size
+            val spacing = (width - totalIconsWidth) / (visibleIcons.size + 1)
+            
+            // Вычисляем позицию активной иконки среди видимых
+            val visiblePosition = if (isGuestMode) {
+                // Для гостя: позиция 1 (дом) = 0 в видимых, позиция 2 (галерея) = 1 в видимых
+                when (selectedPosition) {
+                    1 -> 0 // Дом
+                    2 -> 1 // Галерея
+                    else -> 0
+                }
+            } else {
+                selectedPosition
+            }
+            
+            val activeIconX = spacing + iconSize / 2f + visiblePosition * (iconSize + spacing)
             val activeIconY = height / 2f
             val circleRadius = 32f * resources.displayMetrics.density // Радиус 32dp для круга 64x64dp
 

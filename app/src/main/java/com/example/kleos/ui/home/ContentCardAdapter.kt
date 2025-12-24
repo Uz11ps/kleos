@@ -36,10 +36,19 @@ class ContentCardAdapter(
         return ContentCardViewHolder(binding)
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount(): Int {
+        val count = items.size
+        android.util.Log.d("ContentCardAdapter", "getItemCount: $count")
+        return count
+    }
 
     override fun onBindViewHolder(holder: ContentCardViewHolder, position: Int) {
+        if (position >= items.size) {
+            android.util.Log.e("ContentCardAdapter", "Position $position >= items.size ${items.size}")
+            return
+        }
         val item = items[position]
+        android.util.Log.d("ContentCardAdapter", "Binding item at position $position: ${item.title}")
         holder.binding.categoryText.text = item.category
         holder.binding.titleText.text = item.title
         holder.binding.dateText.text = item.date
@@ -51,21 +60,23 @@ class ContentCardAdapter(
         // По умолчанию показываем градиентный фон (overlay непрозрачный)
         holder.binding.overlayView.alpha = 1.0f
         
-        // Устанавливаем цвет фона карточки
-        holder.binding.root.setCardBackgroundColor(item.backgroundColor)
+        val context = holder.itemView.context
+        val newsCategory = context.getString(R.string.category_news)
+        val interestingCategory = context.getString(R.string.category_interesting)
         
         // Устанавливаем фон для overlay в зависимости от категории
         val backgroundDrawable = when (item.category) {
-            "Новости" -> R.drawable.bg_news_card
-            "Интересное" -> R.drawable.bg_interesting_card
+            newsCategory -> R.drawable.bg_news_card
+            interestingCategory -> R.drawable.bg_interesting_card
             else -> R.drawable.bg_news_card
         }
         holder.binding.overlayView.setBackgroundResource(backgroundDrawable)
+        holder.binding.root.setCardBackgroundColor(android.graphics.Color.TRANSPARENT)
         
         // Устанавливаем бейдж для категории
         val badgeBackground = when (item.category) {
-            "Новости" -> R.drawable.bg_category_badge_news
-            "Интересное" -> R.drawable.bg_category_badge_interesting
+            newsCategory -> R.drawable.bg_category_badge_news
+            interestingCategory -> R.drawable.bg_category_badge_interesting
             else -> R.drawable.bg_category_badge_news
         }
         holder.binding.categoryText.setBackgroundResource(badgeBackground)
@@ -147,8 +158,10 @@ class ContentCardAdapter(
     }
 
     fun submitList(newItems: List<ContentCard>) {
+        android.util.Log.d("ContentCardAdapter", "submitList called with ${newItems.size} items")
         items = newItems
         notifyDataSetChanged()
+        android.util.Log.d("ContentCardAdapter", "notifyDataSetChanged called, current items.size: ${items.size}")
     }
 }
 

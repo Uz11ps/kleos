@@ -23,13 +23,19 @@ class BlurredCircleView @JvmOverloads constructor(
         // Применяем линейный блюр 280px для Android 12+ (API 31+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             post {
-                val blurRadius = 280f * resources.displayMetrics.density
-                setRenderEffect(android.graphics.RenderEffect.createBlurEffect(
-                    blurRadius,
-                    blurRadius,
-                    android.graphics.Shader.TileMode.CLAMP
-                ))
+                applyBlur()
             }
+        }
+    }
+    
+    private fun applyBlur() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && width > 0 && height > 0) {
+            val blurRadius = 280f * resources.displayMetrics.density
+            setRenderEffect(android.graphics.RenderEffect.createBlurEffect(
+                blurRadius,
+                blurRadius,
+                android.graphics.Shader.TileMode.CLAMP
+            ))
         }
     }
 
@@ -50,12 +56,17 @@ class BlurredCircleView @JvmOverloads constructor(
         // Применяем размытие после изменения размера
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             post {
-                val blurRadius = 280f * resources.displayMetrics.density
-                setRenderEffect(android.graphics.RenderEffect.createBlurEffect(
-                    blurRadius,
-                    blurRadius,
-                    android.graphics.Shader.TileMode.CLAMP
-                ))
+                applyBlur()
+            }
+        }
+    }
+    
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        // Применяем размытие при присоединении к окну
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            post {
+                applyBlur()
             }
         }
     }

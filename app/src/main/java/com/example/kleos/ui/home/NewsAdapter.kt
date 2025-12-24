@@ -52,18 +52,24 @@ class NewsAdapter(
             com.example.kleos.R.drawable.bg_news_card
         }
         
-        holder.itemView.setBackgroundResource(backgroundDrawable)
         holder.binding.overlayView.setBackgroundResource(backgroundDrawable)
+        holder.binding.root.setCardBackgroundColor(android.graphics.Color.TRANSPARENT) // Ensure transparent background for MaterialCardView
+        
+        // Устанавливаем бейдж для категории
+        val badgeBackground = if (isInteresting) {
+            com.example.kleos.R.drawable.bg_category_badge_interesting
+        } else {
+            com.example.kleos.R.drawable.bg_category_badge_news
+        }
+        holder.binding.categoryBadge.setBackgroundResource(badgeBackground)
         
         if (isInteresting) {
-            holder.binding.categoryBadge.text = "Интересное"
-            holder.binding.categoryBadge.setBackgroundResource(com.example.kleos.R.drawable.bg_category_badge_interesting)
+            holder.binding.categoryBadge.text = holder.itemView.context.getString(com.example.kleos.R.string.category_interesting)
             holder.binding.titleText.setTextColor(android.graphics.Color.BLACK)
             holder.binding.dateText.setTextColor(android.graphics.Color.BLACK)
         } else {
-            holder.binding.categoryBadge.text = "Новости"
-            holder.binding.categoryBadge.setBackgroundResource(com.example.kleos.R.drawable.bg_category_badge_news)
-            holder.binding.titleText.setTextColor(android.graphics.Color.WHITE)
+            holder.binding.categoryBadge.text = holder.itemView.context.getString(com.example.kleos.R.string.category_news)
+            holder.binding.titleText.setTextColor(android.graphics.Color.BLACK)
             holder.binding.dateText.setTextColor(android.graphics.Color.WHITE)
         }
         

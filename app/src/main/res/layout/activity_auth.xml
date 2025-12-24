@@ -162,7 +162,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Или войдите как гость"
+                android:text="@string/button_login_as_guest"
                 android:textColor="#CBD5E1"
                 android:textSize="14sp"
                 android:clickable="true"

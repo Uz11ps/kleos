@@ -15,6 +15,7 @@ import com.example.kleos.ui.programs.ProgramsAdapter
 import com.example.kleos.ui.programs.ProgramResultsAdapter
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.example.kleos.ui.utils.BottomSheetManager
+import com.example.kleos.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -187,7 +188,7 @@ class SlideshowFragment : Fragment() {
             android.util.Log.d("SlideshowFragment", "Loaded ${items.size} programs in bottom sheet")
             resultsAdapter.submitList(items)
             val count = items.size
-            summaryText.text = "Найдено: $count ${if (count == 1) "программа" else if (count in 2..4) "программы" else "программ"}"
+            summaryText.text = resources.getString(R.string.admission_found_programs, count)
             BottomSheetManager.showDialog(bottomSheetDialog)
         }
     }

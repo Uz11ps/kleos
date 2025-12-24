@@ -129,6 +129,91 @@
     <string name="filter_education_level">Level of education</string>
     <string name="filter_university">University</string>
     <string name="find_variants">Find variants</string>
+    
+    <!-- Tabs -->
+    <string name="tab_all">All</string>
+    <string name="tab_news">News</string>
+    <string name="tab_interesting">Interesting</string>
+    
+    <!-- Buttons -->
+    <string name="button_find">Find</string>
+    <string name="button_open_website">Open website</string>
+    <string name="button_skip">Skip</string>
+    <string name="button_back">Back</string>
+    <string name="button_submit">Submit</string>
+    <string name="button_apply">Apply</string>
+    <string name="button_send_again">Send again</string>
+    <string name="button_open_email">Open email client</string>
+    <string name="button_login_as_guest">Or login as guest</string>
+    
+    <!-- Admission form -->
+    <string name="admission_personal_data">Personal data</string>
+    <string name="admission_fill_time">Filling will take ~5 minutes</string>
+    <string name="admission_found_programs">Found: %1$d programs</string>
+    
+    <!-- Profile -->
+    <string name="profile_login_required">Login required</string>
+    
+    <!-- Partner detail -->
+    <string name="partner_description">Partner description</string>
+    
+    <!-- Verify email -->
+    <string name="verify_email_title">Verify email</string>
+    <string name="verify_email_message">We sent an email with a verification link. Open the link from the email on this device to complete registration.</string>
+    <string name="verify_email_address">Address:</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_study">Study</string>
+    <string name="onboarding_programs_and">programs and</string>
+    <string name="onboarding_submit_applications">submit applications</string>
+    
+    <!-- Home -->
+    <string name="home_welcome_back">Welcome back,</string>
+    <string name="home_explore_new">Let\'s explore\nnew areas</string>
+    
+    <!-- Program detail -->
+    <string name="program_title">Program</string>
+    <string name="program_university_name">University name</string>
+    
+    <!-- Gallery -->
+    <string name="gallery_category">Gallery</string>
+    <string name="gallery_graduates">Graduates</string>
+    
+    <!-- News -->
+    <string name="news_category">News</string>
+    <string name="news_title_placeholder">Title</string>
+    <string name="news_date_placeholder">Date</string>
+    <string name="news_content_placeholder">Content</string>
+    
+    <!-- University -->
+    <string name="university_category">Universities</string>
+    <string name="university_name_placeholder">University Name</string>
+    <string name="university_location_placeholder">Location</string>
+    <string name="university_description_placeholder">Description</string>
+    <string name="university_website_placeholder">Website</string>
+    
+    <!-- Content card -->
+    <string name="content_title_placeholder">Title</string>
+    <string name="content_date_placeholder">01.01.2000</string>
+    
+    <!-- Program result -->
+    <string name="program_result_name_placeholder">Name</string>
+    <string name="program_result_description_placeholder">Description</string>
+    
+    <!-- Gallery detail -->
+    <string name="gallery_detail_title_placeholder">Title</string>
+    <string name="gallery_detail_description_placeholder">Description</string>
+    <string name="gallery_detail_media_url_placeholder">Media URL</string>
+    
+    <!-- Categories -->
+    <string name="category_news">News</string>
+    <string name="category_interesting">Interesting</string>
+    <string name="category_gallery">Gallery</string>
+    <string name="category_universities">Universities</string>
+    <string name="category_partners">Partners</string>
+    
+    <!-- Partner -->
+    <string name="partner_title">Partner</string>
 
     <!-- FAQ arrays (EN default) -->
     <string-array name="faq_questions">

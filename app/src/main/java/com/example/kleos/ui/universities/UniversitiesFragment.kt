@@ -34,21 +34,46 @@ class UniversitiesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Устанавливаем фон программно для гарантии
+        binding.root.setBackgroundColor(resources.getColor(com.example.kleos.R.color.onboarding_background, null))
+        
+        // Устанавливаем цвет статус-бара для однородного фона
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+        
+        // Обработка кнопки меню
+        binding.menuButton.setOnClickListener {
+            (activity as? com.example.kleos.MainActivity)?.let { mainActivity ->
+                mainActivity.openDrawer()
+            }
+        }
 
         adapter = UniversitiesAdapter(emptyList()) { university ->
-            // Navigate to university detail or show programs
+            // Navigate to university detail
             val bundle = Bundle().apply {
                 putString("universityId", university.id)
                 putString("universityName", university.name)
             }
-            // TODO: Navigate to university detail fragment when created
-            // findNavController().navigate(R.id.universityDetailFragment, bundle)
+            findNavController().navigate(R.id.universityDetailFragment, bundle)
         }
 
         binding.universitiesRecycler.layoutManager = LinearLayoutManager(requireContext())
         binding.universitiesRecycler.adapter = adapter
 
         loadUniversities()
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Устанавливаем цвет статус-бара при возврате на страницу
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.onboarding_background, null)
+    }
+    
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // Восстанавливаем цвет статус-бара
+        activity?.window?.statusBarColor = resources.getColor(com.example.kleos.R.color.dark_background, null)
+        _binding = null
     }
 
     private fun loadUniversities() {
@@ -58,11 +83,6 @@ class UniversitiesFragment : Fragment() {
             }
             adapter.submitList(items)
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }
 

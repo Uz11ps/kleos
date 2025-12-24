@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.kleos.R
 import com.example.kleos.databinding.ActivityPartnerDetailBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,10 +29,10 @@ class PartnerDetailActivity : AppCompatActivity() {
         val siteUrl = intent.getStringExtra("url")
 
         // Устанавливаем название партнера
-        binding.title.text = name.ifBlank { "Партнер" }
+        binding.title.text = name.ifBlank { getString(R.string.partner_title) }
         
         // Устанавливаем описание партнера
-        binding.description.text = description.ifBlank { "Описание партнера" }
+        binding.description.text = description.ifBlank { getString(R.string.partner_description) }
         
         // Обработка кнопки "Открыть сайт"
         binding.openSiteButton.setOnClickListener {

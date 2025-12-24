@@ -23,7 +23,9 @@ const userSchema = new Schema({
   // FCM токен для push-уведомлений
   fcmToken: { type: String, index: true, sparse: true },
   // URL аватарки пользователя
-  avatarUrl: { type: String }
+  avatarUrl: { type: String },
+  // Дата первого входа в админку
+  lastAdminLogin: { type: Date }
 }, { timestamps: true });
 
 export const User = model('User', userSchema);

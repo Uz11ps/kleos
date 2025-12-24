@@ -98,6 +98,91 @@
     <string name="filter_education_level">Уровень образования</string>
     <string name="filter_university">Университет</string>
     <string name="find_variants">Найти варианты</string>
+    
+    <!-- Tabs -->
+    <string name="tab_all">Все</string>
+    <string name="tab_news">Новости</string>
+    <string name="tab_interesting">Интересное</string>
+    
+    <!-- Buttons -->
+    <string name="button_find">Найти</string>
+    <string name="button_open_website">Открыть сайт</string>
+    <string name="button_skip">Пропустить</string>
+    <string name="button_back">Назад</string>
+    <string name="button_submit">Отправить</string>
+    <string name="button_apply">Подать заявку</string>
+    <string name="button_send_again">Отправить письмо повторно</string>
+    <string name="button_open_email">Открыть почтовый клиент</string>
+    <string name="button_login_as_guest">Или войдите как гость</string>
+    
+    <!-- Admission form -->
+    <string name="admission_personal_data">Личные данные</string>
+    <string name="admission_fill_time">Заполнение займёт ~5 минут</string>
+    <string name="admission_found_programs">Найдено: %1$d программ</string>
+    
+    <!-- Profile -->
+    <string name="profile_login_required">Войдите в аккаунт</string>
+    
+    <!-- Partner detail -->
+    <string name="partner_description">Описание партнера</string>
+    
+    <!-- Verify email -->
+    <string name="verify_email_title">Подтвердите почту</string>
+    <string name="verify_email_message">Мы отправили письмо со ссылкой для подтверждения. Откройте ссылку из письма на этом устройстве, чтобы завершить регистрацию.</string>
+    <string name="verify_email_address">Адрес:</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_study">Изучайте</string>
+    <string name="onboarding_programs_and">программы и</string>
+    <string name="onboarding_submit_applications">подавайте заявки</string>
+    
+    <!-- Home -->
+    <string name="home_welcome_back">С возвращением,</string>
+    <string name="home_explore_new">Давайте исследуем\nновые области</string>
+    
+    <!-- Program detail -->
+    <string name="program_title">Программа</string>
+    <string name="program_university_name">Название универа</string>
+    
+    <!-- Gallery -->
+    <string name="gallery_category">Галерея</string>
+    <string name="gallery_graduates">Выпускники</string>
+    
+    <!-- News -->
+    <string name="news_category">Новости</string>
+    <string name="news_title_placeholder">Заголовок</string>
+    <string name="news_date_placeholder">17.12.2025</string>
+    <string name="news_content_placeholder">Содержимое</string>
+    
+    <!-- University -->
+    <string name="university_category">Университеты</string>
+    <string name="university_name_placeholder">Название университета</string>
+    <string name="university_location_placeholder">Местоположение</string>
+    <string name="university_description_placeholder">Описание</string>
+    <string name="university_website_placeholder">Веб-сайт</string>
+    
+    <!-- Content card -->
+    <string name="content_title_placeholder">Заголовок</string>
+    <string name="content_date_placeholder">01.01.2000</string>
+    
+    <!-- Program result -->
+    <string name="program_result_name_placeholder">Название</string>
+    <string name="program_result_description_placeholder">Описание</string>
+    
+    <!-- Gallery detail -->
+    <string name="gallery_detail_title_placeholder">Заголовок</string>
+    <string name="gallery_detail_description_placeholder">Описание</string>
+    <string name="gallery_detail_media_url_placeholder">URL медиа</string>
+    
+    <!-- Categories -->
+    <string name="category_news">Новости</string>
+    <string name="category_interesting">Интересное</string>
+    <string name="category_gallery">Галерея</string>
+    <string name="category_universities">Университеты</string>
+    <string name="category_partners">Партнеры</string>
+    
+    <!-- Partner -->
+    <string name="partner_title">Партнер</string>
 
     <!-- FAQ arrays (RU) -->
     <string-array name="faq_questions">
