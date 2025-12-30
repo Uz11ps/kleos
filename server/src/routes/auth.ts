@@ -151,7 +151,7 @@ router.post('/verify/consume', async (req, res) => {
     const appScheme = process.env.APP_DEEP_LINK_SCHEME || 'kleos';
     const appHost = 'verified';
     const appLink = `${appScheme}://${appHost}?jwt=${jwtToken}`;
-    const intentLink = `intent://${appHost}?jwt=${encodeURIComponent(jwtToken)}#Intent;scheme=${appScheme};package=com.example.kleos;end`;
+    const intentLink = `intent://${appHost}?jwt=${encodeURIComponent(jwtToken)}#Intent;scheme=${appScheme};package=com.kleos.education;end`;
     return res.send(`<!DOCTYPE html>
 <html lang="ru">
   <head>
@@ -480,4 +480,5 @@ async function sendVerificationEmail(to: string, name: string, webLink: string, 
   }
   throw lastError || new Error('SMTP send failed');
 }
+
 

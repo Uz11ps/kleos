@@ -29,7 +29,7 @@
             android:elevation="0dp" />
 
         <!-- Размытый кружок сверху справа в бургере -->
-        <com.example.kleos.ui.onboarding.BlurredCircleView
+        <com.kleos.education.ui.onboarding.BlurredCircleView
             android:id="@+id/blurredCircleTopDrawer"
             android:layout_width="318dp"
             android:layout_height="318dp"
@@ -40,7 +40,7 @@
             android:visibility="visible" />
 
         <!-- Размытый кружок снизу слева в бургере -->
-        <com.example.kleos.ui.onboarding.BlurredCircleView
+        <com.kleos.education.ui.onboarding.BlurredCircleView
             android:id="@+id/blurredCircleBottomDrawer"
             android:layout_width="318dp"
             android:layout_height="318dp"

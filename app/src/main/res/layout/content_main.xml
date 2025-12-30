@@ -20,7 +20,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
-    <com.example.kleos.ui.common.CustomBottomNavView
+    <com.kleos.education.ui.common.CustomBottomNavView
         android:id="@+id/bottom_nav"
         android:layout_width="228dp"
         android:layout_height="70dp"

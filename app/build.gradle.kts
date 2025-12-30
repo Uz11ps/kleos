@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.kleos"
+    namespace = "com.kleos.education"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.kleos"
+        applicationId = "com.kleos.education"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

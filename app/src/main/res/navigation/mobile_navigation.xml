@@ -7,49 +7,49 @@
 
     <fragment
         android:id="@+id/nav_home"
-        android:name="com.example.kleos.ui.home.HomeFragment"
+        android:name="com.kleos.education.ui.home.HomeFragment"
         android:label="@string/menu_home"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/nav_news"
-        android:name="com.example.kleos.ui.news.NewsFragment"
+        android:name="com.kleos.education.ui.news.NewsFragment"
         android:label="@string/menu_news"
         tools:layout="@layout/fragment_news" />
     
     <fragment
         android:id="@+id/newsDetailFragment"
-        android:name="com.example.kleos.ui.news.NewsDetailFragment"
+        android:name="com.kleos.education.ui.news.NewsDetailFragment"
         android:label="News Detail"
         tools:layout="@layout/fragment_news_detail" />
 
     <fragment
         android:id="@+id/nav_gallery"
-        android:name="com.example.kleos.ui.gallery.GalleryFragment"
+        android:name="com.kleos.education.ui.gallery.GalleryFragment"
         android:label="@string/menu_gallery"
         tools:layout="@layout/fragment_gallery" />
     
     <fragment
         android:id="@+id/galleryDetailFragment"
-        android:name="com.example.kleos.ui.gallery.GalleryDetailFragment"
+        android:name="com.kleos.education.ui.gallery.GalleryDetailFragment"
         android:label="Gallery Detail"
         tools:layout="@layout/fragment_gallery_detail" />
 
     <fragment
         android:id="@+id/nav_universities"
-        android:name="com.example.kleos.ui.universities.UniversitiesFragment"
+        android:name="com.kleos.education.ui.universities.UniversitiesFragment"
         android:label="@string/menu_universities"
         tools:layout="@layout/fragment_universities" />
     
     <fragment
         android:id="@+id/universityDetailFragment"
-        android:name="com.example.kleos.ui.universities.UniversityDetailFragment"
+        android:name="com.kleos.education.ui.universities.UniversityDetailFragment"
         android:label="University Detail"
         tools:layout="@layout/fragment_university_detail" />
 
     <fragment
         android:id="@+id/nav_slideshow"
-        android:name="com.example.kleos.ui.programs.ProgramsFiltersFragment"
+        android:name="com.kleos.education.ui.programs.ProgramsFiltersFragment"
         android:label="@string/menu_slideshow"
         tools:layout="@layout/fragment_programs_filters">
         <action
@@ -59,27 +59,27 @@
     
     <fragment
         android:id="@+id/programsResultsFragment"
-        android:name="com.example.kleos.ui.slideshow.SlideshowFragment"
+        android:name="com.kleos.education.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_slideshow"
         tools:layout="@layout/fragment_slideshow" />
     <fragment
         android:id="@+id/nav_profile"
-        android:name="com.example.kleos.ui.profile.ProfileFragment"
+        android:name="com.kleos.education.ui.profile.ProfileFragment"
         android:label="@string/menu_profile"
         tools:layout="@layout/fragment_profile" />
     <fragment
         android:id="@+id/nav_partners"
-        android:name="com.example.kleos.ui.partners.PartnersFragment"
+        android:name="com.kleos.education.ui.partners.PartnersFragment"
         android:label="@string/menu_partners"
         tools:layout="@layout/fragment_partners" />
     <fragment
         android:id="@+id/nav_chat"
-        android:name="com.example.kleos.ui.chat.ChatFragment"
+        android:name="com.kleos.education.ui.chat.ChatFragment"
         android:label="@string/menu_chat"
         tools:layout="@layout/fragment_chat" />
     <fragment
         android:id="@+id/nav_admission"
-        android:name="com.example.kleos.ui.admission.AdmissionFormFragment"
+        android:name="com.kleos.education.ui.admission.AdmissionFormFragment"
         android:label="@string/menu_admission"
         tools:layout="@layout/fragment_admission_form" />
 </navigation>

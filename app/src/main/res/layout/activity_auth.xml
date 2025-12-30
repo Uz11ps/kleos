@@ -9,7 +9,7 @@
     android:clipToPadding="false">
 
     <!-- Кружок с блюром сверху за текстом -->
-    <com.example.kleos.ui.onboarding.BlurredCircleView
+    <com.kleos.education.ui.onboarding.BlurredCircleView
         android:id="@+id/blurredCircleTop"
         android:layout_width="318dp"
         android:layout_height="318dp"
@@ -20,15 +20,15 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Кружок с блюром снизу под кнопками -->
-    <com.example.kleos.ui.onboarding.BlurredCircleView
+    <com.kleos.education.ui.onboarding.BlurredCircleView
         android:id="@+id/blurredCircle"
         android:layout_width="318dp"
         android:layout_height="318dp"
-        android:layout_marginTop="-50dp"
         android:elevation="0dp"
-        app:layout_constraintTop_toBottomOf="@id/welcomeContainer"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="-150dp" />
 
     <ImageView
         android:id="@+id/gradientShape"
@@ -62,7 +62,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Общий контейнер для welcome screen (текст и кнопки) -->
+    <!-- Общий контейнер для welcome screen (текст) -->
     <LinearLayout
         android:id="@+id/welcomeContainer"
         android:layout_width="0dp"
@@ -73,10 +73,10 @@
         android:gravity="center_horizontal"
         android:elevation="5dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/bottomBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.5">
+        app:layout_constraintVertical_bias="0.4">
 
         <!-- Контейнер для welcome screen -->
         <LinearLayout
@@ -84,8 +84,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:layout_marginBottom="32dp">
+            android:gravity="center_horizontal">
 
             <!-- Заголовок "Добро пожаловать" -->
             <TextView
@@ -113,63 +112,68 @@
 
         </LinearLayout>
 
-        <!-- Кнопки над заблюренным кружком -->
-        <LinearLayout
-            android:id="@+id/bottomBar"
+    </LinearLayout>
+
+    <!-- Кнопки над заблюренным кружком -->
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:elevation="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="32dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/submitButton"
+            style="@style/Widget.Kleos.Button.Rounded"
+            android:layout_width="214dp"
+            android:layout_height="62dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="@string/action_login"
+            android:textSize="24sp"
+            android:textAllCaps="false"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:textColor="@color/dark_background"
+            android:backgroundTint="@android:color/white" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="12dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/toggleModeButton"
+            style="@style/Widget.Kleos.Button.Outlined.Rounded"
+            android:layout_width="214dp"
+            android:layout_height="62dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="@string/action_register"
+            android:textSize="24sp"
+            android:textAllCaps="false"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            app:strokeColor="@android:color/white"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:id="@+id/guestLoginText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/submitButton"
-                style="@style/Widget.Kleos.Button.Rounded"
-                android:layout_width="214dp"
-                android:layout_height="62dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="@string/action_login"
-                android:textSize="24sp"
-                android:textAllCaps="false"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:includeFontPadding="false"
-                android:textColor="@color/dark_background"
-                android:backgroundTint="@android:color/white" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="12dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/toggleModeButton"
-                style="@style/Widget.Kleos.Button.Outlined.Rounded"
-                android:layout_width="214dp"
-                android:layout_height="62dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="@string/action_register"
-                android:textSize="24sp"
-                android:textAllCaps="false"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:includeFontPadding="false"
-                app:strokeColor="@android:color/white"
-                android:textColor="@android:color/white" />
-
-            <TextView
-                android:id="@+id/guestLoginText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/button_login_as_guest"
-                android:textColor="#CBD5E1"
-                android:textSize="14sp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackgroundBorderless" />
-        </LinearLayout>
-
+            android:layout_marginTop="12dp"
+            android:text="@string/button_login_as_guest"
+            android:textColor="#CBD5E1"
+            android:textSize="14sp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
 
     <!-- Контейнер для формы входа/регистрации (скрыт по умолчанию) -->
@@ -342,3 +346,4 @@
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

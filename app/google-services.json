@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:1043311223184:android:28309adefd741b4ecb1315",
         "android_client_info": {
-          "package_name": "com.example.kleos"
+          "package_name": "com.kleos.education"
         }
       },
       "oauth_client": [],
@@ -27,4 +27,5 @@
   ],
   "configuration_version": "1"
 }
+
 

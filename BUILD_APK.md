@@ -80,7 +80,7 @@ rmdir /s /q .idea\caches
 
 ```kotlin
 defaultConfig {
-    applicationId = "com.example.kleos"
+    applicationId = "com.kleos.education"
     minSdk = 24
     targetSdk = 35
     versionCode = 2  // Увеличьте это число
@@ -142,4 +142,5 @@ gradlew clean cleanBuildCache assembleRelease --no-daemon
 - **Используйте Release вариант для финальной сборки**
 - **Увеличивайте versionCode при каждой новой версии**
 - **Проверяйте что все файлы сохранены перед сборкой**
+
 

@@ -8,7 +8,7 @@
     android:clipToPadding="false">
 
     <!-- Размытый кружок внизу слева -->
-    <com.example.kleos.ui.onboarding.BlurredCircleView
+    <com.kleos.education.ui.onboarding.BlurredCircleView
         android:id="@+id/blurredCircleBottom"
         android:layout_width="318dp"
         android:layout_height="318dp"
@@ -18,7 +18,7 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Размытый кружок вверху справа -->
-    <com.example.kleos.ui.onboarding.BlurredCircleView
+    <com.kleos.education.ui.onboarding.BlurredCircleView
         android:id="@+id/blurredCircleTop"
         android:layout_width="318dp"
         android:layout_height="318dp"
@@ -834,5 +834,6 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 
