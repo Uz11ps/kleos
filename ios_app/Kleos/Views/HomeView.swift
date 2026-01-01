@@ -90,7 +90,8 @@ struct HomeView: View {
                 .font(.system(size: 16))
                 .foregroundColor(.gray)
             
-            Text("Let's explore\nnew areas")
+            let userName = userProfile?.fullName ?? sessionManager.currentUser?.fullName ?? "Guest"
+            Text("\(userName)")
                 .font(.system(size: 32, weight: .bold))
                 .foregroundColor(.white)
                 .lineSpacing(4)

@@ -6,6 +6,8 @@ struct ProfileView: View {
     @State private var profile: UserProfile?
     @State private var isLoading = true
     @State private var isEditing = false
+    @State private var errorMessage: String?
+    @State private var successMessage: String?
     
     @State private var fullName = ""
     @State private var phone = ""
@@ -16,6 +18,10 @@ struct ProfileView: View {
     @State private var payment = ""
     @State private var penalties = ""
     @State private var notes = ""
+    
+    private var isGuest: Bool {
+        sessionManager.currentUser?.email == "guest@local" || !sessionManager.isLoggedIn
+    }
     
     var body: some View {
         NavigationView {
@@ -38,7 +44,9 @@ struct ProfileView: View {
                 }
                 .ignoresSafeArea()
                 
-                if isLoading {
+                if isGuest {
+                    guestLoginView
+                } else if isLoading {
                     LoadingView()
                 } else if let profile = profile {
                     ScrollView {
@@ -74,6 +82,20 @@ struct ProfileView: View {
                                 ProfileField(label: "Notes", value: $notes, isEditable: isEditing, isMultiline: true)
                             }
                             .padding()
+                            
+                            if let error = errorMessage {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                                    .padding(.horizontal)
+                            }
+                            
+                            if let success = successMessage {
+                                Text(success)
+                                    .foregroundColor(.green)
+                                    .font(.caption)
+                                    .padding(.horizontal)
+                            }
                             
                             if isEditing {
                                 Button(action: saveProfile) {
@@ -146,8 +168,11 @@ struct ProfileView: View {
     }
     
     private func saveProfile() {
+        errorMessage = nil
+        successMessage = nil
+        
         let request = UpdateProfileRequest(
-            fullName: fullName,
+            fullName: fullName.isEmpty ? nil : fullName,
             phone: phone.isEmpty ? nil : phone,
             course: course.isEmpty ? nil : course,
             speciality: speciality.isEmpty ? nil : speciality,
@@ -164,11 +189,50 @@ struct ProfileView: View {
                 await MainActor.run {
                     self.profile = updated
                     self.isEditing = false
+                    self.successMessage = "Profile updated successfully"
+                    
+                    // Clear success message after 3 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        self.successMessage = nil
+                    }
+                }
+            } catch let error as ApiError {
+                await MainActor.run {
+                    switch error {
+                    case .httpError(let code):
+                        errorMessage = "Error updating profile (Error \(code)). Please try again."
+                    case .serverError(let message):
+                        errorMessage = message
+                    default:
+                        errorMessage = "Error updating profile. Check your internet connection."
+                    }
                 }
             } catch {
-                // Handle error
+                await MainActor.run {
+                    errorMessage = "Error updating profile. Please try again."
+                }
             }
         }
+    }
+    
+    private var guestLoginView: some View {
+        VStack(spacing: 24) {
+            Text("Please sign in to view your profile")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+            
+            Button(action: {
+                // Navigate to auth
+            }) {
+                Text("Sign In")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(KleosButtonStyle())
+            .padding(.horizontal, 40)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
