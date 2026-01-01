@@ -50,10 +50,17 @@ struct HomeView: View {
         }
         .onAppear {
             print("🏠 HomeView appeared, loading data...")
+            print("🏠 Current news count: \(news.count)")
+            print("🏠 isLoading: \(isLoading)")
             loadData()
         }
         .refreshable {
             print("🔄 HomeView refresh triggered")
+            loadData()
+        }
+        .task {
+            // Альтернативный способ загрузки через task
+            print("📋 HomeView task started")
             loadData()
         }
     }
@@ -222,28 +229,33 @@ struct HomeView: View {
     }
     
     private func loadContent() {
+        print("🔄 loadContent() called")
+        print("🔄 Current state - isLoading: \(isLoading), news count: \(news.count)")
+        
         isLoading = true
         errorMessage = nil
         debugInfo = "Loading..."
         
-        Task {
+        Task { @MainActor in
             do {
-                print("🔄 Loading news...")
+                print("🔄 Task started, calling fetchNews()...")
                 let fetchedNews = try await apiClient.fetchNews()
-                print("✅ Loaded \(fetchedNews.count) news items")
-                await MainActor.run {
-                    self.news = fetchedNews
-                    self.isLoading = false
-                    self.debugInfo = "Loaded \(fetchedNews.count) items"
-                    self.errorMessage = nil
-                }
+                print("✅ fetchNews() returned \(fetchedNews.count) items")
+                
+                self.news = fetchedNews
+                self.isLoading = false
+                self.debugInfo = "Loaded \(fetchedNews.count) items"
+                self.errorMessage = nil
+                
+                print("✅ State updated - news count: \(self.news.count), isLoading: \(self.isLoading)")
             } catch {
-                print("❌ Error loading news: \(error)")
-                await MainActor.run {
-                    self.isLoading = false
-                    self.errorMessage = error.localizedDescription
-                    self.debugInfo = "Error: \(error)"
-                }
+                print("❌ Error in loadContent: \(error)")
+                print("❌ Error type: \(type(of: error))")
+                print("❌ Error description: \(error.localizedDescription)")
+                
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+                self.debugInfo = "Error: \(error.localizedDescription)"
             }
         }
     }
