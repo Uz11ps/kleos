@@ -64,13 +64,27 @@ class ApiClient: ObservableObject {
         
         do {
             let decoder = JSONDecoder()
+            // Настраиваем декодер для правильной обработки дат
+            decoder.dateDecodingStrategy = .iso8601
             let items = try decoder.decode([NewsItem].self, from: data)
             print("✅ Successfully decoded \(items.count) news items")
+            if items.isEmpty {
+                print("⚠️ Warning: News array is empty")
+            }
             return items
         } catch let decodingError {
             print("❌ Decode error: \(decodingError)")
             let responseString = String(data: data, encoding: .utf8) ?? "no data"
             print("📦 Raw JSON (first 1000 chars): \(responseString.prefix(1000))")
+            
+            // Пробуем декодировать как массив словарей для диагностики
+            if let jsonArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                print("📊 JSON structure: Array with \(jsonArray.count) items")
+                if let firstItem = jsonArray.first {
+                    print("📋 First item keys: \(firstItem.keys.joined(separator: ", "))")
+                }
+            }
+            
             throw decodingError
         }
     }
@@ -220,11 +234,24 @@ class ApiClient: ObservableObject {
             let decoder = JSONDecoder()
             let items = try decoder.decode([University].self, from: data)
             print("✅ Successfully decoded \(items.count) universities")
+            if items.isEmpty {
+                print("⚠️ Warning: Universities array is empty")
+            }
             return items
-        } catch {
-            print("❌ Decode error: \(error)")
-            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
-            throw error
+        } catch let decodingError {
+            print("❌ Decode error: \(decodingError)")
+            let responseString = String(data: data, encoding: .utf8) ?? "no data"
+            print("📦 Raw JSON (first 1000 chars): \(responseString.prefix(1000))")
+            
+            // Пробуем декодировать как массив словарей для диагностики
+            if let jsonArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                print("📊 JSON structure: Array with \(jsonArray.count) items")
+                if let firstItem = jsonArray.first {
+                    print("📋 First item keys: \(firstItem.keys.joined(separator: ", "))")
+                }
+            }
+            
+            throw decodingError
         }
     }
     
@@ -284,11 +311,24 @@ class ApiClient: ObservableObject {
             let decoder = JSONDecoder()
             let items = try decoder.decode([Program].self, from: data)
             print("✅ Successfully decoded \(items.count) programs")
+            if items.isEmpty {
+                print("⚠️ Warning: Programs array is empty")
+            }
             return items
-        } catch {
-            print("❌ Decode error: \(error)")
-            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
-            throw error
+        } catch let decodingError {
+            print("❌ Decode error: \(decodingError)")
+            let responseString = String(data: data, encoding: .utf8) ?? "no data"
+            print("📦 Raw JSON (first 1000 chars): \(responseString.prefix(1000))")
+            
+            // Пробуем декодировать как массив словарей для диагностики
+            if let jsonArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                print("📊 JSON structure: Array with \(jsonArray.count) items")
+                if let firstItem = jsonArray.first {
+                    print("📋 First item keys: \(firstItem.keys.joined(separator: ", "))")
+                }
+            }
+            
+            throw decodingError
         }
     }
     
@@ -323,11 +363,24 @@ class ApiClient: ObservableObject {
             let decoder = JSONDecoder()
             let items = try decoder.decode([GalleryItem].self, from: data)
             print("✅ Successfully decoded \(items.count) gallery items")
+            if items.isEmpty {
+                print("⚠️ Warning: Gallery array is empty")
+            }
             return items
-        } catch {
-            print("❌ Decode error: \(error)")
-            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
-            throw error
+        } catch let decodingError {
+            print("❌ Decode error: \(decodingError)")
+            let responseString = String(data: data, encoding: .utf8) ?? "no data"
+            print("📦 Raw JSON (first 1000 chars): \(responseString.prefix(1000))")
+            
+            // Пробуем декодировать как массив словарей для диагностики
+            if let jsonArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                print("📊 JSON structure: Array with \(jsonArray.count) items")
+                if let firstItem = jsonArray.first {
+                    print("📋 First item keys: \(firstItem.keys.joined(separator: ", "))")
+                }
+            }
+            
+            throw decodingError
         }
     }
     
@@ -352,11 +405,24 @@ class ApiClient: ObservableObject {
             let decoder = JSONDecoder()
             let items = try decoder.decode([Partner].self, from: data)
             print("✅ Successfully decoded \(items.count) partners")
+            if items.isEmpty {
+                print("⚠️ Warning: Partners array is empty")
+            }
             return items
-        } catch {
-            print("❌ Decode error: \(error)")
-            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
-            throw error
+        } catch let decodingError {
+            print("❌ Decode error: \(decodingError)")
+            let responseString = String(data: data, encoding: .utf8) ?? "no data"
+            print("📦 Raw JSON (first 1000 chars): \(responseString.prefix(1000))")
+            
+            // Пробуем декодировать как массив словарей для диагностики
+            if let jsonArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                print("📊 JSON structure: Array with \(jsonArray.count) items")
+                if let firstItem = jsonArray.first {
+                    print("📋 First item keys: \(firstItem.keys.joined(separator: ", "))")
+                }
+            }
+            
+            throw decodingError
         }
     }
     
