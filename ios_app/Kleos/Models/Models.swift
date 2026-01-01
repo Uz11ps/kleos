@@ -63,40 +63,83 @@ struct UpdateProfileRequest: Codable {
 }
 
 // MARK: - University Models
+struct SocialLinks: Codable {
+    let facebook: String?
+    let twitter: String?
+    let instagram: String?
+    let youtube: String?
+    let whatsapp: String?
+    let phone: String?
+    let email: String?
+}
+
+struct DegreeProgram: Codable {
+    let type: String
+    let description: String?
+}
+
+struct ContentBlock: Codable {
+    let type: String
+    let content: String?
+    let order: Int?
+}
+
 struct University: Codable, Identifiable {
     let id: String
     let name: String
-    let location: String
+    let city: String?
+    let country: String?
     let description: String?
     let website: String?
     let logoUrl: String?
+    let socialLinks: SocialLinks?
+    let degreePrograms: [DegreeProgram]?
+    let contentBlocks: [ContentBlock]?
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case name, location, description, website, logoUrl
+        case name, city, country, description, website, logoUrl, socialLinks, degreePrograms, contentBlocks
+    }
+    
+    var location: String {
+        var parts: [String] = []
+        if let city = city { parts.append(city) }
+        if let country = country { parts.append(country) }
+        return parts.joined(separator: ", ")
     }
 }
 
 // MARK: - Program Models
 struct Program: Codable, Identifiable {
     let id: String
-    let name: String
+    let title: String
     let description: String?
-    let universityId: String?
-    let universityName: String?
     let language: String?
-    let educationLevel: String?
-    let duration: String?
+    let level: String? // "Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"
+    let university: String? // Legacy field for backward compatibility
+    let universityId: String? // New field linking to University model
+    let tuition: Double?
+    let durationYears: Double? // Changed from durationMonths to durationYears
+    let active: Bool?
+    let order: Int?
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case name, description, universityId, universityName, language, educationLevel, duration
+        case title, description, language, level, university, universityId, tuition, durationYears, active, order
+    }
+    
+    var name: String { title }
+    var educationLevel: String? { level }
+    var duration: String? {
+        guard let years = durationYears else { return nil }
+        return String(format: "%.1f years", years)
     }
 }
 
 struct ProgramFilters: Codable {
     let language: String?
-    let educationLevel: String?
+    let level: String?
+    let university: String?
     let universityId: String?
     let searchQuery: String?
 }
@@ -134,23 +177,21 @@ struct AdmissionApplication: Codable {
     let firstName: String
     let lastName: String
     let patronymic: String?
-    let email: String
     let phone: String
-    let dateOfBirth: String
-    let placeOfBirth: String
-    let nationality: String
-    let sex: String
-    let passportNumber: String
-    let passportIssue: String
-    let passportExpiry: String
-    let visaCity: String
+    let email: String
+    let dateOfBirth: String?
+    let placeOfBirth: String?
+    let nationality: String?
+    let passportNumber: String?
+    let passportIssue: String?
+    let passportExpiry: String?
+    let visaCity: String?
     let program: String
     let comment: String?
 }
 
 struct AdmissionResponse: Codable {
-    let id: String?
-    let message: String?
+    let ok: Bool?
     let error: String?
 }
 

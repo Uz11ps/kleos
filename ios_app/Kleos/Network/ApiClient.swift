@@ -101,6 +101,43 @@ class ApiClient: ObservableObject {
         return try JSONDecoder().decode(AuthResponse.self, from: data)
     }
     
+    func verifyConsume(token: String) async throws -> AuthResponse {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/auth/verify/consume") else {
+            throw URLError(.badURL)
+        }
+        
+        let body = try JSONEncoder().encode(["token": token])
+        let request = createRequest(url: url, method: "POST", body: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            if let errorResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
+                throw ApiError.serverError(errorResponse.error ?? "Verification failed")
+            }
+            throw ApiError.httpError(httpResponse.statusCode)
+        }
+        
+        return try JSONDecoder().decode(AuthResponse.self, from: data)
+    }
+    
+    func resendVerify(email: String) async throws -> [String: Any] {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/auth/verify/resend") else {
+            throw URLError(.badURL)
+        }
+        
+        let body = try JSONEncoder().encode(["email": email])
+        let request = createRequest(url: url, method: "POST", body: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            throw ApiError.httpError(httpResponse.statusCode)
+        }
+        
+        return try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
+    }
+    
     // MARK: - User Profile API
     func getProfile() async throws -> UserProfile {
         guard let url = URL(string: "\(baseURL)\(apiPrefix)/users/me") else {
@@ -122,6 +159,17 @@ class ApiClient: ObservableObject {
         
         let (data, _) = try await URLSession.shared.data(for: urlRequest)
         return try JSONDecoder().decode(UserProfile.self, from: data)
+    }
+    
+    func saveFcmToken(_ token: String) async throws {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/users/fcm-token") else {
+            throw URLError(.badURL)
+        }
+        
+        let body = try JSONEncoder().encode(["token": token])
+        let request = createRequest(url: url, method: "POST", body: body)
+        
+        let (_, _) = try await URLSession.shared.data(for: request)
     }
     
     // MARK: - Universities API
@@ -154,14 +202,17 @@ class ApiClient: ObservableObject {
             if let language = filters.language {
                 queryItems.append("language=\(language)")
             }
-            if let educationLevel = filters.educationLevel {
-                queryItems.append("educationLevel=\(educationLevel)")
+            if let level = filters.level {
+                queryItems.append("level=\(level)")
+            }
+            if let university = filters.university {
+                queryItems.append("university=\(university)")
             }
             if let universityId = filters.universityId {
                 queryItems.append("universityId=\(universityId)")
             }
             if let searchQuery = filters.searchQuery {
-                queryItems.append("search=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+                queryItems.append("q=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
             }
         }
         
@@ -176,6 +227,16 @@ class ApiClient: ObservableObject {
         let request = createRequest(url: url)
         let (data, _) = try await URLSession.shared.data(for: request)
         return try JSONDecoder().decode([Program].self, from: data)
+    }
+    
+    func fetchProgram(id: String) async throws -> Program {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/programs/\(id)") else {
+            throw URLError(.badURL)
+        }
+        
+        let request = createRequest(url: url)
+        let (data, _) = try await URLSession.shared.data(for: request)
+        return try JSONDecoder().decode(Program.self, from: data)
     }
     
     // MARK: - Gallery API
@@ -288,8 +349,24 @@ class ApiClient: ObservableObject {
         
         let request = createRequest(url: url)
         let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode([Country].self, from: data)
+        let response = try JSONDecoder().decode(CountriesResponse.self, from: data)
+        return response.countries.map { Country(id: $0, name: $0) }
     }
+    
+    // MARK: - i18n API
+    func fetchTranslations(language: String) async throws -> [String: String] {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/i18n/\(language)") else {
+            throw URLError(.badURL)
+        }
+        
+        let request = createRequest(url: url)
+        let (data, _) = try await URLSession.shared.data(for: request)
+        return try JSONDecoder().decode([String: String].self, from: data)
+    }
+}
+
+struct CountriesResponse: Codable {
+    let countries: [String]
 }
 
 enum ApiError: Error {
