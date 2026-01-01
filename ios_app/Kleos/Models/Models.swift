@@ -188,6 +188,7 @@ struct AdmissionApplication: Codable {
     let visaCity: String?
     let program: String
     let comment: String?
+    // Note: sex field removed to match Android version
 }
 
 struct AdmissionResponse: Codable {

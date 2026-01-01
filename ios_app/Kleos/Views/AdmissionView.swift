@@ -14,7 +14,6 @@ struct AdmissionView: View {
     @State private var dateOfBirth = ""
     @State private var placeOfBirth = ""
     @State private var nationality = ""
-    @State private var sex = "Male"
     @State private var passportNumber = ""
     @State private var passportIssue = ""
     @State private var passportExpiry = ""
@@ -25,6 +24,8 @@ struct AdmissionView: View {
     
     @State private var isLoading = false
     @State private var showConsent = false
+    @State private var errorMessage: String?
+    @State private var successMessage: String?
     
     var body: some View {
         NavigationView {
@@ -88,13 +89,6 @@ struct AdmissionView: View {
                             .pickerStyle(.menu)
                             .foregroundColor(.white)
                             
-                            Picker("Sex", selection: $sex) {
-                                Text("Male").tag("Male")
-                                Text("Female").tag("Female")
-                            }
-                            .pickerStyle(.menu)
-                            .foregroundColor(.white)
-                            
                             TextField("Passport Number", text: $passportNumber)
                                 .textFieldStyle(KleosTextFieldStyle())
                             
@@ -136,6 +130,18 @@ struct AdmissionView: View {
                                 .foregroundColor(.white)
                             }
                             
+                            if let error = errorMessage {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                            }
+                            
+                            if let success = successMessage {
+                                Text(success)
+                                    .foregroundColor(.green)
+                                    .font(.caption)
+                            }
+                            
                             Button(action: submitApplication) {
                                 if isLoading {
                                     ProgressView()
@@ -167,16 +173,16 @@ struct AdmissionView: View {
         !firstName.isEmpty &&
         !lastName.isEmpty &&
         !email.isEmpty &&
+        isValidEmail(email) &&
         !phone.isEmpty &&
-        !dateOfBirth.isEmpty &&
-        !placeOfBirth.isEmpty &&
-        !nationality.isEmpty &&
-        !passportNumber.isEmpty &&
-        !passportIssue.isEmpty &&
-        !passportExpiry.isEmpty &&
-        !visaCity.isEmpty &&
         !program.isEmpty &&
         consentAccepted
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format:"SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
     }
     
     private func loadData() {
@@ -211,7 +217,39 @@ struct AdmissionView: View {
     }
     
     private func submitApplication() {
+        // Валидация
+        if firstName.isEmpty {
+            errorMessage = "Введите имя"
+            return
+        }
+        if lastName.isEmpty {
+            errorMessage = "Введите фамилию"
+            return
+        }
+        if email.isEmpty {
+            errorMessage = "Введите email"
+            return
+        }
+        if !isValidEmail(email) {
+            errorMessage = "Некорректный email"
+            return
+        }
+        if phone.isEmpty {
+            errorMessage = "Введите телефон"
+            return
+        }
+        if program.isEmpty {
+            errorMessage = "Выберите программу"
+            return
+        }
+        if !consentAccepted {
+            errorMessage = "Необходимо согласие на обработку персональных данных"
+            return
+        }
+        
         isLoading = true
+        errorMessage = nil
+        successMessage = nil
         
         let application = AdmissionApplication(
             firstName: firstName,
@@ -219,14 +257,13 @@ struct AdmissionView: View {
             patronymic: patronymic.isEmpty ? nil : patronymic,
             email: email,
             phone: phone,
-            dateOfBirth: dateOfBirth,
-            placeOfBirth: placeOfBirth,
-            nationality: nationality,
-            sex: sex,
-            passportNumber: passportNumber,
-            passportIssue: passportIssue,
-            passportExpiry: passportExpiry,
-            visaCity: visaCity,
+            dateOfBirth: dateOfBirth.isEmpty ? nil : dateOfBirth,
+            placeOfBirth: placeOfBirth.isEmpty ? nil : placeOfBirth,
+            nationality: nationality.isEmpty ? nil : nationality,
+            passportNumber: passportNumber.isEmpty ? nil : passportNumber,
+            passportIssue: passportIssue.isEmpty ? nil : passportIssue,
+            passportExpiry: passportExpiry.isEmpty ? nil : passportExpiry,
+            visaCity: visaCity.isEmpty ? nil : visaCity,
             program: program,
             comment: comment.isEmpty ? nil : comment
         )
@@ -236,15 +273,55 @@ struct AdmissionView: View {
                 let response = try await apiClient.submitAdmission(application)
                 await MainActor.run {
                     isLoading = false
-                    // Show success message
+                    if response.ok == true {
+                        successMessage = "Заявка успешно отправлена!"
+                        // Очистить форму через несколько секунд
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            resetForm()
+                        }
+                    } else if let error = response.error {
+                        errorMessage = error
+                    }
+                }
+            } catch let error as ApiError {
+                await MainActor.run {
+                    isLoading = false
+                    switch error {
+                    case .httpError(let code):
+                        errorMessage = "Ошибка отправки заявки (Error \(code)). Попробуйте снова."
+                    case .serverError(let message):
+                        errorMessage = message
+                    default:
+                        errorMessage = "Ошибка отправки заявки. Проверьте подключение к интернету."
+                    }
                 }
             } catch {
                 await MainActor.run {
                     isLoading = false
-                    // Show error message
+                    errorMessage = "Ошибка отправки заявки. Попробуйте снова."
                 }
             }
         }
+    }
+    
+    private func resetForm() {
+        firstName = ""
+        lastName = ""
+        patronymic = ""
+        email = ""
+        phone = ""
+        dateOfBirth = ""
+        placeOfBirth = ""
+        nationality = ""
+        passportNumber = ""
+        passportIssue = ""
+        passportExpiry = ""
+        visaCity = ""
+        program = ""
+        comment = ""
+        consentAccepted = false
+        successMessage = nil
+        errorMessage = nil
     }
 }
 

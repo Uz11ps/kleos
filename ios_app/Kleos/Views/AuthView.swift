@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct AuthView: View {
     @StateObject private var sessionManager = SessionManager.shared
@@ -150,6 +151,27 @@ struct LoginView: View {
     }
     
     private func performLogin() {
+        // Валидация перед отправкой запроса
+        if email.isEmpty {
+            errorMessage = "Введите email"
+            return
+        }
+        
+        if !isValidEmail(email) {
+            errorMessage = "Некорректный email"
+            return
+        }
+        
+        if password.isEmpty {
+            errorMessage = "Введите пароль"
+            return
+        }
+        
+        if password.count < 6 {
+            errorMessage = "Пароль должен быть не менее 6 символов"
+            return
+        }
+        
         isLoading = true
         errorMessage = nil
         
@@ -165,16 +187,51 @@ struct LoginView: View {
                     }
                 } else if let error = response.error {
                     await MainActor.run {
-                        errorMessage = error
+                        errorMessage = getErrorMessage(error)
                         isLoading = false
                     }
                 }
+            } catch let error as ApiError {
+                await MainActor.run {
+                    switch error {
+                    case .httpError(let code):
+                        if code == 403 {
+                            errorMessage = "Email не подтвержден. Проверьте почту."
+                        } else {
+                            errorMessage = "Ошибка входа (Error \(code)). Попробуйте снова."
+                        }
+                    case .serverError(let message):
+                        errorMessage = getErrorMessage(message)
+                    default:
+                        errorMessage = "Ошибка входа. Проверьте подключение к интернету."
+                    }
+                    isLoading = false
+                }
             } catch {
                 await MainActor.run {
-                    errorMessage = "Login failed. Please try again."
+                    errorMessage = "Ошибка входа. Попробуйте снова."
                     isLoading = false
                 }
             }
+        }
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format:"SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
+    private func getErrorMessage(_ error: String) -> String {
+        switch error {
+        case "invalid_credentials":
+            return "Неверный email или пароль"
+        case "email_not_verified":
+            return "Email не подтвержден. Проверьте почту."
+        case "email_taken":
+            return "Email уже используется"
+        default:
+            return error
         }
     }
 }
@@ -253,6 +310,32 @@ struct RegisterView: View {
     }
     
     private func performRegister() {
+        // Валидация перед отправкой запроса
+        if fullName.isEmpty {
+            errorMessage = "Введите ФИО"
+            return
+        }
+        
+        if email.isEmpty {
+            errorMessage = "Введите email"
+            return
+        }
+        
+        if !isValidEmail(email) {
+            errorMessage = "Некорректный email"
+            return
+        }
+        
+        if password.isEmpty {
+            errorMessage = "Введите пароль"
+            return
+        }
+        
+        if password.count < 6 {
+            errorMessage = "Пароль должен быть не менее 6 символов"
+            return
+        }
+        
         isLoading = true
         errorMessage = nil
         
@@ -268,16 +351,47 @@ struct RegisterView: View {
                     }
                 } else if let error = response.error {
                     await MainActor.run {
-                        errorMessage = error
+                        errorMessage = getErrorMessage(error)
                         isLoading = false
                     }
                 }
+            } catch let error as ApiError {
+                await MainActor.run {
+                    switch error {
+                    case .httpError(let code):
+                        errorMessage = "Ошибка регистрации (Error \(code)). Попробуйте снова."
+                    case .serverError(let message):
+                        errorMessage = getErrorMessage(message)
+                    default:
+                        errorMessage = "Ошибка регистрации. Проверьте подключение к интернету."
+                    }
+                    isLoading = false
+                }
             } catch {
                 await MainActor.run {
-                    errorMessage = "Registration failed. Please try again."
+                    errorMessage = "Ошибка регистрации. Попробуйте снова."
                     isLoading = false
                 }
             }
+        }
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format:"SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
+    private func getErrorMessage(_ error: String) -> String {
+        switch error {
+        case "invalid_credentials":
+            return "Неверный email или пароль"
+        case "email_not_verified":
+            return "Email не подтвержден. Проверьте почту."
+        case "email_taken":
+            return "Email уже используется"
+        default:
+            return error
         }
     }
 }
