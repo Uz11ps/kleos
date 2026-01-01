@@ -167,7 +167,7 @@ struct DrawerMenuView: View {
                                 isPresented = false
                             })
                             
-                            DrawerMenuItem(icon: "handshake.fill", title: "Partners", action: {
+                            DrawerMenuItem(icon: "person.2.fill", title: "Partners", action: {
                                 // Navigate to partners
                                 isPresented = false
                             })

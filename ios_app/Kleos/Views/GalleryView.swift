@@ -55,16 +55,21 @@ struct GalleryView: View {
     }
     
     private func loadGallery() {
+        isLoading = true
         Task {
             do {
+                print("🔄 Loading gallery...")
                 let fetched = try await apiClient.fetchGallery()
+                print("✅ Loaded \(fetched.count) gallery items")
                 await MainActor.run {
                     self.galleryItems = fetched
                     self.isLoading = false
                 }
             } catch {
+                print("❌ Error loading gallery: \(error)")
                 await MainActor.run {
                     self.isLoading = false
+                    print("⚠️ Failed to load gallery: \(error.localizedDescription)")
                 }
             }
         }

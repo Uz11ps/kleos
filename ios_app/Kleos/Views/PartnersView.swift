@@ -50,16 +50,21 @@ struct PartnersView: View {
     }
     
     private func loadPartners() {
+        isLoading = true
         Task {
             do {
+                print("🔄 Loading partners...")
                 let fetched = try await apiClient.fetchPartners()
+                print("✅ Loaded \(fetched.count) partners")
                 await MainActor.run {
                     self.partners = fetched
                     self.isLoading = false
                 }
             } catch {
+                print("❌ Error loading partners: \(error)")
                 await MainActor.run {
                     self.isLoading = false
+                    print("⚠️ Failed to load partners: \(error.localizedDescription)")
                 }
             }
         }

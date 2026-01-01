@@ -52,16 +52,21 @@ struct UniversitiesView: View {
     }
     
     private func loadUniversities() {
+        isLoading = true
         Task {
             do {
+                print("🔄 Loading universities...")
                 let fetched = try await apiClient.fetchUniversities()
+                print("✅ Loaded \(fetched.count) universities")
                 await MainActor.run {
                     self.universities = fetched
                     self.isLoading = false
                 }
             } catch {
+                print("❌ Error loading universities: \(error)")
                 await MainActor.run {
                     self.isLoading = false
+                    print("⚠️ Failed to load universities: \(error.localizedDescription)")
                 }
             }
         }

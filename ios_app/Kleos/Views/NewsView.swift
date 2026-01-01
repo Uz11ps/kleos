@@ -72,14 +72,18 @@ struct NewsView: View {
         
         Task {
             do {
+                print("🔄 Loading news...")
                 let fetchedNews = try await apiClient.fetchNews()
+                print("✅ Loaded \(fetchedNews.count) news items")
                 await MainActor.run {
                     self.news = fetchedNews
                     self.isLoading = false
                 }
             } catch {
+                print("❌ Error loading news: \(error)")
                 await MainActor.run {
                     self.isLoading = false
+                    print("⚠️ Failed to load news: \(error.localizedDescription)")
                 }
             }
         }

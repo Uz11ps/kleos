@@ -39,17 +39,25 @@ class ApiClient: ObservableObject {
     
     // MARK: - News API
     func fetchNews() async throws -> [NewsItem] {
-        guard let url = URL(string: "\(baseURL)\(apiPrefix)/news") else {
+        let urlString = "\(baseURL)\(apiPrefix)/news"
+        print("🌐 Fetching news from: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
+            print("❌ Invalid URL: \(urlString)")
             throw URLError(.badURL)
         }
         
         let request = createRequest(url: url)
+        print("📤 Request headers: \(request.allHTTPHeaderFields ?? [:])")
+        
         let (data, response) = try await URLSession.shared.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse {
-            print("🔍 News response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8) ?? "no data")")
+            let responseString = String(data: data, encoding: .utf8) ?? "no data"
+            print("🔍 News response (\(httpResponse.statusCode)): \(responseString.prefix(500))")
             
             if httpResponse.statusCode != 200 {
+                print("❌ HTTP Error: \(httpResponse.statusCode)")
                 throw ApiError.httpError(httpResponse.statusCode)
             }
         }
@@ -59,10 +67,11 @@ class ApiClient: ObservableObject {
             let items = try decoder.decode([NewsItem].self, from: data)
             print("✅ Successfully decoded \(items.count) news items")
             return items
-        } catch {
-            print("❌ Decode error: \(error)")
-            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
-            throw error
+        } catch let decodingError {
+            print("❌ Decode error: \(decodingError)")
+            let responseString = String(data: data, encoding: .utf8) ?? "no data"
+            print("📦 Raw JSON (first 1000 chars): \(responseString.prefix(1000))")
+            throw decodingError
         }
     }
     
