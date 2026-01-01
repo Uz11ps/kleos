@@ -135,6 +135,24 @@ struct HomeView: View {
     
     private var newsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
+            // Debug info
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Debug: isLoading=\(isLoading ? "true" : "false"), news.count=\(news.count), selectedTab=\(selectedTab)")
+                    .font(.caption2)
+                    .foregroundColor(.yellow)
+                if let error = errorMessage {
+                    Text("Error: \(error)")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+                if !debugInfo.isEmpty {
+                    Text("Info: \(debugInfo)")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding(.horizontal, 24)
+            
             if isLoading {
                 VStack {
                     LoadingView()
@@ -151,6 +169,12 @@ struct HomeView: View {
                         Text("No content available")
                             .foregroundColor(.gray)
                         Text("Total news: \(news.count)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text("Filtered news: \(filteredNews.count)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text("Selected tab: \(selectedTab)")
                             .font(.caption)
                             .foregroundColor(.gray)
                         if let error = errorMessage {
