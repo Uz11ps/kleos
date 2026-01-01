@@ -174,7 +174,7 @@ struct UniversityDetailView: View {
                         .padding()
                         
                         // Content
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 20) {
                             Text(university.name)
                                 .font(.system(size: 32, weight: .bold))
                                 .foregroundColor(.white)
@@ -193,14 +193,120 @@ struct UniversityDetailView: View {
                                     .lineSpacing(4)
                             }
                             
-                            if let website = university.website, let url = URL(string: website) {
-                                Link(destination: url) {
-                                    HStack {
-                                        Text("Open website")
-                                        Image(systemName: "arrow.up.right")
+                            // Social Links
+                            if let socialLinks = university.socialLinks {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("Contacts")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(.white)
+                                    
+                                    if let website = university.website, let url = URL(string: website) {
+                                        Link(destination: url) {
+                                            HStack {
+                                                Image(systemName: "globe")
+                                                Text("Website")
+                                                Spacer()
+                                                Image(systemName: "arrow.up.right")
+                                            }
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.blue)
+                                        }
                                     }
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.blue)
+                                    
+                                    if let email = socialLinks.email {
+                                        Link(destination: URL(string: "mailto:\(email)")!) {
+                                            HStack {
+                                                Image(systemName: "envelope")
+                                                Text(email)
+                                                Spacer()
+                                            }
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.blue)
+                                        }
+                                    }
+                                    
+                                    if let phone = socialLinks.phone {
+                                        Link(destination: URL(string: "tel:\(phone)")!) {
+                                            HStack {
+                                                Image(systemName: "phone")
+                                                Text(phone)
+                                                Spacer()
+                                            }
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.blue)
+                                        }
+                                    }
+                                    
+                                    HStack(spacing: 16) {
+                                        if let facebook = socialLinks.facebook, let url = URL(string: facebook) {
+                                            Link(destination: url) {
+                                                Image(systemName: "link")
+                                                    .foregroundColor(.blue)
+                                            }
+                                        }
+                                        if let instagram = socialLinks.instagram, let url = URL(string: instagram) {
+                                            Link(destination: url) {
+                                                Image(systemName: "camera")
+                                                    .foregroundColor(.blue)
+                                            }
+                                        }
+                                        if let youtube = socialLinks.youtube, let url = URL(string: youtube) {
+                                            Link(destination: url) {
+                                                Image(systemName: "play.circle")
+                                                    .foregroundColor(.blue)
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding()
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(16)
+                            }
+                            
+                            // Degree Programs
+                            if let degreePrograms = university.degreePrograms, !degreePrograms.isEmpty {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("Programs")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(.white)
+                                    
+                                    ForEach(degreePrograms, id: \.type) { program in
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(program.type)
+                                                .font(.system(size: 16, weight: .semibold))
+                                                .foregroundColor(.white)
+                                            
+                                            if let description = program.description {
+                                                Text(description)
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(.gray)
+                                            }
+                                        }
+                                        .padding()
+                                        .background(Color.white.opacity(0.1))
+                                        .cornerRadius(12)
+                                    }
+                                }
+                            }
+                            
+                            // Content Blocks
+                            if let contentBlocks = university.contentBlocks, !contentBlocks.isEmpty {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("Additional Information")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(.white)
+                                    
+                                    ForEach(contentBlocks.sorted(by: { ($0.order ?? 0) < ($1.order ?? 0) }), id: \.type) { block in
+                                        if let content = block.content {
+                                            Text(content)
+                                                .font(.system(size: 16))
+                                                .foregroundColor(.white)
+                                                .lineSpacing(4)
+                                                .padding()
+                                                .background(Color.white.opacity(0.1))
+                                                .cornerRadius(12)
+                                        }
+                                    }
                                 }
                             }
                         }
