@@ -8,6 +8,8 @@ struct HomeView: View {
     @State private var isLoading = true
     @State private var selectedTab = "all" // all, news, interesting
     @State private var userProfile: UserProfile?
+    @State private var errorMessage: String?
+    @State private var debugInfo: String = ""
     
     var body: some View {
         ZStack {
@@ -47,6 +49,11 @@ struct HomeView: View {
             }
         }
         .onAppear {
+            print("🏠 HomeView appeared, loading data...")
+            loadData()
+        }
+        .refreshable {
+            print("🔄 HomeView refresh triggered")
             loadData()
         }
     }
@@ -122,16 +129,43 @@ struct HomeView: View {
     private var newsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             if isLoading {
-                LoadingView()
-                    .frame(height: 400)
+                VStack {
+                    LoadingView()
+                        .frame(height: 400)
+                    Text("Loading...")
+                        .foregroundColor(.gray)
+                        .padding()
+                }
             } else {
                 let filteredNews = filteredNewsItems
                 
                 if filteredNews.isEmpty {
-                    Text("No content available")
-                        .foregroundColor(.gray)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding()
+                    VStack(spacing: 12) {
+                        Text("No content available")
+                            .foregroundColor(.gray)
+                        Text("Total news: \(news.count)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        if let error = errorMessage {
+                            Text("Error: \(error)")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .padding()
+                        }
+                        if !debugInfo.isEmpty {
+                            Text(debugInfo)
+                                .font(.caption2)
+                                .foregroundColor(.gray)
+                                .padding()
+                        }
+                        Button("Retry") {
+                            loadContent()
+                        }
+                        .buttonStyle(KleosButtonStyle())
+                        .padding(.top, 8)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 16) {
@@ -189,6 +223,8 @@ struct HomeView: View {
     
     private func loadContent() {
         isLoading = true
+        errorMessage = nil
+        debugInfo = "Loading..."
         
         Task {
             do {
@@ -198,13 +234,15 @@ struct HomeView: View {
                 await MainActor.run {
                     self.news = fetchedNews
                     self.isLoading = false
+                    self.debugInfo = "Loaded \(fetchedNews.count) items"
+                    self.errorMessage = nil
                 }
             } catch {
                 print("❌ Error loading news: \(error)")
                 await MainActor.run {
                     self.isLoading = false
-                    // Показываем ошибку пользователю
-                    print("⚠️ Failed to load news: \(error.localizedDescription)")
+                    self.errorMessage = error.localizedDescription
+                    self.debugInfo = "Error: \(error)"
                 }
             }
         }

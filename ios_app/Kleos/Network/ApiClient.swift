@@ -48,21 +48,26 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
+        print("📤 Request URL: \(url.absoluteString)")
+        print("📤 Request method: \(request.httpMethod ?? "GET")")
         print("📤 Request headers: \(request.allHTTPHeaderFields ?? [:])")
         
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        if let httpResponse = response as? HTTPURLResponse {
-            let responseString = String(data: data, encoding: .utf8) ?? "no data"
-            print("🔍 News response (\(httpResponse.statusCode)): \(responseString.prefix(500))")
-            
-            if httpResponse.statusCode != 200 {
-                print("❌ HTTP Error: \(httpResponse.statusCode)")
-                throw ApiError.httpError(httpResponse.statusCode)
-            }
-        }
-        
         do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+        
+            if let httpResponse = response as? HTTPURLResponse {
+                let responseString = String(data: data, encoding: .utf8) ?? "no data"
+                print("🔍 News response (\(httpResponse.statusCode)), size: \(data.count) bytes")
+                print("🔍 Response headers: \(httpResponse.allHeaderFields)")
+                print("🔍 Response body (first 500 chars): \(responseString.prefix(500))")
+                
+                if httpResponse.statusCode != 200 {
+                    print("❌ HTTP Error: \(httpResponse.statusCode)")
+                    throw ApiError.httpError(httpResponse.statusCode)
+                }
+            }
+            
+            do {
             let decoder = JSONDecoder()
             // Настраиваем декодер для правильной обработки дат
             decoder.dateDecodingStrategy = .iso8601

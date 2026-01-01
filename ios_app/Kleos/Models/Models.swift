@@ -184,10 +184,11 @@ struct GalleryItem: Codable, Identifiable {
     let description: String?
     let mediaUrl: String
     let mediaType: String
+    let createdAt: String? // Сервер возвращает createdAt
     
     enum CodingKeys: String, CodingKey {
         case id // Сервер возвращает "id", а не "_id"
-        case title, description, mediaUrl, mediaType
+        case title, description, mediaUrl, mediaType, createdAt
     }
 }
 
