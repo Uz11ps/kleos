@@ -226,7 +226,7 @@ struct UserInfo: Codable {
     let role: String
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id
         case fullName, email, role
     }
 }
