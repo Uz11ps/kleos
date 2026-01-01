@@ -1,0 +1,31 @@
+{
+  "project_info": {
+    "project_number": "1043311223184",
+    "project_id": "kleos-8e95f",
+    "storage_bucket": "kleos-8e95f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1043311223184:android:28309adefd741b4ecb1315",
+        "android_client_info": {
+          "package_name": "com.kleos.education"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACfv3vNTFxf3uw4daimg0fxPFprQd0pHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+
+

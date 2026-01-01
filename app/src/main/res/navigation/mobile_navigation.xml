@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.kleos.education.ui.home.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_news"
+        android:name="com.kleos.education.ui.news.NewsFragment"
+        android:label="@string/menu_news"
+        tools:layout="@layout/fragment_news" />
+    
+    <fragment
+        android:id="@+id/newsDetailFragment"
+        android:name="com.kleos.education.ui.news.NewsDetailFragment"
+        android:label="News Detail"
+        tools:layout="@layout/fragment_news_detail" />
+
+    <fragment
+        android:id="@+id/nav_gallery"
+        android:name="com.kleos.education.ui.gallery.GalleryFragment"
+        android:label="@string/menu_gallery"
+        tools:layout="@layout/fragment_gallery" />
+    
+    <fragment
+        android:id="@+id/galleryDetailFragment"
+        android:name="com.kleos.education.ui.gallery.GalleryDetailFragment"
+        android:label="Gallery Detail"
+        tools:layout="@layout/fragment_gallery_detail" />
+
+    <fragment
+        android:id="@+id/nav_universities"
+        android:name="com.kleos.education.ui.universities.UniversitiesFragment"
+        android:label="@string/menu_universities"
+        tools:layout="@layout/fragment_universities" />
+    
+    <fragment
+        android:id="@+id/universityDetailFragment"
+        android:name="com.kleos.education.ui.universities.UniversityDetailFragment"
+        android:label="University Detail"
+        tools:layout="@layout/fragment_university_detail" />
+
+    <fragment
+        android:id="@+id/nav_slideshow"
+        android:name="com.kleos.education.ui.programs.ProgramsFiltersFragment"
+        android:label="@string/menu_slideshow"
+        tools:layout="@layout/fragment_programs_filters">
+        <action
+            android:id="@+id/action_programs_filters_to_slideshow"
+            app:destination="@id/programsResultsFragment" />
+    </fragment>
+    
+    <fragment
+        android:id="@+id/programsResultsFragment"
+        android:name="com.kleos.education.ui.slideshow.SlideshowFragment"
+        android:label="@string/menu_slideshow"
+        tools:layout="@layout/fragment_slideshow" />
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.kleos.education.ui.profile.ProfileFragment"
+        android:label="@string/menu_profile"
+        tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/nav_partners"
+        android:name="com.kleos.education.ui.partners.PartnersFragment"
+        android:label="@string/menu_partners"
+        tools:layout="@layout/fragment_partners" />
+    <fragment
+        android:id="@+id/nav_chat"
+        android:name="com.kleos.education.ui.chat.ChatFragment"
+        android:label="@string/menu_chat"
+        tools:layout="@layout/fragment_chat" />
+    <fragment
+        android:id="@+id/nav_admission"
+        android:name="com.kleos.education.ui.admission.AdmissionFormFragment"
+        android:label="@string/menu_admission"
+        tools:layout="@layout/fragment_admission_form" />
+</navigation>

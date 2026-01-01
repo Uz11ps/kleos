@@ -1,0 +1,554 @@
+import { User } from '../models/User.js';
+import jwt from 'jsonwebtoken';
+import { GoogleAuth } from 'google-auth-library';
+
+/**
+ * Отправка push-уведомления через Firebase Cloud Messaging (FCM)
+ * Поддерживает как Legacy API (через Server Key), так и новый метод (через OAuth2)
+ */
+async function sendPushNotification(fcmToken: string, title: string, body: string, data?: Record<string, string>): Promise<boolean> {
+  if (!fcmToken || fcmToken.trim() === '') {
+    console.error('FCM token is empty or invalid');
+    return false;
+  }
+  
+  const serverKey = process.env.FCM_SERVER_KEY;
+  const projectId = process.env.FCM_PROJECT_ID || 'kleos-8e95f'; // Из google-services.json
+  
+  console.log(`Attempting to send push notification. Method: ${serverKey ? 'Legacy' : 'OAuth2'}, Project ID: ${projectId}`);
+  
+  // Используем новый метод через OAuth2, если Server Key не указан
+  if (!serverKey) {
+    console.log('FCM_SERVER_KEY not configured, using OAuth2 method...');
+    return await sendPushNotificationOAuth2(fcmToken, title, body, data, projectId);
+  }
+
+  try {
+    // Legacy метод через Server Key
+    const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `key=${serverKey}`
+      },
+      body: JSON.stringify({
+        to: fcmToken,
+        notification: {
+          title,
+          body,
+          sound: 'default',
+          badge: '1'
+        },
+        data: data || {},
+        priority: 'high'
+      })
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('FCM Legacy API error:', response.status, text);
+      // Пробуем новый метод как fallback
+      return await sendPushNotificationOAuth2(fcmToken, title, body, data, projectId);
+    }
+
+    const result = await response.json();
+    if (result.failure === 1) {
+      console.error('FCM send failed:', result.results);
+      // Если токен невалидный, удаляем его из базы
+      if (result.results?.[0]?.error === 'InvalidRegistration' || result.results?.[0]?.error === 'NotRegistered') {
+        await User.updateOne({ fcmToken }, { $unset: { fcmToken: 1 } });
+      }
+      return false;
+    }
+
+    return true;
+  } catch (error: any) {
+    console.error('Error sending push notification (Legacy):', error);
+    // Пробуем новый метод как fallback
+    return await sendPushNotificationOAuth2(fcmToken, title, body, data, projectId);
+  }
+}
+
+/**
+ * Получение OAuth2 токена доступа для FCM HTTP v1 API через Service Account
+ * Использует google-auth-library для правильной обработки Service Account
+ */
+async function getAccessToken(): Promise<string | null> {
+  try {
+    // Пробуем использовать google-auth-library (более надежный способ)
+    let auth: GoogleAuth | null = null;
+    
+    const fs = await import('fs');
+    const path = await import('path');
+    const serviceAccountPath = process.env.FCM_SERVICE_ACCOUNT_PATH || path.join(process.cwd(), 'firebase-service-account.json');
+    
+    // ПРИОРИТЕТ: Сначала пробуем загрузить из файла (более надежно)
+    if (fs.existsSync(serviceAccountPath)) {
+      console.log(`[OAuth2] Loading service account from file using GoogleAuth: ${serviceAccountPath}`);
+      try {
+        // Читаем файл для проверки
+        const fileContent = fs.readFileSync(serviceAccountPath, 'utf-8');
+        const fileData = JSON.parse(fileContent);
+        console.log(`[OAuth2] File loaded: project_id=${fileData.project_id}, client_email=${fileData.client_email}`);
+        console.log(`[OAuth2] Key ID from file: ${fileData.private_key_id}`);
+        
+        auth = new GoogleAuth({
+          keyFile: serviceAccountPath,
+          scopes: ['https://www.googleapis.com/auth/firebase.messaging']
+        });
+        console.log(`[OAuth2] GoogleAuth initialized successfully from file`);
+      } catch (fileError: any) {
+        console.error(`[OAuth2] Error initializing GoogleAuth from file:`, fileError.message);
+        console.error(`[OAuth2] File error stack:`, fileError.stack);
+        // Продолжаем попытку с переменной окружения
+      }
+    }
+    
+    // Fallback: пробуем из переменной окружения, если файл не найден или не сработал
+    if (!auth) {
+      const serviceAccountJson = process.env.FCM_SERVICE_ACCOUNT_JSON;
+      if (serviceAccountJson) {
+        console.log(`[OAuth2] Loading service account from environment variable using GoogleAuth`);
+        try {
+          const serviceAccount = JSON.parse(serviceAccountJson);
+          // Проверяем, что ключ правильно отформатирован
+          if (serviceAccount.private_key) {
+            // Убеждаемся, что ключ имеет правильные переносы строк
+            if (!serviceAccount.private_key.includes('\n') && serviceAccount.private_key.includes('\\n')) {
+              console.log(`[OAuth2] Fixing escaped newlines in private_key from environment variable`);
+              serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+            }
+          }
+          auth = new GoogleAuth({
+            credentials: serviceAccount,
+            scopes: ['https://www.googleapis.com/auth/firebase.messaging']
+          });
+          console.log(`[OAuth2] GoogleAuth initialized successfully from environment variable`);
+        } catch (envError: any) {
+          console.error(`[OAuth2] Error initializing GoogleAuth from environment variable:`, envError.message);
+        }
+      }
+    }
+    
+    if (!auth) {
+      console.error('[OAuth2] Service Account not configured. Set FCM_SERVICE_ACCOUNT_PATH or FCM_SERVICE_ACCOUNT_JSON');
+      return null;
+    }
+    
+    console.log(`[OAuth2] Getting access token using GoogleAuth...`);
+    console.log(`[OAuth2] Server time: ${new Date().toISOString()}`);
+    console.log(`[OAuth2] Server timezone offset: ${new Date().getTimezoneOffset()} minutes`);
+    
+    const client = await auth.getClient();
+    
+    // Проверяем тип клиента
+    console.log(`[OAuth2] Client type: ${client.constructor.name}`);
+    
+    // Пробуем получить access token с более подробным логированием
+    let accessToken;
+    try {
+      accessToken = await client.getAccessToken();
+    } catch (tokenError: any) {
+      console.error(`[OAuth2] Error getting access token:`, tokenError.message);
+      console.error(`[OAuth2] Error code:`, tokenError.code);
+      console.error(`[OAuth2] Error response:`, tokenError.response?.data || tokenError.response);
+      throw tokenError;
+    }
+    
+    if (!accessToken.token) {
+      console.error('[OAuth2] Failed to get access token - token is empty');
+      console.error('[OAuth2] Access token response:', accessToken);
+      return null;
+    }
+    
+    console.log(`[OAuth2] ✅ Access token obtained successfully using GoogleAuth, length: ${accessToken.token.length}`);
+    return accessToken.token;
+  } catch (error: any) {
+    console.error('[OAuth2] Error getting access token with GoogleAuth:', error.message);
+    console.error('[OAuth2] Error stack:', error.stack);
+    
+    // Fallback на ручной метод, если google-auth-library не работает
+    console.log('[OAuth2] Falling back to manual JWT method...');
+    return await getAccessTokenManual();
+  }
+}
+
+/**
+ * Ручной метод получения access token (fallback)
+ */
+async function getAccessTokenManual(): Promise<string | null> {
+  let serviceAccount: any = null;
+  
+  // Пробуем сначала прочитать из файла (проще для настройки)
+  const fs = await import('fs');
+  const path = await import('path');
+  const serviceAccountPath = process.env.FCM_SERVICE_ACCOUNT_PATH || path.join(process.cwd(), 'firebase-service-account.json');
+  
+  try {
+    if (fs.existsSync(serviceAccountPath)) {
+      const fileContent = fs.readFileSync(serviceAccountPath, 'utf-8');
+      serviceAccount = JSON.parse(fileContent);
+      console.log('Loaded service account from file:', serviceAccountPath);
+    }
+  } catch (e: any) {
+    console.warn('Failed to read service account file:', e.message);
+  }
+  
+  // Если файл не найден, пробуем из переменной окружения
+  if (!serviceAccount) {
+    const serviceAccountJson = process.env.FCM_SERVICE_ACCOUNT_JSON;
+    if (serviceAccountJson) {
+      try {
+        serviceAccount = JSON.parse(serviceAccountJson);
+        console.log('Loaded service account from environment variable');
+      } catch (e: any) {
+        console.warn('Failed to parse FCM_SERVICE_ACCOUNT_JSON:', e.message);
+      }
+    }
+  }
+  
+  if (!serviceAccount) {
+    console.warn('FCM Service Account not configured. Set FCM_SERVICE_ACCOUNT_PATH or FCM_SERVICE_ACCOUNT_JSON');
+    return null;
+  }
+
+  try {
+    const { private_key, client_email, project_id } = serviceAccount;
+    
+    if (!private_key || !client_email) {
+      console.error('[OAuth2] Service account missing required fields: private_key or client_email');
+      return null;
+    }
+    
+    console.log(`[OAuth2] Creating JWT for client_email: ${client_email}`);
+    
+    // Обрабатываем private_key - заменяем экранированные символы \n на реальные переносы строк
+    // В JSON файле ключ может быть сохранен как "-----BEGIN PRIVATE KEY-----\\n..."
+    let formattedPrivateKey = private_key;
+    
+    // Проверяем, есть ли экранированные символы (двойной обратный слэш + n)
+    if (private_key.includes('\\n')) {
+      console.log(`[OAuth2] Found escaped newlines (\\n), replacing...`);
+      formattedPrivateKey = private_key.replace(/\\n/g, '\n');
+    } else if (private_key.includes('\n')) {
+      console.log(`[OAuth2] Private key already has real newlines`);
+    } else {
+      console.warn(`[OAuth2] Private key has no newlines - this might be a problem`);
+    }
+    
+    // Убираем лишние пробелы в начале и конце
+    formattedPrivateKey = formattedPrivateKey.trim();
+    
+    // Проверяем формат ключа
+    if (!formattedPrivateKey.includes('BEGIN PRIVATE KEY') && !formattedPrivateKey.includes('BEGIN RSA PRIVATE KEY')) {
+      console.error(`[OAuth2] Invalid private key format - missing BEGIN marker`);
+      return null;
+    }
+    
+    if (!formattedPrivateKey.includes('END PRIVATE KEY') && !formattedPrivateKey.includes('END RSA PRIVATE KEY')) {
+      console.error(`[OAuth2] Invalid private key format - missing END marker`);
+      return null;
+    }
+    
+    // Создаем JWT для получения access token
+    const now = Math.floor(Date.now() / 1000);
+    
+    // Формируем правильный JWT payload для Google OAuth2
+    const tokenPayload = {
+      iss: client_email,  // Issuer - email из service account
+      sub: client_email,  // Subject - должен быть такой же как issuer
+      aud: 'https://oauth2.googleapis.com/token',  // Audience
+      exp: now + 3600,  // Expiration time (1 hour)
+      iat: now,  // Issued at time
+      scope: 'https://www.googleapis.com/auth/firebase.messaging'  // Scope для FCM
+    };
+    
+    console.log(`[OAuth2] Signing JWT with algorithm RS256...`);
+    console.log(`[OAuth2] JWT payload:`, JSON.stringify(tokenPayload, null, 2));
+    console.log(`[OAuth2] Private key starts with: ${formattedPrivateKey.substring(0, 50)}`);
+    console.log(`[OAuth2] Private key ends with: ${formattedPrivateKey.substring(formattedPrivateKey.length - 50)}`);
+    console.log(`[OAuth2] Private key length: ${formattedPrivateKey.length}, lines: ${formattedPrivateKey.split('\n').length}`);
+    
+    let token: string;
+    try {
+      token = jwt.sign(tokenPayload, formattedPrivateKey, { algorithm: 'RS256' });
+      console.log(`[OAuth2] JWT created successfully, length: ${token.length}`);
+      console.log(`[OAuth2] JWT preview: ${token.substring(0, 50)}...`);
+    } catch (jwtError: any) {
+      console.error(`[OAuth2] Error signing JWT:`, jwtError.message);
+      console.error(`[OAuth2] JWT error details:`, jwtError);
+      return null;
+    }
+    console.log(`[OAuth2] JWT created, length: ${token.length}`);
+
+    // Обмениваем JWT на access token
+    console.log(`[OAuth2] Exchanging JWT for access token...`);
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: token
+      })
+    });
+
+    const responseText = await response.text();
+    console.log(`[OAuth2] Token exchange response: ${response.status} ${response.statusText}`);
+    console.log(`[OAuth2] Response body: ${responseText}`);
+    
+    if (!response.ok) {
+      console.error(`[OAuth2] Failed to get access token: ${response.status}`);
+      console.error(`[OAuth2] Full error response: ${responseText}`);
+      
+      // Попробуем распарсить ошибку для более детальной информации
+      try {
+        const errorData = JSON.parse(responseText);
+        console.error(`[OAuth2] Error details:`, errorData);
+      } catch (e) {
+        // Игнорируем ошибки парсинга
+      }
+      
+      return null;
+    }
+
+    try {
+      const result = JSON.parse(responseText);
+      if (!result.access_token) {
+        console.error('[OAuth2] Access token not found in response:', result);
+        return null;
+      }
+      
+      console.log(`[OAuth2] Access token obtained successfully, length: ${result.access_token.length}`);
+      return result.access_token;
+    } catch (e: any) {
+      console.error('[OAuth2] Failed to parse token response:', e.message);
+      console.error('[OAuth2] Raw response:', responseText.substring(0, 500));
+      return null;
+    }
+  } catch (error: any) {
+    console.error('[OAuth2] Error getting access token:', error.message);
+    console.error('[OAuth2] Error stack:', error.stack);
+    return null;
+  }
+}
+
+/**
+ * Отправка через новый FCM HTTP v1 API (не требует Legacy API)
+ */
+async function sendPushNotificationOAuth2(fcmToken: string, title: string, body: string, data?: Record<string, string>, projectId?: string): Promise<boolean> {
+  if (!projectId) {
+    console.error('FCM_PROJECT_ID not configured, skipping push notification');
+    return false;
+  }
+
+  console.log(`Getting access token for project ${projectId}...`);
+  // Получаем access token через Service Account
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    console.error('Failed to get access token, skipping push notification. Check FCM_SERVICE_ACCOUNT_PATH or FCM_SERVICE_ACCOUNT_JSON');
+    return false;
+  }
+  
+  console.log('Access token obtained successfully, length:', accessToken.length);
+
+  try {
+    // Используем новый FCM v1 API endpoint согласно документации Firebase
+    const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+    
+    const messagePayload = {
+      message: {
+        token: fcmToken,
+        notification: {
+          title,
+          body
+        },
+        data: data || {},
+        android: {
+          priority: 'high' as const,
+          notification: {
+            sound: 'default',
+            channelId: 'default'
+          }
+        },
+        apns: {
+          headers: {
+            'apns-priority': '10'
+          },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1
+            }
+          }
+        }
+      }
+    };
+    
+    console.log(`[FCM] Sending request to: ${url}`);
+    console.log(`[FCM] Token length: ${fcmToken.length}, preview: ${fcmToken.substring(0, 30)}...`);
+    console.log(`[FCM] Payload: ${JSON.stringify(messagePayload).substring(0, 200)}...`);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify(messagePayload)
+    });
+
+    const responseText = await response.text();
+    console.log(`FCM API response status: ${response.status} ${response.statusText}`);
+    console.log(`FCM API response body: ${responseText.substring(0, 500)}`);
+    
+    if (!response.ok) {
+      console.error(`FCM v1 API error: ${response.status} ${response.statusText}`);
+      console.error('Full response body:', responseText);
+      
+      // Если токен невалидный, удаляем его из базы
+      if (response.status === 404 || response.status === 400 || response.status === 403) {
+        try {
+          const errorData = JSON.parse(responseText);
+          const errorMessage = errorData.error?.message || errorData.error || '';
+          const errorCode = errorData.error?.code || '';
+          console.error('FCM error details:', { message: errorMessage, code: errorCode });
+          
+          if (errorMessage.includes('Invalid') || 
+              errorMessage.includes('not found') || 
+              errorMessage.includes('registration') ||
+              errorMessage.includes('token') ||
+              errorCode === 'INVALID_ARGUMENT' ||
+              errorCode === 'NOT_FOUND') {
+            console.log(`Removing invalid FCM token from database (error: ${errorMessage})`);
+            await User.updateOne({ fcmToken }, { $unset: { fcmToken: 1 } });
+          }
+        } catch (e) {
+          console.error('Failed to parse error response:', e);
+          console.error('Raw error response:', responseText);
+        }
+      }
+      
+      return false;
+    }
+
+    try {
+      const result = JSON.parse(responseText);
+      console.log('FCM v1 API success response:', JSON.stringify(result));
+      
+      if (result.name) {
+        // Успешная отправка (v1 API возвращает объект с полем 'name')
+        console.log('✅ Push notification sent successfully, message name:', result.name);
+        return true;
+      }
+
+      console.warn('Unexpected FCM response format:', result);
+      return false;
+    } catch (e) {
+      console.error('Failed to parse success response:', e);
+      console.error('Raw success response:', responseText);
+      return false;
+    }
+  } catch (error: any) {
+    console.error('Error sending push notification (OAuth2):', error);
+    return false;
+  }
+}
+
+/**
+ * Отправка push-уведомления конкретному пользователю
+ */
+export async function sendPushToUser(userId: string, title: string, body: string, data?: Record<string, string>): Promise<boolean> {
+  console.log(`[sendPushToUser] Looking up user ${userId}`);
+  const user = await User.findById(userId).lean();
+  if (!user) {
+    console.log(`[sendPushToUser] User ${userId} not found`);
+    return false;
+  }
+  
+  const fcmToken = (user as any).fcmToken;
+  const userEmail = (user as any).email || 'unknown';
+  
+  if (!fcmToken || fcmToken.trim() === '') {
+    console.log(`[sendPushToUser] User ${userId} (${userEmail}) has no FCM token`);
+    return false;
+  }
+  
+  console.log(`[sendPushToUser] User ${userId} (${userEmail}) has FCM token, sending notification`);
+  const result = await sendPushNotification(fcmToken, title, body, data);
+  console.log(`[sendPushToUser] Notification result for user ${userId}: ${result ? 'success' : 'failed'}`);
+  return result;
+}
+
+/**
+ * Отправка push-уведомления всем пользователям с FCM токенами
+ */
+export async function sendPushToAll(title: string, body: string, data?: Record<string, string>): Promise<number> {
+  const users = await User.find({ fcmToken: { $exists: true, $ne: null, $ne: '' } }).select('fcmToken email').lean();
+  console.log(`Found ${users.length} users with FCM tokens`);
+  if (users.length === 0) {
+    console.log('No users with FCM tokens found. Users need to login and have FCM token registered.');
+    // Выводим информацию о пользователях без токенов для отладки
+    const totalUsers = await User.countDocuments();
+    const usersWithoutTokens = await User.countDocuments({ $or: [{ fcmToken: { $exists: false } }, { fcmToken: null }, { fcmToken: '' }] });
+    console.log(`Total users: ${totalUsers}, Users without FCM tokens: ${usersWithoutTokens}`);
+    return 0;
+  }
+
+  let successCount = 0;
+  // Отправляем уведомления параллельно, но с ограничением
+  const batchSize = 10;
+  for (let i = 0; i < users.length; i += batchSize) {
+    const batch = users.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map(async (user) => {
+        const token = (user as any).fcmToken;
+        const email = (user as any).email || 'unknown';
+        console.log(`Sending notification to user ${email}, token: ${token?.substring(0, 20)}...`);
+        try {
+          const result = await sendPushNotification(token, title, body, data);
+          if (!result) {
+            console.error(`Failed to send notification to user ${email}`);
+          }
+          return result;
+        } catch (error: any) {
+          console.error(`Error sending notification to user ${email}:`, error.message);
+          return false;
+        }
+      })
+    );
+    successCount += results.filter(r => r.status === 'fulfilled' && r.value === true).length;
+    
+    // Логируем ошибки
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to send notification to user ${batch[index].email || 'unknown'}:`, result.reason);
+      }
+    });
+  }
+
+  console.log(`Sent push notifications: ${successCount}/${users.length} successful`);
+  return successCount;
+}
+
+/**
+ * Отправка push-уведомления всем пользователям с определенной ролью
+ */
+export async function sendPushToRole(role: string, title: string, body: string, data?: Record<string, string>): Promise<number> {
+  const users = await User.find({ role, fcmToken: { $exists: true, $ne: null } }).select('fcmToken').lean();
+  if (users.length === 0) {
+    return 0;
+  }
+
+  let successCount = 0;
+  const batchSize = 10;
+  for (let i = 0; i < users.length; i += batchSize) {
+    const batch = users.slice(i, i + batchSize);
+    const results = await Promise.all(
+      batch.map(user => sendPushNotification((user as any).fcmToken, title, body, data))
+    );
+    successCount += results.filter(r => r).length;
+  }
+
+  return successCount;
+}
+

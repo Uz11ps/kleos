@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kleos education</string>
+    <string name="action_login">Войти</string>
+    <string name="action_register">Регистрация</string>
+    <string name="menu_home">Главная</string>
+    <string name="menu_gallery">Галерея</string>
+    <string name="menu_universities">Университеты</string>
+    <string name="menu_slideshow">Программы</string>
+    <string name="menu_profile">Профиль</string>
+    <string name="menu_partners">Партнеры</string>
+    <string name="menu_chat">Поддержка</string>
+    <string name="menu_admission">Допуск</string>
+    <string name="action_logout">Выход</string>
+    <string name="menu_news">Новости</string>
+    <string name="choose_language">Выберите язык</string>
+    <string name="lang_russian">Русский</string>
+    <string name="lang_english">English</string>
+    <string name="lang_chinese">中文（简体）</string>
+    <string name="no_suitable_question">Нет подходящего вопроса? Оставить заявку</string>
+    <string name="support_title">Вопросы и помощь</string>
+    <string name="support_subtitle">Не нашли нужный ответ?</string>
+    <string name="leave_request">Оставить заявку</string>
+    <string name="faq_hint">Краткая подсказка, если нужна</string>
+
+    <!-- Chat -->
+    <string name="hint_message">Текст</string>
+    <string name="action_send">Отправить</string>
+    <string name="what_interests_you">Что вас интересует?</string>
+
+    <!-- Partners -->
+    <string name="loading">Загрузка…</string>
+    <string name="no_partners_yet">Партнеров пока нет</string>
+    <string name="failed_to_load">Не удалось загрузить</string>
+
+    <!-- Home -->
+    <string name="guest">гость</string>
+    <string name="hello_name">Здравствуйте, %1$s</string>
+    <string name="hi_name">Привет, %1$s</string>
+    <string name="id_prefix">ID: %1$s</string>
+
+    <!-- Auth -->
+    <string name="forgot_password_not_impl">Сброс пароля пока не реализован</string>
+    <string name="title_sign_up">Регистрация</string>
+    <string name="title_sign_in">Вход</string>
+
+    <!-- Admission form -->
+    <string name="admission_apply_now">Подать заявку</string>
+    <string name="label_full_name">ФИО</string>
+    <string name="label_first_name">Имя</string>
+    <string name="label_last_name">Фамилия</string>
+    <string name="label_patronymic">Отчество (необязательно)</string>
+    <string name="label_surname">Фамилия</string>
+    <string name="label_date_of_birth">Дата рождения</string>
+    <string name="label_place_of_birth">Место рождения</string>
+    <string name="label_nationality">Гражданство</string>
+    <string name="label_sex">Пол</string>
+    <string name="sex_male">Мужской</string>
+    <string name="sex_female">Женский</string>
+    <string name="label_phone">Телефон</string>
+    <string name="label_passport_number">Номер паспорта</string>
+    <string name="label_passport_issue">Дата и место выдачи паспорта</string>
+    <string name="label_passport_expiry">Срок действия паспорта</string>
+    <string name="label_visa_city">Город получения российской визы в вашей стране</string>
+    <string name="label_program">Программа</string>
+    <string name="label_comment_optional">Комментарий (необязательно)</string>
+    <string name="action_submit_application">Отправить заявку</string>
+    <string name="consent_label">Я согласен(а) на обработку персональных данных</string>
+    <string name="consent_read_full">Прочитать полный текст</string>
+
+    <!-- Onboarding -->
+    <string name="ob_title_1">Откройте для себя ведущие университеты России</string>
+    <string name="ob_sub_1">В нашем приложении вы сможете найти лучшие российские университеты и все их образовательные программы</string>
+    <string name="ob_title_2">StudyInRussia — прямые эфиры и ток‑шоу</string>
+    <string name="ob_sub_2">Смотрите прямые эфиры и ток‑шоу с ведущими вузами России, чтобы обсуждать и получать самую актуальную информацию</string>
+    <string name="ob_title_3">Форум — место общения и учебных дискуссий</string>
+    <string name="ob_sub_3">Пространство для обмена идеями, где вы можете публиковать мысли и взаимодействовать с другими абитуриентами и студентами</string>
+
+    <!-- Profile -->
+    <string name="profile_name">Имя</string>
+    <string name="profile_notes">Заметки</string>
+    <string name="profile_payment">Оплата</string>
+    <string name="profile_penalties">Штрафы</string>
+    <string name="profile_phone">Телефон</string>
+    <string name="profile_course">Курс</string>
+    <string name="profile_speciality">Специальность</string>
+    <string name="profile_status">Статус</string>
+    <string name="profile_university">Университет</string>
+    <string name="profile_student_id">Студенческий ID</string>
+    <string name="role_student">Студент</string>
+    <string name="role_admin">Администратор</string>
+    <string name="role_user">Пользователь</string>
+
+    <!-- Programs/Filters -->
+    <string name="filters_title">Фильтры</string>
+    <string name="filter_search_program">Поиск программы</string>
+    <string name="filter_language">Язык</string>
+    <string name="filter_education_level">Уровень образования</string>
+    <string name="filter_university">Университет</string>
+    <string name="find_variants">Найти варианты</string>
+    
+    <!-- Tabs -->
+    <string name="tab_all">Все</string>
+    <string name="tab_news">Новости</string>
+    <string name="tab_interesting">Интересное</string>
+    
+    <!-- Buttons -->
+    <string name="button_find">Найти</string>
+    <string name="button_open_website">Открыть сайт</string>
+    <string name="button_skip">Пропустить</string>
+    <string name="button_back">Назад</string>
+    <string name="button_submit">Отправить</string>
+    <string name="button_apply">Подать заявку</string>
+    <string name="button_send_again">Отправить письмо повторно</string>
+    <string name="button_open_email">Открыть почтовый клиент</string>
+    <string name="button_login_as_guest">Или войдите как гость</string>
+    
+    <!-- Admission form -->
+    <string name="admission_personal_data">Личные данные</string>
+    <string name="admission_fill_time">Заполнение займёт ~5 минут</string>
+    <string name="admission_found_programs">Найдено: %1$d программ</string>
+    
+    <!-- Profile -->
+    <string name="profile_login_required">Войдите в аккаунт</string>
+    
+    <!-- Partner detail -->
+    <string name="partner_description">Описание партнера</string>
+    
+    <!-- Verify email -->
+    <string name="verify_email_title">Подтвердите почту</string>
+    <string name="verify_email_message">Мы отправили письмо со ссылкой для подтверждения. Откройте ссылку из письма на этом устройстве, чтобы завершить регистрацию.</string>
+    <string name="verify_email_address">Адрес:</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_study">Изучайте</string>
+    <string name="onboarding_programs_and">программы и</string>
+    <string name="onboarding_submit_applications">подавайте заявки</string>
+    
+    <!-- Home -->
+    <string name="home_welcome_back">С возвращением,</string>
+    <string name="home_explore_new">Давайте исследуем\nновые области</string>
+    
+    <!-- Program detail -->
+    <string name="program_title">Программа</string>
+    <string name="program_university_name">Название универа</string>
+    
+    <!-- Gallery -->
+    <string name="gallery_category">Галерея</string>
+    <string name="gallery_graduates">Выпускники</string>
+    
+    <!-- News -->
+    <string name="news_category">Новости</string>
+    <string name="news_title_placeholder">Заголовок</string>
+    <string name="news_date_placeholder">17.12.2025</string>
+    <string name="news_content_placeholder">Содержимое</string>
+    
+    <!-- University -->
+    <string name="university_category">Университеты</string>
+    <string name="university_name_placeholder">Название университета</string>
+    <string name="university_location_placeholder">Местоположение</string>
+    <string name="university_description_placeholder">Описание</string>
+    <string name="university_website_placeholder">Веб-сайт</string>
+    
+    <!-- Content card -->
+    <string name="content_title_placeholder">Заголовок</string>
+    <string name="content_date_placeholder">01.01.2000</string>
+    
+    <!-- Program result -->
+    <string name="program_result_name_placeholder">Название</string>
+    <string name="program_result_description_placeholder">Описание</string>
+    
+    <!-- Gallery detail -->
+    <string name="gallery_detail_title_placeholder">Заголовок</string>
+    <string name="gallery_detail_description_placeholder">Описание</string>
+    <string name="gallery_detail_media_url_placeholder">URL медиа</string>
+    
+    <!-- Categories -->
+    <string name="category_news">Новости</string>
+    <string name="category_interesting">Интересное</string>
+    <string name="category_gallery">Галерея</string>
+    <string name="category_universities">Университеты</string>
+    <string name="category_partners">Партнеры</string>
+    
+    <!-- Partner -->
+    <string name="partner_title">Партнер</string>
+
+    <!-- FAQ arrays (RU) -->
+    <string-array name="faq_questions">
+        <item>Когда открыта подача документов на осенний набор?</item>
+        <item>Есть ли весенний набор?</item>
+        <item>Какие документы нужны для поступления?</item>
+        <item>Нужна ли легализация или апостиль?</item>
+        <item>Нужна ли нострификация диплома?</item>
+        <item>Какой уровень русского требуется?</item>
+        <item>Есть ли подготовительные курсы русского языка?</item>
+        <item>Есть ли вступительные экзамены или онлайн-собеседование?</item>
+        <item>Сколько делается приглашение для визы?</item>
+        <item>Какой тип визы выдается сначала?</item>
+        <item>Как производится оплата обучения?</item>
+        <item>Есть ли предоплата?</item>
+        <item>Возможен ли возврат, если отказали в визе?</item>
+        <item>Предоставляется ли общежитие?</item>
+        <item>Сколько стоит проживание в общежитии?</item>
+        <item>Нужна ли медицинская страховка?</item>
+        <item>Нужны ли медосмотр и дактилоскопия?</item>
+        <item>Нужно ли миграционное учётывание после приезда?</item>
+        <item>Что такое миграционная карта?</item>
+        <item>Можно ли открыть банковский счет?</item>
+        <item>Как получить SIM-карту?</item>
+        <item>Можно ли работать во время учебы?</item>
+        <item>Можно ли перевестись из другого университета?</item>
+        <item>Есть ли стипендии для иностранцев?</item>
+        <item>Какова стоимость проживания в месяц?</item>
+        <item>Есть ли возрастные ограничения?</item>
+        <item>Доступна ли дистанционная форма?</item>
+        <item>Можно ли получить многократную визу сразу?</item>
+        <item>Кто делает перевод документов на русский?</item>
+        <item>Можно ли платить частями?</item>
+    </string-array>
+    <string-array name="faq_answers">
+        <item>Обычно прием начинается весной и длится до июля–августа. Точные даты устанавливает программа.</item>
+        <item>У некоторых программ есть набор в феврале/марте; уточняйте по программе.</item>
+        <item>Паспорт, диплом с приложением, нотариальный перевод на русский, фото, мотивационное письмо (если требуется).</item>
+        <item>Да, в зависимости от страны: апостиль или консульская легализация.</item>
+        <item>Иногда требуется признание образования (4–8 недель).</item>
+        <item>Обычно TRKI/TORFL В1–В2 для русскоязычных программ; возможен подготовительный год.</item>
+        <item>Да, годовая подготовительная программа: русский и профильные предметы; в конце внутренний экзамен.</item>
+        <item>Зависит от программы: часто онлайн-собеседование и/или тесты.</item>
+        <item>Обычно 10–20 рабочих дней после оплаты и полного пакета документов.</item>
+        <item>Как правило, однократная учебная виза на 90 дней, затем продление и многократная.</item>
+        <item>Банковский перевод по инвойсу; иногда карты; комиссии за счет студента.</item>
+        <item>Да, часто требуется предоплата за семестр или год.</item>
+        <item>Как правило, частичный возврат за вычетом админрасходов; см. договор.</item>
+        <item>Да, при наличии мест; приоритет первокурсникам-иностранцам.</item>
+        <item>В среднем 1 000–5 000 ₽ в месяц в зависимости от города и условий.</item>
+        <item>Да, полис ДМС обязателен на весь период обучения.</item>
+        <item>Да, в течение 90 дней после въезда: медосмотр, фото и отпечатки.</item>
+        <item>Да, регистрация по месту пребывания в течение 3 рабочих дней.</item>
+        <item>Бланк, выдаётся на границе; сохраните до выезда и для регистрации.</item>
+        <item>Да; обычно нужны паспорт, миграционная карта и регистрация.</item>
+        <item>С паспортом в офисе оператора; регистрацию могут запросить.</item>
+        <item>Иностранные очники могут работать, обычно до 20 ч/неделю во время семестра.</item>
+        <item>Да, при наличии академсправки и соответствия плану; решение за приёмной комиссией.</item>
+        <item>Да: квоты Россотрудничества и гранты университетов; конкурс.</item>
+        <item>В среднем 20 000–40 000 ₽ на питание, транспорт и прочее.</item>
+        <item>Обычно нет строгих ограничений; несовершеннолетним — согласие и опекун.</item>
+        <item>Для части программ — да; для визы чаще нужна очная форма.</item>
+        <item>Как правило, нет; сначала однократная на 90 дней, затем продление.</item>
+        <item>Принимаются нотариальные/сертифицированные переводы; в стране выдачи или в РФ.</item>
+        <item>Часто помесячно/по семестрам; график в договоре.</item>
+    </string-array>
+</resources>
+
+

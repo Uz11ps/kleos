@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_home"
+            android:title="@string/menu_home" />
+        <item
+            android:id="@+id/nav_news"
+            android:title="@string/menu_news" />
+        <item
+            android:id="@+id/nav_gallery"
+            android:title="@string/menu_gallery" />
+        <item
+            android:id="@+id/nav_universities"
+            android:title="@string/menu_universities" />
+        <item
+            android:id="@+id/nav_slideshow"
+            android:title="@string/menu_slideshow" />
+        <item
+            android:id="@+id/nav_partners"
+            android:title="@string/menu_partners" />
+        <item
+            android:id="@+id/nav_chat"
+            android:title="@string/menu_chat" />
+        <item
+            android:id="@+id/nav_admission"
+            android:title="@string/menu_admission" />
+        <item
+            android:id="@+id/nav_profile"
+            android:title="@string/menu_profile" />
+    </group>
+    <item
+        android:id="@+id/menu_sign_out"
+        android:title="@string/action_logout" />
+    <item
+        android:id="@+id/menu_lang_ru"
+        android:title="@string/lang_russian" />
+    <item
+        android:id="@+id/menu_lang_en"
+        android:title="@string/lang_english" />
+    <item
+        android:id="@+id/menu_lang_zh"
+        android:title="@string/lang_chinese" />
+</menu>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kleos education</string>
+    <string name="action_login">登录</string>
+    <string name="action_register">注册</string>
+    <string name="menu_home">首页</string>
+    <string name="menu_news">新闻</string>
+    <string name="menu_gallery">大学</string>
+    <string name="menu_slideshow">项目</string>
+    <string name="menu_profile">个人资料</string>
+    <string name="menu_partners">合作伙伴</string>
+    <string name="menu_chat">支持</string>
+    <string name="menu_admission">申请</string>
+    <string name="choose_language">选择语言</string>
+    <string name="lang_russian">Русский</string>
+    <string name="lang_english">English</string>
+    <string name="lang_chinese">中文（简体）</string>
+    <string name="no_suitable_question">没有合适的问题？提交申请</string>
+
+    <!-- Chat -->
+    <string name="support_title">问题和帮助</string>
+    <string name="support_subtitle">没有找到您需要的答案？</string>
+    <string name="leave_request">提交请求</string>
+    <string name="faq_hint">简短提示（如需要）</string>
+    <string name="hint_message">消息</string>
+    <string name="action_send">发送</string>
+
+    <!-- Partners -->
+    <string name="loading">加载中…</string>
+    <string name="no_partners_yet">暂无合作伙伴</string>
+    <string name="failed_to_load">加载失败</string>
+
+    <!-- Home -->
+    <string name="guest">访客</string>
+    <string name="hello_name">你好，%1$s</string>
+    <string name="hi_name">你好，%1$s</string>
+    <string name="id_prefix">ID：%1$s</string>
+
+    <!-- Auth -->
+    <string name="forgot_password_not_impl">暂未实现密码重置</string>
+    <string name="title_sign_up">注册</string>
+    <string name="title_sign_in">登录</string>
+
+    <!-- Admission form -->
+    <string name="admission_apply_now">立即申请</string>
+    <string name="label_full_name">姓名</string>
+    <string name="label_first_name">名字</string>
+    <string name="label_last_name">姓氏</string>
+    <string name="label_patronymic">父名（可选）</string>
+    <string name="label_surname">姓氏</string>
+    <string name="label_date_of_birth">出生日期</string>
+    <string name="label_place_of_birth">出生地</string>
+    <string name="label_nationality">国籍</string>
+    <string name="label_sex">性别</string>
+    <string name="sex_male">男</string>
+    <string name="sex_female">女</string>
+    <string name="label_phone">电话</string>
+    <string name="label_passport_number">护照号码</string>
+    <string name="label_passport_issue">护照签发日期和地点</string>
+    <string name="label_passport_expiry">护照有效期</string>
+    <string name="label_visa_city">在您所在国家办理俄罗斯签证的城市</string>
+    <string name="label_program">专业</string>
+    <string name="label_comment_optional">备注（可选）</string>
+    <string name="action_submit_application">提交申请</string>
+
+    <!-- Onboarding -->
+    <string name="ob_title_1">探索著名的俄罗斯大学</string>
+    <string name="ob_sub_1">通过我们的应用，您可以发现顶尖的俄罗斯大学及其全部课程</string>
+    <string name="ob_title_2">StudyInRussia 精彩直播与访谈</string>
+    <string name="ob_sub_2">观看与领先俄罗斯高校的直播访谈，获取最新信息</string>
+    <string name="ob_title_3">论坛——学习讨论与社交互动的优质场所</string>
+    <string name="ob_sub_3">在这里分享想法、与他人互动，加入学习社区</string>
+
+    <!-- Profile -->
+    <string name="profile_name">姓名</string>
+    <string name="profile_notes">备注</string>
+    <string name="profile_payment">付款</string>
+    <string name="profile_penalties">罚款</string>
+    <string name="profile_phone">电话</string>
+    <string name="profile_course">课程</string>
+    <string name="profile_speciality">专业</string>
+    <string name="profile_status">状态</string>
+    <string name="profile_university">大学</string>
+    <string name="profile_student_id">学生证号</string>
+
+    <!-- Programs/Filters -->
+    <string name="filters_title">筛选</string>
+    <string name="filter_search_program">搜索项目</string>
+    <string name="filter_language">语言</string>
+    <string name="filter_education_level">教育层次</string>
+    <string name="filter_university">大学</string>
+
+    <!-- FAQ arrays (ZH) -->
+    <string-array name="faq_questions">
+        <item>秋季招生什么时候开始？</item>
+        <item>是否有春季招生？</item>
+        <item>申请需要哪些材料？</item>
+        <item>是否需要公证/认证或加签（apostille）？</item>
+        <item>是否需要文凭认证（对等认证）？</item>
+        <item>需要什么水平的俄语？</item>
+        <item>是否有预科/俄语预备课程？</item>
+        <item>是否有入学考试或面试？</item>
+        <item>签证邀请需要多久办理？</item>
+        <item>最初签发哪种签证？</item>
+        <item>学费如何支付？</item>
+        <item>是否需要预付款？</item>
+        <item>拒签是否可以退款？</item>
+        <item>是否提供宿舍？</item>
+        <item>宿舍费用大概多少？</item>
+        <item>是否需要医疗保险？</item>
+        <item>是否需要体检和指纹登记？</item>
+        <item>到达后是否需要办理落地登记？</item>
+        <item>什么是入境/移民卡？</item>
+        <item>可以开立银行账户吗？</item>
+        <item>如何办理手机卡？</item>
+        <item>在读期间可以工作吗？</item>
+        <item>可以从其他大学转学吗？</item>
+        <item>是否有奖学金？</item>
+        <item>每月生活费用大概多少？</item>
+        <item>是否有年龄限制？</item>
+        <item>是否提供远程/线上学习？</item>
+        <item>可以直接办理多次往返签证吗？</item>
+        <item>谁可以把文件翻译成俄语？</item>
+        <item>可以分期支付学费吗？</item>
+    </string-array>
+    <string-array name="faq_answers">
+        <item>通常在春季开放，持续到7–8月；具体日期请以项目为准。</item>
+        <item>部分项目在2/3月有招生；请以具体项目为准。</item>
+        <item>护照、毕业证和成绩单、俄语公证翻译、照片，如需：动机信等。</item>
+        <item>视国家而定，通常需要加签或领事认证。</item>
+        <item>有时需要由大学或相关机构认可教育文件（约4–8周）。</item>
+        <item>俄语授课通常需要ТРКИ/ТОРФЛ B1–B2；也可读预科。</item>
+        <item>是的，一年制预科：俄语+专业课；结业有校内考试。</item>
+        <item>视项目而定：常见为在线面试和/或科目测试。</item>
+        <item>一般在支付并提交完整材料后10–20个工作日。</item>
+        <item>通常先签发90天一次性学习签证，入学后延长并转为多次。</item>
+        <item>通过银行转账（发票），部分项目支持银行卡；费用由学生承担。</item>
+        <item>通常需要（按学期或学年）预付款以办理邀请。</item>
+        <item>通常支持部分退款（扣除行政费用），以合同为准。</item>
+        <item>有，视床位情况；优先照顾国际新生。</item>
+        <item>约1,000–5,000卢布/月，因城市和条件而异。</item>
+        <item>需要，学习期间须持有效医疗保险。</item>
+        <item>需要，入境90天内完成体检、照片及指纹登记。</item>
+        <item>需要，抵达后3个工作日内在居住地办理登记，通常由宿舍或房东办理。</item>
+        <item>入境时获得的纸质表格；请妥善保管以备登记及出境使用。</item>
+        <item>可以；通常需要护照、移民卡、登记单。</item>
+        <item>携带护照至运营商营业厅办理；有时需出示登记单。</item>
+        <item>全日制国际学生可合法兼职，学期中一般每周不超过20小时。</item>
+        <item>可以，需提供成绩单并符合课程计划；由招生委员会决定。</item>
+        <item>有：国家配额与校内奖学金；竞争性申请。</item>
+        <item>平均每月2–4万卢布（餐饮、交通及日常开销）。</item>
+        <item>本科通常无严格限制；未成年人需监护人同意及在俄监护。</item>
+        <item>部分项目提供；签证通常要求全日制到校。</item>
+        <item>一般不可以；通常先办一次性90天签证，后续延长为多次。</item>
+        <item>可在原籍国或俄罗斯进行具资质的/公证的翻译。</item>
+        <item>多数学校按学期缴费；以合同约定为准。</item>
+    </string-array>
+ </resources>
+
+

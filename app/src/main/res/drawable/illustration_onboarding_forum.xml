@@ -1,0 +1,57 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="200dp"
+    android:viewportWidth="320"
+    android:viewportHeight="200">
+
+    <!-- Transparent background to match page -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,0 L320,0 L320,200 L0,200 Z" />
+
+    <!-- Main forum card -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M64,48 L256,48 L256,148 L64,148 Z" />
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M72,56 L248,56 L248,140 L72,140 Z" />
+
+    <!-- Title lines (as shapes) -->
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M84,70 L190,70 L190,78 L84,78 Z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M84,84 L220,84 L220,90 L84,90 Z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M84,96 L206,96 L206,102 L84,102 Z" />
+
+    <!-- Post bubble -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M92,112 C92,104 100,98 110,98 L184,98 C194,98 202,104 202,112 C202,120 194,126 184,126 L132,126 L116,138 L116,126 C100,126 92,120 92,112 Z" />
+
+    <!-- Reply bubble -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M168,124 C168,118 174,113 182,113 L226,113 C234,113 240,118 240,124 C240,130 234,135 226,135 L202,135 L188,146 L188,135 C174,135 168,130 168,124 Z" />
+
+    <!-- User avatars -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M110,150 m-10,0 a10,10 0,1 1,20 0 a10,10 0,1 1,-20 0" />
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M140,150 m-10,0 a10,10 0,1 1,20 0 a10,10 0,1 1,-20 0" />
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M170,150 m-10,0 a10,10 0,1 1,20 0 a10,10 0,1 1,-20 0" />
+
+    <!-- Small idea spark -->
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M48,70 L52,78 L60,82 L52,86 L48,94 L44,86 L36,82 L44,78 Z" />
+</vector>
+

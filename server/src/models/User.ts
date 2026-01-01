@@ -1,0 +1,33 @@
+import { Schema, model } from 'mongoose';
+
+const userSchema = new Schema({
+  email: { type: String, index: true, unique: true, required: true },
+  fullName: { type: String, required: true },
+  passwordHash: { type: String, required: true },
+  role: { type: String, enum: ['user', 'student', 'admin'], default: 'user', index: true },
+  emailVerified: { type: Boolean, default: false, index: true },
+  emailVerifyToken: { type: String, index: true, sparse: true },
+  emailVerifyExpires: { type: Date },
+  // Уникальный числовой ID пользователя (0 для гостей, уникальный для зарегистрированных)
+  userId: { type: Number, index: true, unique: true, sparse: true },
+  // Admin-editable student profile fields (optional)
+  studentId: { type: String, index: true, sparse: true },
+  phone: { type: String },
+  course: { type: String },
+  speciality: { type: String },
+  status: { type: String },
+  university: { type: String },
+  payment: { type: String },
+  penalties: { type: String },
+  notes: { type: String },
+  // FCM токен для push-уведомлений
+  fcmToken: { type: String, index: true, sparse: true },
+  // URL аватарки пользователя
+  avatarUrl: { type: String },
+  // Дата первого входа в админку
+  lastAdminLogin: { type: Date }
+}, { timestamps: true });
+
+export const User = model('User', userSchema);
+
+

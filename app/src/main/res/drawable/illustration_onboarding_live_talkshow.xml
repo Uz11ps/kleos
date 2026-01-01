@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="200dp"
+    android:viewportWidth="320"
+    android:viewportHeight="200">
+
+    <!-- Transparent background to match page -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,0 L320,0 L320,200 L0,200 Z" />
+
+    <!-- Screen -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M70,52 L250,52 L250,142 L70,142 Z" />
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M78,60 L242,60 L242,134 L78,134 Z" />
+
+    <!-- Live badge -->
+    <path
+        android:fillColor="#EF4444"
+        android:pathData="M86,66 L132,66 L132,82 L86,82 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M93,78 L93,70 L95,70 L95,78 Z M98,78 L98,70 L100,70 L100,78 Z M103,78 L103,70 L105,70 L105,78 Z" />
+
+    <!-- Play icon -->
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M152,78 L152,116 L186,97 Z" />
+
+    <!-- Chat bubbles (talk-show) -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M96,154 C96,145 104,138 114,138 L152,138 C162,138 170,145 170,154 C170,163 162,170 152,170 L126,170 L114,180 L114,170 C104,170 96,163 96,154 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M154,150 C154,143 161,137 170,137 L206,137 C215,137 222,143 222,150 C222,157 215,163 206,163 L190,163 L178,172 L178,163 C161,163 154,157 154,150 Z" />
+
+    <!-- Small sound waves -->
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M258,86 C266,94 266,110 258,118 L254,114 C260,108 260,96 254,90 Z" />
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M268,78 C280,92 280,112 268,126 L264,122 C274,110 274,94 264,82 Z" />
+</vector>
+
