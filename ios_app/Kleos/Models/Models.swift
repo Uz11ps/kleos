@@ -14,13 +14,46 @@ struct NewsItem: Codable, Identifiable {
         case title, content, imageUrl, publishedAt, isInteresting
     }
     
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        content = try? container.decode(String.self, forKey: .content)
+        imageUrl = try? container.decode(String.self, forKey: .imageUrl)
+        
+        // Обрабатываем publishedAt - может быть строкой или датой
+        if let dateString = try? container.decode(String.self, forKey: .publishedAt) {
+            publishedAt = dateString
+        } else if let date = try? container.decode(Date.self, forKey: .publishedAt) {
+            let formatter = ISO8601DateFormatter()
+            publishedAt = formatter.string(from: date)
+        } else {
+            publishedAt = ""
+        }
+        
+        isInteresting = try? container.decode(Bool.self, forKey: .isInteresting)
+    }
+    
     var dateText: String {
-        let formatter = ISO8601DateFormatter()
-        if let date = formatter.date(from: publishedAt) {
+        // Пробуем разные форматы даты
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        
+        if let date = isoFormatter.date(from: publishedAt) {
             let displayFormatter = DateFormatter()
             displayFormatter.dateFormat = "dd.MM.yyyy"
             return displayFormatter.string(from: date)
         }
+        
+        // Пробуем без дробных секунд
+        isoFormatter.formatOptions = [.withInternetDateTime]
+        if let date = isoFormatter.date(from: publishedAt) {
+            let displayFormatter = DateFormatter()
+            displayFormatter.dateFormat = "dd.MM.yyyy"
+            return displayFormatter.string(from: date)
+        }
+        
+        // Если не получилось, возвращаем как есть
         return publishedAt
     }
 }

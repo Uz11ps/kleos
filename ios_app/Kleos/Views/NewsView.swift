@@ -59,9 +59,11 @@ struct NewsView: View {
     private var filteredNews: [NewsItem] {
         switch selectedTab {
         case "news":
+            // Если isInteresting не задан, считаем все новостями
             return news.filter { !($0.isInteresting ?? false) }
         case "interesting":
-            return news.filter { $0.isInteresting ?? true }
+            // Если isInteresting не задан, не показываем в интересном
+            return news.filter { $0.isInteresting == true }
         default:
             return news
         }
