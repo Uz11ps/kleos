@@ -198,11 +198,12 @@ struct Partner: Codable, Identifiable {
     let name: String
     let description: String?
     let logoUrl: String?
-    let website: String?
+    let website: String? // Маппинг с серверного поля "url"
     
     enum CodingKeys: String, CodingKey {
         case id // Сервер возвращает "id", а не "_id"
-        case name, description, logoUrl, website
+        case name, description, logoUrl
+        case website = "url" // Сервер возвращает "url", а не "website"
     }
 }
 
