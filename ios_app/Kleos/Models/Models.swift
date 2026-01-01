@@ -10,7 +10,7 @@ struct NewsItem: Codable, Identifiable {
     let isInteresting: Bool?
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id", а не "_id"
         case title, content, imageUrl, publishedAt, isInteresting
     }
     
@@ -97,7 +97,7 @@ struct University: Codable, Identifiable {
     let contentBlocks: [ContentBlock]?
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id", а не "_id"
         case name, city, country, description, website, logoUrl, socialLinks, degreePrograms, contentBlocks
     }
     
@@ -124,7 +124,7 @@ struct Program: Codable, Identifiable {
     let order: Int?
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id", а не "_id"
         case title, description, language, level, university, universityId, tuition, durationYears, active, order
     }
     
@@ -153,7 +153,7 @@ struct GalleryItem: Codable, Identifiable {
     let mediaType: String
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id", а не "_id"
         case title, description, mediaUrl, mediaType
     }
 }
@@ -167,7 +167,7 @@ struct Partner: Codable, Identifiable {
     let website: String?
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id", а не "_id"
         case name, description, logoUrl, website
     }
 }
@@ -203,7 +203,7 @@ struct Chat: Codable, Identifiable {
     let lastMessageAt: String?
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id"
         case status, lastMessageAt
     }
 }
@@ -212,7 +212,7 @@ struct ChatCreateResponse: Codable {
     let id: String
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id"
     }
 }
 
@@ -223,7 +223,7 @@ struct ChatMessage: Codable, Identifiable {
     let createdAt: String
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id"
         case text, senderRole, createdAt
     }
     

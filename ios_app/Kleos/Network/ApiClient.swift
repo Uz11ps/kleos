@@ -44,8 +44,26 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode([NewsItem].self, from: data)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            print("🔍 News response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8) ?? "no data")")
+            
+            if httpResponse.statusCode != 200 {
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            let items = try decoder.decode([NewsItem].self, from: data)
+            print("✅ Successfully decoded \(items.count) news items")
+            return items
+        } catch {
+            print("❌ Decode error: \(error)")
+            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
+            throw error
+        }
     }
     
     func fetchNewsDetail(id: String) async throws -> NewsItem {
@@ -179,8 +197,26 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode([University].self, from: data)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            print("🔍 Universities response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "no data")")
+            
+            if httpResponse.statusCode != 200 {
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            let items = try decoder.decode([University].self, from: data)
+            print("✅ Successfully decoded \(items.count) universities")
+            return items
+        } catch {
+            print("❌ Decode error: \(error)")
+            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
+            throw error
+        }
     }
     
     func fetchUniversity(id: String) async throws -> University {
@@ -225,8 +261,26 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode([Program].self, from: data)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            print("🔍 Programs response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "no data")")
+            
+            if httpResponse.statusCode != 200 {
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            let items = try decoder.decode([Program].self, from: data)
+            print("✅ Successfully decoded \(items.count) programs")
+            return items
+        } catch {
+            print("❌ Decode error: \(error)")
+            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
+            throw error
+        }
     }
     
     func fetchProgram(id: String) async throws -> Program {
@@ -246,8 +300,26 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode([GalleryItem].self, from: data)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            print("🔍 Gallery response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "no data")")
+            
+            if httpResponse.statusCode != 200 {
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            let items = try decoder.decode([GalleryItem].self, from: data)
+            print("✅ Successfully decoded \(items.count) gallery items")
+            return items
+        } catch {
+            print("❌ Decode error: \(error)")
+            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
+            throw error
+        }
     }
     
     // MARK: - Partners API
@@ -257,8 +329,26 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode([Partner].self, from: data)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            print("🔍 Partners response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "no data")")
+            
+            if httpResponse.statusCode != 200 {
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            let items = try decoder.decode([Partner].self, from: data)
+            print("✅ Successfully decoded \(items.count) partners")
+            return items
+        } catch {
+            print("❌ Decode error: \(error)")
+            print("📦 Raw JSON: \(String(data: data, encoding: .utf8) ?? "no data")")
+            throw error
+        }
     }
     
     // MARK: - Admission API
