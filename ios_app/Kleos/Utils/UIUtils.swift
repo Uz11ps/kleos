@@ -3,15 +3,15 @@ import SwiftUI
 // MARK: - Blurred Circle View
 struct BlurredCircle: View {
     var color: Color = Color(hex: "7E5074")
-    var size: CGFloat = 400 // Увеличим размер для мягкости
-    var blurRadius: CGFloat = 100 // Увеличим размытие
+    var size: CGFloat = 450 // Увеличим размер для мягкости
+    var blurRadius: CGFloat = 120 // Еще сильнее размытие
     
     var body: some View {
         Circle()
             .fill(color)
             .frame(width: size, height: size)
             .blur(radius: blurRadius)
-            .opacity(0.6) // Добавим прозрачности, как в Android-эффекте
+            .opacity(0.45) // Мягкая прозрачность для глубины
     }
 }
 
@@ -42,7 +42,7 @@ extension Color {
         )
     }
     
-    static let kleosBackground = Color(hex: "0E080F") // Точный цвет из Android
+    static let kleosBackground = Color(hex: "0E080F")
     static let kleosAccent = Color(hex: "7E5074")
     static let kleosBlue = Color(hex: "3B82F6")
 }
@@ -52,21 +52,36 @@ extension Color {
 struct KleosBackground: ViewModifier {
     func body(content: Content) -> some View {
         ZStack {
+            // 1. Основной глубокий фон
             Color.kleosBackground.ignoresSafeArea()
             
-            // Background blurred circles
+            // 2. Верхний центральный круг (как в Android activity_auth.xml)
+            VStack {
+                BlurredCircle(color: Color(hex: "7E5074"))
+                    .offset(y: -200) // Сдвиг вверх наполовину
+                Spacer()
+            }
+            .ignoresSafeArea()
+            
+            // 3. Нижний центральный круг
+            VStack {
+                Spacer()
+                BlurredCircle(color: Color(hex: "7E5074"))
+                    .offset(y: 200) // Сдвиг вниз наполовину
+            }
+            .ignoresSafeArea()
+            
+            // 4. Дополнительное синее свечение (аналог gradient_shape)
             VStack {
                 HStack {
-                    BlurredCircle()
-                        .offset(x: -100, y: -100)
+                    Circle()
+                        .fill(Color.kleosBlue.opacity(0.15))
+                        .frame(width: 400, height: 400)
+                        .blur(radius: 100)
+                        .offset(x: -150, y: -100)
                     Spacer()
                 }
                 Spacer()
-                HStack {
-                    Spacer()
-                    BlurredCircle(color: Color.kleosBlue.opacity(0.3))
-                        .offset(x: 100, y: 100)
-                }
             }
             .ignoresSafeArea()
             
