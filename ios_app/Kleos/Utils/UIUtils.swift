@@ -2,15 +2,16 @@ import SwiftUI
 
 // MARK: - Blurred Circle View
 struct BlurredCircle: View {
-    var color: Color = Color(hex: "7E5074").opacity(0.4)
-    var size: CGFloat = 318
-    var blurRadius: CGFloat = 50
+    var color: Color = Color(hex: "7E5074")
+    var size: CGFloat = 400 // Увеличим размер для мягкости
+    var blurRadius: CGFloat = 100 // Увеличим размытие
     
     var body: some View {
         Circle()
             .fill(color)
             .frame(width: size, height: size)
             .blur(radius: blurRadius)
+            .opacity(0.6) // Добавим прозрачности, как в Android-эффекте
     }
 }
 
@@ -41,10 +42,11 @@ extension Color {
         )
     }
     
-    static let kleosBackground = Color(hex: "0F172A")
+    static let kleosBackground = Color(hex: "0E080F") // Точный цвет из Android
     static let kleosAccent = Color(hex: "7E5074")
     static let kleosBlue = Color(hex: "3B82F6")
 }
+
 
 // MARK: - Background View Modifier
 struct KleosBackground: ViewModifier {
