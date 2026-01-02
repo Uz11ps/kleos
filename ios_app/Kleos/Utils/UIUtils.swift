@@ -30,7 +30,7 @@ extension Color {
         case 8: // ARGB (32-bit)
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
-            (a, r, g, b) = (1, 1, 1, 0)
+            (a, r, g, b) = (255, 0, 0, 0)
         }
 
         self.init(
@@ -47,41 +47,47 @@ extension Color {
     static let kleosBlue = Color(hex: "3B82F6")
 }
 
-
 // MARK: - Background View Modifier
 struct KleosBackground: ViewModifier {
     func body(content: Content) -> some View {
         ZStack {
-            // 1. Основной глубокий фон
-            Color.kleosBackground.ignoresSafeArea()
+            // 1. Фиксированный цвет фона (как в Android onboarding_background)
+            Color(hex: "0E080F")
+                .ignoresSafeArea()
             
-            // 2. Верхний центральный круг (как в Android activity_auth.xml)
-            VStack {
-                BlurredCircle(color: Color(hex: "7E5074"))
-                    .offset(y: -200) // Сдвиг вверх наполовину
-                Spacer()
-            }
-            .ignoresSafeArea()
-            
-            // 3. Нижний центральный круг
-            VStack {
-                Spacer()
-                BlurredCircle(color: Color(hex: "7E5074"))
-                    .offset(y: 200) // Сдвиг вниз наполовину
-            }
-            .ignoresSafeArea()
-            
-            // 4. Дополнительное синее свечение (аналог gradient_shape)
-            VStack {
-                HStack {
+            // 2. Светящиеся круги (1 в 1 как в Android layout)
+            Group {
+                // Верхний круг (blurredCircleTop)
+                Circle()
+                    .fill(Color(hex: "7E5074"))
+                    .frame(width: 318, height: 318)
+                    .blur(radius: 120)
+                    .opacity(0.5)
+                    .offset(y: -150)
+                
+                // Нижний круг (blurredCircle)
+                VStack {
+                    Spacer()
                     Circle()
-                        .fill(Color.kleosBlue.opacity(0.15))
-                        .frame(width: 400, height: 400)
-                        .blur(radius: 100)
-                        .offset(x: -150, y: -100)
+                        .fill(Color(hex: "7E5074"))
+                        .frame(width: 318, height: 318)
+                        .blur(radius: 120)
+                        .opacity(0.5)
+                        .offset(y: 150)
+                }
+                
+                // Синий градиент слева (gradientShape)
+                VStack {
+                    HStack {
+                        Circle()
+                            .fill(Color(hex: "3B82F6").opacity(0.2))
+                            .frame(width: 400, height: 400)
+                            .blur(radius: 100)
+                            .offset(x: -100, y: -100)
+                        Spacer()
+                    }
                     Spacer()
                 }
-                Spacer()
             }
             .ignoresSafeArea()
             
@@ -89,6 +95,7 @@ struct KleosBackground: ViewModifier {
         }
     }
 }
+
 
 extension View {
     func kleosBackground() -> some View {

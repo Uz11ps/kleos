@@ -6,18 +6,16 @@ struct SplashView: View {
     @State private var showOnboarding = false
     
     var body: some View {
-        ZStack {
-            Color.kleosBackground.ignoresSafeArea()
-            
-            VStack {
-                Spacer()
-                Text("Kleos")
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(.white)
-                Spacer()
-            }
+        VStack {
+            Spacer()
+            Text("Kleos")
+                .font(.system(size: 48, weight: .bold))
+                .foregroundColor(.white)
+            Spacer()
         }
+        .kleosBackground() // Централизованный фон
         .onAppear {
+
             // Проверяем, показывали ли onboarding
             let hasSeenOnboarding = UserDefaults.standard.bool(forKey: "has_seen_onboarding")
             
@@ -66,18 +64,15 @@ struct OnboardingView: View {
     ]
     
     var body: some View {
-        ZStack {
-            Color.kleosBackground.ignoresSafeArea()
-            
-            TabView(selection: $currentPage) {
-                ForEach(0..<pages.count, id: \.self) { index in
-                    OnboardingPageView(page: pages[index])
-                        .tag(index)
-                }
+        TabView(selection: $currentPage) {
+            ForEach(0..<pages.count, id: \.self) { index in
+                OnboardingPageView(page: pages[index])
+                    .tag(index)
             }
-            .tabViewStyle(.page)
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
-            
+        }
+        .tabViewStyle(.page)
+        .indexViewStyle(.page(backgroundDisplayMode: .always))
+        .overlay(
             VStack {
                 Spacer()
                 HStack {
@@ -108,9 +103,11 @@ struct OnboardingView: View {
                 }
                 .padding()
             }
-        }
+        )
+        .kleosBackground() // Централизованный фон
     }
 }
+
 
 struct OnboardingPage {
     let title: String

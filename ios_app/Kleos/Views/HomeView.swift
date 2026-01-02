@@ -12,48 +12,30 @@ struct HomeView: View {
     @State private var debugInfo: String = ""
     
     var body: some View {
-        ZStack {
-            Color.kleosBackground.ignoresSafeArea()
-            
-            // Background circles
-            VStack {
-                HStack {
-                    BlurredCircle()
-                        .offset(x: -100, y: -100)
-                    Spacer()
-                }
-                Spacer()
-                HStack {
-                    Spacer()
-                    BlurredCircle(color: Color.kleosBlue.opacity(0.3))
-                        .offset(x: 100, y: 100)
-                }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Header
+                headerView
+                
+                // Welcome Section
+                welcomeSection
+                
+                // Tabs
+                tabsView
+                
+                // News Section
+                newsSection
             }
-            .ignoresSafeArea()
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Header
-                    headerView
-                    
-                    // Welcome Section
-                    welcomeSection
-                    
-                    // Tabs
-                    tabsView
-                    
-                    // News Section
-                    newsSection
-                }
-                .padding(.top, 20)
-            }
+            .padding(.top, 20)
         }
+        .kleosBackground() // Используем централизованный фон
         .onAppear {
             print("🏠 HomeView appeared, loading data...")
             print("🏠 Current news count: \(news.count)")
             print("🏠 isLoading: \(isLoading)")
             loadData()
         }
+
         .refreshable {
             print("🔄 HomeView refresh triggered")
             loadData()

@@ -7,76 +7,58 @@ struct AuthView: View {
     @State private var showRegister = false
     
     var body: some View {
-        ZStack {
-            Color.kleosBackground.ignoresSafeArea()
+        VStack(spacing: 30) {
+            Spacer()
             
-            // Background circles
-            VStack {
-                HStack {
-                    BlurredCircle()
-                        .offset(x: -100, y: -100)
-                    Spacer()
-                }
-                Spacer()
-                HStack {
-                    Spacer()
-                    BlurredCircle(color: Color.kleosBlue.opacity(0.3))
-                        .offset(x: 100, y: 100)
-                }
-            }
-            .ignoresSafeArea()
-            
-            VStack(spacing: 30) {
-                Spacer()
+            VStack(spacing: 16) {
+                Text("Welcome")
+                    .font(.system(size: 40, weight: .bold))
+                    .foregroundColor(.white)
                 
-                VStack(spacing: 16) {
-                    Text("Welcome")
-                        .font(.system(size: 40, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Text("Log in or create a profile")
-                        .font(.system(size: 16))
+                Text("Log in or create a profile")
+                    .font(.system(size: 16))
+                    .foregroundColor(.gray)
+            }
+            
+            Spacer()
+            
+            VStack(spacing: 12) {
+                Button(action: {
+                    showLogin = true
+                }) {
+                    Text("Sign In")
+                        .font(.system(size: 24, weight: .semibold))
+                        .frame(width: 214, height: 62)
+                }
+                .buttonStyle(KleosButtonStyle())
+                
+                Button(action: {
+                    showRegister = true
+                }) {
+                    Text("Sign Up")
+                        .font(.system(size: 24, weight: .semibold))
+                        .frame(width: 214, height: 62)
+                }
+                .buttonStyle(KleosOutlinedButtonStyle())
+                
+                Button(action: {
+                    // Guest login
+                    sessionManager.saveUser(fullName: "Guest", email: "guest@local")
+                    sessionManager.saveToken(UUID().uuidString)
+                }) {
+                    Text("Or login as guest")
+                        .font(.system(size: 14))
                         .foregroundColor(.gray)
                 }
-                
-                Spacer()
-                
-                VStack(spacing: 12) {
-                    Button(action: {
-                        showLogin = true
-                    }) {
-                        Text("Sign In")
-                            .font(.system(size: 24, weight: .semibold))
-                            .frame(width: 214, height: 62)
-                    }
-                    .buttonStyle(KleosButtonStyle())
-                    
-                    Button(action: {
-                        showRegister = true
-                    }) {
-                        Text("Sign Up")
-                            .font(.system(size: 24, weight: .semibold))
-                            .frame(width: 214, height: 62)
-                    }
-                    .buttonStyle(KleosOutlinedButtonStyle())
-                    
-                    Button(action: {
-                        // Guest login
-                        sessionManager.saveUser(fullName: "Guest", email: "guest@local")
-                        sessionManager.saveToken(UUID().uuidString)
-                    }) {
-                        Text("Or login as guest")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.top, 12)
-                }
-                .padding(.bottom, 32)
+                .padding(.top, 12)
             }
+            .padding(.bottom, 32)
         }
+        .kleosBackground() // Используем централизованный фон
         .sheet(isPresented: $showLogin) {
             LoginView()
         }
+
         .sheet(isPresented: $showRegister) {
             RegisterView()
         }
