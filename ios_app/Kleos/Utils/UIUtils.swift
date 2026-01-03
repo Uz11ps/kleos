@@ -39,6 +39,50 @@ struct BlurredCircle: View {
     }
 }
 
+// MARK: - Gradient Shape (Ribbon)
+struct KleosRibbon: View {
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                Path { path in
+                    let w = geometry.size.width
+                    let h = geometry.size.height
+                    
+                    // Улучшенная swirly-линия (лента)
+                    path.move(to: CGPoint(x: w * -0.2, y: h * 0.4))
+                    
+                    path.addCurve(to: CGPoint(x: w * 0.4, y: h * 0.1),
+                                 control1: CGPoint(x: w * 0.0, y: h * 0.5),
+                                 control2: CGPoint(x: w * 0.2, y: h * -0.1))
+                    
+                    path.addCurve(to: CGPoint(x: w * 0.8, y: h * 0.6),
+                                 control1: CGPoint(x: w * 0.6, y: h * 0.3),
+                                 control2: CGPoint(x: w * w * 0.002, y: h * 0.8)) // w*w is just to make it wider
+                    
+                    path.addCurve(to: CGPoint(x: w * 1.2, y: h * 0.2),
+                                 control1: CGPoint(x: w * 1.0, y: h * 0.4),
+                                 control2: CGPoint(x: w * 1.1, y: h * 0.1))
+                }
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(hex: "E8D5FF"), // Лавандовый
+                            Color(hex: "D4A5FF"), // Светло-фиолетовый
+                            Color(hex: "FFB6C1"), // Розовый
+                            Color(hex: "FFD700")  // Желтый/золотой
+                        ]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: StrokeStyle(lineWidth: 120, lineCap: .round, lineJoin: .round)
+                )
+                .blur(radius: 60)
+                .opacity(0.6)
+            }
+        }
+    }
+}
+
 // MARK: - Background View Modifier
 struct KleosBackground: ViewModifier {
     var showGradientShape: Bool = false
@@ -81,11 +125,10 @@ struct KleosBackground: ViewModifier {
                     }
                     
                     if showGradientShape {
-                        // Синий акцент (градиентная форма)
-                        BlurredCircle(color: Color.kleosBlue, size: geo.size.width * 1.4)
-                            .opacity(0.5)
-                            .position(x: 0, y: geo.size.height * 0.1)
-                            .scaleEffect(x: 1.8, y: 1.2)
+                        // Градиентная "лента" (рибон) как в Android
+                        KleosRibbon()
+                            .frame(width: geo.size.width * 1.5, height: geo.size.height * 0.8)
+                            .position(x: geo.size.width * 0.5, y: geo.size.height * 0.3)
                     }
                 }
                 .ignoresSafeArea()
