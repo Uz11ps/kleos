@@ -275,12 +275,19 @@ struct RegisterView: View {
 struct VerifyEmailView: View {
     let email: String
     @Environment(\.dismiss) var dismiss
+    @ObservedObject private var sessionManager = SessionManager.shared
+    @State private var checkTimer: Timer?
+    
     var body: some View {
         ZStack {
             Color.white.ignoresSafeArea()
             VStack(spacing: 0) {
                 Spacer()
                 VStack(spacing: 24) {
+                    Image(systemName: "envelope.badge.shield.half.filled")
+                        .font(.system(size: 80))
+                        .foregroundColor(Color.kleosBlue)
+                    
                     Text(LocalizationManager.shared.t("verify_email"))
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.black)
@@ -293,6 +300,19 @@ struct VerifyEmailView: View {
                     Text("\(LocalizationManager.shared.t("address")): \(email)")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(Color.kleosBlue)
+                    
+                    Button(action: {
+                        // Мануальная проверка статуса
+                        Task {
+                            try? await ApiClient.shared.getProfile()
+                            // Если запрос прошел, значит мы уже залогинены (токен мог прийти через Deep Link)
+                        }
+                    }) {
+                        Text(LocalizationManager.shared.t("check_status"))
+                            .fontWeight(.semibold)
+                    }
+                    .buttonStyle(KleosButtonStyle(backgroundColor: Color.kleosBlue, foregroundColor: .white))
+                    .padding(.top, 20)
                 }
                 .padding()
                 Spacer()
@@ -304,6 +324,22 @@ struct VerifyEmailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(LocalizationManager.shared.t("close")) { dismiss() }
                     .foregroundColor(.black)
+            }
+        }
+        .onAppear {
+            // Запускаем таймер проверки, если вдруг Deep Link не сработал, но токен сохранился
+            checkTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
+                if sessionManager.isLoggedIn {
+                    dismiss()
+                }
+            }
+        }
+        .onDisappear {
+            checkTimer?.invalidate()
+        }
+        .onChange(of: sessionManager.isLoggedIn) { _, newValue in
+            if newValue {
+                dismiss()
             }
         }
     }

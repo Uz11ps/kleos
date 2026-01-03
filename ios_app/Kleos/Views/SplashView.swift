@@ -35,9 +35,11 @@ struct SplashView: View {
                 } else if sessionManager.isLoggedIn {
                     MainTabView()
                         .transition(.opacity)
+                        .id("MainApp") // Force re-render when switching
                 } else {
                     AuthView()
                         .transition(.opacity)
+                        .id("AuthFlow")
                 }
             }
         }

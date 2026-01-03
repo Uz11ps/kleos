@@ -91,7 +91,8 @@ class LocalizationManager: ObservableObject {
             "password": "Пароль",
             "study": "Изучайте",
             "programs_and": "программы и",
-            "submit_apps": "подавайте заявки"
+            "submit_apps": "подавайте заявки",
+            "check_status": "Я подтвердил почту"
         ],
         "en": [
             "home": "Home",
@@ -169,7 +170,8 @@ class LocalizationManager: ObservableObject {
             "password": "Password",
             "study": "Study",
             "programs_and": "programs and",
-            "submit_apps": "submit applications"
+            "submit_apps": "submit applications",
+            "check_status": "I confirmed my email"
         ],
         "zh": [
             "home": "首页",
@@ -241,13 +243,14 @@ class LocalizationManager: ObservableObject {
             "enter_full_name": "输入全名",
             "register_error": "注册错误",
             "verify_email": "验证电子邮件",
-            "verify_email_description": "我们发送了一封包含验证链接的电子邮件。请在设备上打开邮件中的链接。",
+            "verify_email_description": "我们发送了一封包含验证链接의电子邮件。请在设备上打开邮件中的链接。",
             "address": "地址",
             "full_name": "全名",
             "password": "密码",
             "study": "研究",
             "programs_and": "项目和",
-            "submit_apps": "提交申请"
+            "submit_apps": "提交申请",
+            "check_status": "我确认了我的电子邮件"
         ]
     ]
     
