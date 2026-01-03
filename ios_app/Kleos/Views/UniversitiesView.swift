@@ -62,34 +62,51 @@ struct UniversityCard: View {
     let university: University
     var body: some View {
         ZStack(alignment: .bottomLeading) {
+            // Background Image
             AsyncImage(url: ApiClient.shared.getFullUrl(university.logoUrl)) { phase in
                 if case .success(let image) = phase {
                     image.resizable().aspectRatio(contentMode: .fill)
                 } else {
-                    RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.1))
+                    Color(hex: "7E5074").opacity(0.3)
                 }
             }
-            .frame(height: 180).clipped()
-            LinearGradient(gradient: Gradient(colors: [.black.opacity(0.7), .clear]), startPoint: .bottom, endPoint: .center)
+            .frame(height: 200).clipped()
+            
+            // Overlay darkening
+            Color.black.opacity(0.4)
+            
+            // Arrow button
+            VStack {
+                HStack {
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.black)
+                        .padding(8)
+                        .background(Color.white)
+                        .clipShape(Circle())
+                        .padding(16)
+                }
+                Spacer()
+            }
+            
+            // Text content
             VStack(alignment: .leading, spacing: 4) {
-                CategoryBadge(text: LocalizationManager.shared.t("university"), isInteresting: false)
-                Text(university.name).font(.system(size: 20, weight: .bold)).foregroundColor(.white)
+                CategoryBadge(text: LocalizationManager.shared.t("universities"), isInteresting: false)
+                    .padding(.bottom, 4)
+                Text(university.name)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
                 HStack {
                     Image(systemName: "mappin.and.ellipse")
                     Text(university.location)
                 }
-                .font(.system(size: 14)).foregroundColor(.gray)
+                .font(.system(size: 14)).foregroundColor(.white.opacity(0.8))
             }
             .padding(20)
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Image(systemName: "arrow.up.right.circle.fill").resizable().frame(width: 32, height: 32).foregroundColor(.white).padding(20)
-                }
-            }
         }
-        .cornerRadius(20).shadow(radius: 10)
+        .frame(height: 200)
+        .cornerRadius(20)
     }
 }
 

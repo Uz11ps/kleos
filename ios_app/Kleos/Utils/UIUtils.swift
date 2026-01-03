@@ -21,6 +21,7 @@ struct KleosBackground: ViewModifier {
                 ZStack {
                     if circlePositions == .center || isSplashOrAuth {
                         // ВЕРХНИЙ КРУГ (Розовый #7E5074)
+                        // Android: Center Y = 9dp
                         RadialGradient(
                             gradient: Gradient(colors: [Color(hex: "7E5074").opacity(0.9), Color(hex: "7E5074").opacity(0)]),
                             center: .center,
@@ -31,6 +32,7 @@ struct KleosBackground: ViewModifier {
                         .position(x: geo.size.width / 2, y: 9)
 
                         // НИЖНИЙ КРУГ (Розовый #7E5074)
+                        // Android: Center Y = ParentHeight - 9dp
                         RadialGradient(
                             gradient: Gradient(colors: [Color(hex: "7E5074").opacity(0.9), Color(hex: "7E5074").opacity(0)]),
                             center: .center,
@@ -69,7 +71,7 @@ struct KleosBackground: ViewModifier {
                             endRadius: 200
                         )
                         .frame(width: 500, height: 500)
-                        .position(x: 100, y: 100)
+                        .position(x: 80, y: 80)
                     }
                 }
             }

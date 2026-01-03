@@ -22,31 +22,28 @@ struct KleosApp: App {
     }
     
     private func handleDeepLink(_ url: URL) {
-        print("🔗 Deep Link: \(url.absoluteString)")
+        print("🔗 Received Deep Link: \(url.absoluteString)")
         let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
         
         if url.host == "verified" {
             if let jwt = components?.queryItems?.first(where: { $0.name == "jwt" })?.value {
-                print("🔗 Received JWT from Safari")
+                print("🔗 Received JWT from Safari, processing...")
                 
-                // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА СТАРОЙ СЕССИИ
-                sessionManager.logout()
-                
-                // Сохраняем новый токен
+                // Просто сохраняем новый токен (SessionManager сам почистит гостевые данные)
                 sessionManager.saveToken(jwt)
                 
                 Task {
                     do {
-                        // Ждем 0.5 сек, чтобы все части приложения увидели новый токен
-                        try await Task.sleep(nanoseconds: 500_000_000)
+                        // Небольшая пауза для завершения записи в UserDefaults
+                        try await Task.sleep(nanoseconds: 300_000_000)
                         
                         let profile = try await ApiClient.shared.getProfile()
                         await MainActor.run {
                             sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
-                            print("✅ Session updated successfully")
+                            print("✅ Deep Link: Session updated successfully")
                         }
                     } catch {
-                        print("❌ Profile load error (expected if too fast): \(error)")
+                        print("❌ Deep Link: Profile load error: \(error)")
                     }
                 }
             }

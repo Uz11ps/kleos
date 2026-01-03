@@ -33,7 +33,6 @@ struct HomeView: View {
         }
         .kleosBackground()
         .onAppear {
-            // Загружаем данные только если они еще не были загружены
             if !hasLoadedOnce && !isLoading {
                 loadData()
             }
@@ -129,7 +128,6 @@ struct HomeView: View {
     }
     
     private func loadUserProfile() {
-        // Если гость - не запрашиваем профиль
         if sessionManager.isGuest() {
             self.userProfile = sessionManager.currentUser
             return
@@ -137,13 +135,9 @@ struct HomeView: View {
         
         Task {
             do {
-                // ПРОВЕРКА ТОКЕНА ПЕРЕД ЗАПРОСОМ
-                guard let token = sessionManager.getToken(), token.contains(".") else { return }
-                
                 let profile = try await apiClient.getProfile()
                 await MainActor.run { self.userProfile = profile }
             } catch {
-                print("⚠️ HomeView: Profile load failed")
                 await MainActor.run {
                     if let currentUser = sessionManager.currentUser {
                         self.userProfile = currentUser
@@ -197,37 +191,56 @@ struct TabButton: View {
 struct NewsCard: View {
     let item: NewsItem
     var isInteresting: Bool { item.isInteresting ?? false }
-    var backgroundColor: Color { isInteresting ? Color(hex: "FFD700") : Color(hex: "E8D5FF") }
+    
     var body: some View {
         ZStack(alignment: .topLeading) {
-            backgroundColor.frame(width: UIScreen.main.bounds.width - 48, height: 200)
+            // Background Image
             if let imageUrl = item.imageUrl, !imageUrl.isEmpty {
                 AsyncImage(url: ApiClient.shared.getFullUrl(imageUrl)) { phase in
                     if case .success(let image) = phase {
                         image.resizable().aspectRatio(contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width - 48, height: 200).clipped()
+                    } else {
+                        Color(hex: isInteresting ? "FFD700" : "7E5074").opacity(0.3)
                     }
                 }
+            } else {
+                Color(hex: isInteresting ? "FFD700" : "7E5074").opacity(0.3)
             }
+            
+            // Overlay (Darkening like in Android)
+            Color.black.opacity(0.4)
+            
+            // Content
             VStack {
                 HStack {
                     Spacer()
-                    Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)).foregroundColor(.black)
-                        .frame(width: 32, height: 32).background(Color.white).clipShape(Circle())
-                        .padding(.top, 16).padding(.trailing, 16)
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.black)
+                        .padding(8)
+                        .background(Color.white)
+                        .clipShape(Circle())
+                        .padding(16)
                 }
                 Spacer()
             }
+            
             VStack(alignment: .leading, spacing: 0) {
                 Spacer()
                 CategoryBadge(text: isInteresting ? LocalizationManager.shared.t("interesting") : LocalizationManager.shared.t("news"), isInteresting: isInteresting)
                     .padding(.leading, 20).padding(.bottom, 8)
-                Text(item.title).font(.system(size: 20, weight: .bold)).foregroundColor(isInteresting ? .black : .white)
+                Text(item.title)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
                     .padding(.horizontal, 20).padding(.bottom, 4)
-                Text(item.dateText).font(.system(size: 14)).foregroundColor(isInteresting ? Color.gray.opacity(0.8) : Color.white.opacity(0.8))
+                Text(item.dateText)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.8))
                     .padding(.leading, 20).padding(.bottom, 20)
             }
         }
-        .frame(width: UIScreen.main.bounds.width - 48, height: 200).cornerRadius(20)
+        .frame(height: 200)
+        .cornerRadius(20)
+        .clipped()
     }
 }

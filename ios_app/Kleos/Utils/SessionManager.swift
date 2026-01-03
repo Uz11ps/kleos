@@ -28,9 +28,13 @@ class SessionManager: ObservableObject {
     func checkLoginStatus() {
         let email = userDefaults.string(forKey: userEmailKey)
         _token = userDefaults.string(forKey: tokenKey)
+        
         isLoggedIn = _token != nil && email != nil
         isUserGuest = determineGuestStatus()
-        if isLoggedIn { loadCurrentUser() }
+        
+        if isLoggedIn {
+            loadCurrentUser()
+        }
     }
     
     private func determineGuestStatus() -> Bool {
@@ -40,20 +44,22 @@ class SessionManager: ObservableObject {
         return _token == nil || email == nil
     }
     
-    func isGuest() -> Bool { return isUserGuest }
+    func isGuest() -> Bool {
+        return isUserGuest
+    }
     
     func saveToken(_ token: String) {
-        print("🔑 SessionManager: Saving token...")
-        self._token = token
-        userDefaults.set(token, forKey: tokenKey)
-        
-        // Синхронно чистим гостевые данные, если это JWT
+        // Если это новый JWT - принудительно стираем старые гостевые данные ПЕРЕД сохранением
         if token.contains(".") {
+            print("✅ SessionManager: Real user token (JWT) detected")
             if userDefaults.string(forKey: userEmailKey) == "guest@local" {
                 userDefaults.removeObject(forKey: userEmailKey)
                 userDefaults.removeObject(forKey: userFullNameKey)
             }
         }
+        
+        self._token = token
+        userDefaults.set(token, forKey: tokenKey)
         userDefaults.synchronize()
         
         DispatchQueue.main.async {
@@ -70,7 +76,9 @@ class SessionManager: ObservableObject {
     func saveUser(fullName: String, email: String, role: String? = nil) {
         userDefaults.set(fullName, forKey: userFullNameKey)
         userDefaults.set(email, forKey: userEmailKey)
-        if let role = role { userDefaults.set(role, forKey: userRoleKey) }
+        if let role = role {
+            userDefaults.set(role, forKey: userRoleKey)
+        }
         userDefaults.synchronize()
         
         DispatchQueue.main.async {
@@ -83,11 +91,14 @@ class SessionManager: ObservableObject {
     
     func loadCurrentUser() {
         guard let email = userDefaults.string(forKey: userEmailKey),
-              let fullName = userDefaults.string(forKey: userFullNameKey) else { return }
+              let fullName = userDefaults.string(forKey: userFullNameKey) else {
+            return
+        }
         
         currentUser = UserProfile(
             id: userDefaults.string(forKey: userIdKey) ?? "0",
-            email: email, fullName: fullName,
+            email: email,
+            fullName: fullName,
             role: userDefaults.string(forKey: userRoleKey) ?? "user",
             phone: nil, course: nil, speciality: nil, status: nil, university: nil,
             payment: nil, penalties: nil, notes: nil, studentId: nil,
@@ -96,12 +107,13 @@ class SessionManager: ObservableObject {
     }
     
     func logout() {
-        print("🚪 SessionManager: Logout")
+        print("🚪 SessionManager: Cleaning session data")
         _token = nil
         userDefaults.removeObject(forKey: tokenKey)
         userDefaults.removeObject(forKey: userEmailKey)
         userDefaults.removeObject(forKey: userFullNameKey)
         userDefaults.removeObject(forKey: userRoleKey)
+        userDefaults.removeObject(forKey: userIdKey)
         userDefaults.synchronize()
         
         DispatchQueue.main.async {
