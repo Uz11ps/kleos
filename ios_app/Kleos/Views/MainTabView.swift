@@ -47,19 +47,6 @@ struct MainTabView: View {
                     .tabItem { Label(t("gallery"), systemImage: "photo.on.rectangle.angled") }.tag(1)
                 } else {
                     NavigationView {
-                        UniversitiesView()
-                            .navigationBarTitleDisplayMode(.inline)
-                            .toolbar {
-                                ToolbarItem(placement: .navigationBarLeading) {
-                                    Button(action: { withAnimation { showDrawer = true } }) {
-                                        Image(systemName: "line.3.horizontal").foregroundColor(.white)
-                                    }
-                                }
-                            }
-                    }
-                    .tabItem { Label(t("universities"), systemImage: "graduationcap.fill") }.tag(0)
-                    
-                    NavigationView {
                         HomeView()
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
@@ -70,7 +57,20 @@ struct MainTabView: View {
                                 }
                             }
                     }
-                    .tabItem { Label(t("home"), systemImage: "house.fill") }.tag(1)
+                    .tabItem { Label(t("home"), systemImage: "house.fill") }.tag(0)
+
+                    NavigationView {
+                        UniversitiesView()
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button(action: { withAnimation { showDrawer = true } }) {
+                                        Image(systemName: "line.3.horizontal").foregroundColor(.white)
+                                    }
+                                }
+                            }
+                    }
+                    .tabItem { Label(t("universities"), systemImage: "graduationcap.fill") }.tag(1)
                     
                     NavigationView {
                         GalleryView()
