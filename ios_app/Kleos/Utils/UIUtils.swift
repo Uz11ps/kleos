@@ -24,43 +24,43 @@ struct KleosBackground: ViewModifier {
                         // В Android: layout_marginTop="-150dp", width="318dp"
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 318, height: 318)
-                            .blur(radius: 110)
-                            .opacity(0.9)
-                            .position(x: geo.size.width / 2, y: -50) // Центр вынесен за экран
+                            .frame(width: 320, height: 320)
+                            .blur(radius: 140) // Глубокий блюр
+                            .opacity(0.8)
+                            .position(x: geo.size.width / 2, y: -80)
 
                         // НИЖНИЙ КРУГ (Розовый #7E5074)
                         // В Android: layout_marginBottom="-150dp", width="318dp"
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 318, height: 318)
-                            .blur(radius: 110)
-                            .opacity(0.9)
-                            .position(x: geo.size.width / 2, y: geo.size.height + 50)
+                            .frame(width: 320, height: 320)
+                            .blur(radius: 140)
+                            .opacity(0.8)
+                            .position(x: geo.size.width / 2, y: geo.size.height + 80)
                     } else {
                         // Угловые свечения для внутренних страниц
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 130)
-                            .opacity(0.6)
-                            .position(x: geo.size.width + 60, y: -60)
+                            .blur(radius: 150)
+                            .opacity(0.5)
+                            .position(x: geo.size.width + 100, y: -100)
                         
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 130)
-                            .opacity(0.6)
-                            .position(x: -60, y: geo.size.height + 60)
+                            .blur(radius: 150)
+                            .opacity(0.5)
+                            .position(x: -100, y: geo.size.height + 100)
                     }
                     
                     // СИНИЙ ГРАДИЕНТ (gradient_shape в Android)
                     if showGradientShape {
                         Circle()
-                            .fill(Color(hex: "3B82F6").opacity(0.35))
-                            .frame(width: 400, height: 400)
-                            .blur(radius: 100)
-                            .position(x: 20, y: 20)
+                            .fill(Color(hex: "3B82F6").opacity(0.3))
+                            .frame(width: 440, height: 440)
+                            .blur(radius: 110)
+                            .position(x: 0, y: 0)
                     }
                 }
             }

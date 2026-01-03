@@ -334,9 +334,9 @@ struct VerifyEmailView: View {
         }
         .onAppear {
             // Запускаем таймер проверки
-            checkTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+            checkTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
                 if !sessionManager.isGuest() && sessionManager.isLoggedIn {
-                    print("✅ VerifyEmailView: User is no longer a guest, dismissing...")
+                    print("🚀 VerifyEmailView: Status changed to REAL USER. Closing...")
                     dismiss()
                 }
             }
@@ -345,8 +345,8 @@ struct VerifyEmailView: View {
             checkTimer?.invalidate()
         }
         .onChange(of: sessionManager.isUserGuest) { _, isGuest in
-            if !isGuest && sessionManager.isLoggedIn {
-                print("✅ VerifyEmailView onChange: User is no longer a guest, dismissing...")
+            if !isGuest {
+                print("🚀 VerifyEmailView: isUserGuest is now FALSE. Closing...")
                 dismiss()
             }
         }

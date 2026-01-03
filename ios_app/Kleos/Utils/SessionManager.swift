@@ -38,7 +38,7 @@ class SessionManager: ObservableObject {
         if let t = _token, t.contains(".") { return false }
         // Если email гостевой
         if email == "guest@local" { return true }
-        // В остальных случаях (нет токена или email) - считаем гостем для безопасности
+        // В остальных случаях считаем гостем для безопасности
         return _token == nil || email == nil
     }
     
@@ -47,11 +47,12 @@ class SessionManager: ObservableObject {
     }
     
     func saveToken(_ token: String) {
+        print("🔑 SessionManager: Saving new token...")
         self._token = token
         userDefaults.set(token, forKey: tokenKey)
         
-        // При переходе из гостя в реального юзера (JWT) - чистим старые данные
         if token.contains(".") {
+            print("✅ SessionManager: JWT Token detected!")
             if userDefaults.string(forKey: userEmailKey) == "guest@local" {
                 userDefaults.removeObject(forKey: userEmailKey)
                 userDefaults.removeObject(forKey: userFullNameKey)
@@ -61,6 +62,8 @@ class SessionManager: ObservableObject {
         isUserGuest = determineGuestStatus()
         isLoggedIn = true
         objectWillChange.send()
+        
+        print("👤 Status: \(isUserGuest ? "Guest" : "Real User"), LoggedIn: \(isLoggedIn)")
     }
     
     func getToken() -> String? {
@@ -68,6 +71,7 @@ class SessionManager: ObservableObject {
     }
     
     func saveUser(fullName: String, email: String, role: String? = nil) {
+        print("👤 SessionManager: Saving user info for \(email)")
         userDefaults.set(fullName, forKey: userFullNameKey)
         userDefaults.set(email, forKey: userEmailKey)
         if let role = role {
@@ -98,6 +102,7 @@ class SessionManager: ObservableObject {
     }
     
     func logout() {
+        print("🚪 SessionManager: Logging out...")
         _token = nil
         userDefaults.removeObject(forKey: tokenKey)
         userDefaults.removeObject(forKey: userEmailKey)
