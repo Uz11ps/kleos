@@ -8,7 +8,7 @@ struct MainTabView: View {
     @State private var activeSheet: ActiveSheet?
     
     enum ActiveSheet: Identifiable {
-        case profile, admission, support, news, programs, partners
+        case profile, admission, support, news, programs, partners, universities
         var id: Int { hashValue }
     }
     
@@ -102,6 +102,7 @@ struct MainTabView: View {
                 case .news: NewsView()
                 case .programs: ProgramsView()
                 case .partners: PartnersView()
+                case .universities: UniversitiesView()
                 }
             }
         }
@@ -179,6 +180,7 @@ struct DrawerMenuView: View {
                             }
                             
                             DrawerMenuItem(icon: "newspaper.fill", title: t("news")) { navigate(.news) }
+                            DrawerMenuItem(icon: "graduationcap.fill", title: t("universities")) { navigate(.universities) }
                             DrawerMenuItem(icon: "book.fill", title: t("programs")) { navigate(.programs) }
                             DrawerMenuItem(icon: "person.2.fill", title: t("partners")) { navigate(.partners) }
                             
