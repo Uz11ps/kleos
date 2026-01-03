@@ -21,46 +21,46 @@ struct KleosBackground: ViewModifier {
                 ZStack {
                     if circlePositions == .center || isSplashOrAuth {
                         // ВЕРХНИЙ КРУГ (Розовый #7E5074)
-                        // В Android: layout_marginTop="-150dp", width="318dp"
+                        // В Android: Center Y = 9dp
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 320, height: 320)
-                            .blur(radius: 140) // Глубокий блюр
-                            .opacity(0.8)
-                            .position(x: geo.size.width / 2, y: -80)
+                            .frame(width: 318, height: 318)
+                            .blur(radius: 120)
+                            .opacity(1.0)
+                            .position(x: geo.size.width / 2, y: 9)
 
                         // НИЖНИЙ КРУГ (Розовый #7E5074)
-                        // В Android: layout_marginBottom="-150dp", width="318dp"
+                        // В Android: Center Y = ParentHeight - 9dp
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 320, height: 320)
-                            .blur(radius: 140)
-                            .opacity(0.8)
-                            .position(x: geo.size.width / 2, y: geo.size.height + 80)
+                            .frame(width: 318, height: 318)
+                            .blur(radius: 120)
+                            .opacity(1.0)
+                            .position(x: geo.size.width / 2, y: geo.size.height - 9)
                     } else {
                         // Угловые свечения для внутренних страниц
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 150)
-                            .opacity(0.5)
-                            .position(x: geo.size.width + 100, y: -100)
+                            .blur(radius: 140)
+                            .opacity(0.8)
+                            .position(x: geo.size.width, y: 0)
                         
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 150)
-                            .opacity(0.5)
-                            .position(x: -100, y: geo.size.height + 100)
+                            .blur(radius: 140)
+                            .opacity(0.8)
+                            .position(x: 0, y: geo.size.height)
                     }
                     
-                    // СИНИЙ ГРАДИЕНТ (gradient_shape в Android)
+                    // СИНИЙ ГРАДИЕНТ (как gradient_shape в Android)
                     if showGradientShape {
                         Circle()
-                            .fill(Color(hex: "3B82F6").opacity(0.3))
-                            .frame(width: 440, height: 440)
-                            .blur(radius: 110)
-                            .position(x: 0, y: 0)
+                            .fill(Color(hex: "3B82F6").opacity(0.35))
+                            .frame(width: 400, height: 400)
+                            .blur(radius: 100)
+                            .position(x: 100, y: 100) // Позиция центра как в Android
                     }
                 }
             }

@@ -29,11 +29,17 @@ struct AuthView: View {
                 Spacer()
                 
                 VStack(spacing: 12) {
-                    Button(action: { showLogin = true }) {
+                    Button(action: { 
+                        sessionManager.logout() // Очистка перед входом
+                        showLogin = true 
+                    }) {
                         Text(t("sign_in")).font(.system(size: 24, weight: .semibold)).frame(width: 214, height: 62)
                     }.buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: Color(hex: "0E080F")))
                     
-                    Button(action: { showRegister = true }) {
+                    Button(action: { 
+                        sessionManager.logout() // Очистка перед регистрацией
+                        showRegister = true 
+                    }) {
                         Text(t("sign_up")).font(.system(size: 24, weight: .semibold)).frame(width: 214, height: 62)
                     }.buttonStyle(KleosOutlinedButtonStyle(strokeColor: .white, foregroundColor: .white))
                     
@@ -126,9 +132,9 @@ struct LoginView: View {
             }
             .background(Color.white)
             .cornerRadius(24, corners: [.topLeft, .topRight])
-            .padding(.bottom, 160) // Поднимаем блок вверх, оставляя место снизу
+            .padding(.bottom, 160)
         }
-        .ignoresSafeArea(.keyboard) // Предотвращаем автоматическое сжатие контента клавиатурой
+        .ignoresSafeArea(.keyboard)
     }
     
     private func performLogin() {
@@ -223,7 +229,7 @@ struct RegisterView: View {
             }
             .background(Color.white)
             .cornerRadius(24, corners: [.topLeft, .topRight])
-            .padding(.bottom, 160) // Поднимаем блок вверх
+            .padding(.bottom, 160)
         }
         .ignoresSafeArea(.keyboard)
     }
@@ -245,9 +251,6 @@ struct RegisterView: View {
                         sessionManager.saveToken(token)
                         sessionManager.saveUser(fullName: user.fullName, email: user.email, role: user.role)
                         dismiss()
-                    } else if let error = response.error {
-                        errorMessage = error
-                        isLoading = false
                     } else {
                         onSuccess(email)
                         dismiss()
@@ -257,7 +260,6 @@ struct RegisterView: View {
                 await MainActor.run {
                     switch error {
                     case .serverError(let msg): errorMessage = msg
-                    case .httpError(let code): errorMessage = "Error \(code)"
                     default: errorMessage = t("register_error")
                     }
                     isLoading = false
@@ -304,6 +306,11 @@ struct VerifyEmailView: View {
                     Button(action: {
                         Task {
                             do {
+                                // ПРОВЕРКА: Если нет токена с точкой - даже не пробуем
+                                guard let t = sessionManager.getToken(), t.contains(".") else {
+                                    print("⚠️ No JWT token yet")
+                                    return
+                                }
                                 let profile = try await ApiClient.shared.getProfile()
                                 await MainActor.run {
                                     sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
@@ -325,18 +332,11 @@ struct VerifyEmailView: View {
                 Spacer()
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(LocalizationManager.shared.t("close")) { dismiss() }
-                    .foregroundColor(.black)
-            }
-        }
         .onAppear {
-            // Запускаем таймер проверки
             checkTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
+                // АВТО-ЗАКРЫТИЕ: если токен стал JWT и статус гостя пропал
                 if !sessionManager.isGuest() && sessionManager.isLoggedIn {
-                    print("🚀 VerifyEmailView: Status changed to REAL USER. Closing...")
+                    print("🚀 Status changed! Closing Verify view...")
                     dismiss()
                 }
             }
@@ -345,10 +345,7 @@ struct VerifyEmailView: View {
             checkTimer?.invalidate()
         }
         .onChange(of: sessionManager.isUserGuest) { _, isGuest in
-            if !isGuest {
-                print("🚀 VerifyEmailView: isUserGuest is now FALSE. Closing...")
-                dismiss()
-            }
+            if !isGuest { dismiss() }
         }
     }
 }

@@ -34,11 +34,8 @@ class SessionManager: ObservableObject {
     
     private func determineGuestStatus() -> Bool {
         let email = userDefaults.string(forKey: userEmailKey)
-        // Если токен содержит точки - это реальный JWT (не гость)
         if let t = _token, t.contains(".") { return false }
-        // Если email гостевой
         if email == "guest@local" { return true }
-        // В остальных случаях считаем гостем для безопасности
         return _token == nil || email == nil
     }
     
@@ -51,8 +48,9 @@ class SessionManager: ObservableObject {
         self._token = token
         userDefaults.set(token, forKey: tokenKey)
         
+        // Если это JWT - очищаем старые гостевые данные
         if token.contains(".") {
-            print("✅ SessionManager: JWT Token detected!")
+            print("✅ SessionManager: JWT Detected!")
             if userDefaults.string(forKey: userEmailKey) == "guest@local" {
                 userDefaults.removeObject(forKey: userEmailKey)
                 userDefaults.removeObject(forKey: userFullNameKey)
@@ -62,8 +60,6 @@ class SessionManager: ObservableObject {
         isUserGuest = determineGuestStatus()
         isLoggedIn = true
         objectWillChange.send()
-        
-        print("👤 Status: \(isUserGuest ? "Guest" : "Real User"), LoggedIn: \(isLoggedIn)")
     }
     
     func getToken() -> String? {
@@ -71,7 +67,7 @@ class SessionManager: ObservableObject {
     }
     
     func saveUser(fullName: String, email: String, role: String? = nil) {
-        print("👤 SessionManager: Saving user info for \(email)")
+        print("👤 SessionManager: Saving profile for \(email)")
         userDefaults.set(fullName, forKey: userFullNameKey)
         userDefaults.set(email, forKey: userEmailKey)
         if let role = role {
@@ -102,12 +98,13 @@ class SessionManager: ObservableObject {
     }
     
     func logout() {
-        print("🚪 SessionManager: Logging out...")
+        print("🚪 SessionManager: Cleaning session...")
         _token = nil
         userDefaults.removeObject(forKey: tokenKey)
         userDefaults.removeObject(forKey: userEmailKey)
         userDefaults.removeObject(forKey: userFullNameKey)
         userDefaults.removeObject(forKey: userRoleKey)
+        userDefaults.removeObject(forKey: userIdKey)
         
         isLoggedIn = false
         isUserGuest = true
