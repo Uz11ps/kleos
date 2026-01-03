@@ -89,11 +89,10 @@ struct KleosBackground: ViewModifier {
                     }
                     
                     if showGradientShape {
-                        // Картинка ленты сверху как на макете
+                        // Картинка ленты в верхней части экрана
                         KleosRibbon()
-                            .frame(width: geo.size.width, height: geo.size.height * 0.5)
-                            .position(x: geo.size.width * 0.5, y: geo.size.height * 0.1)
-                            .clipped()
+                            .frame(width: geo.size.width * 1.2) // Чуть шире экрана
+                            .position(x: geo.size.width * 0.6, y: geo.size.height * 0.15)
                             .allowsHitTesting(false)
                     }
                 }

@@ -10,62 +10,64 @@ struct AuthView: View {
     @State private var verifyEmail = ""
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                // Пятно сверху (лента)
-                Spacer()
-                    .frame(height: 100)
-                
-                VStack(spacing: 8) {
-                    Text(t("welcome"))
-                        .font(.system(size: 44, weight: .black))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
+        GeometryReader { geo in
+            ZStack {
+                VStack(spacing: 0) {
+                    // Большой отступ сверху, чтобы текст был ниже ленты
+                    Spacer()
+                        .frame(height: geo.size.height * 0.3)
                     
-                    Text(t("auth_description"))
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.6))
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, 40)
-                
-                Spacer()
-                
-                VStack(spacing: 16) {
-                    Button(action: { 
-                        sessionManager.logout()
-                        showLogin = true 
-                    }) {
-                        Text(t("sign_in"))
-                            .font(.system(size: 24, weight: .bold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 68)
-                    }
-                    .buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: .black))
-                    
-                    Button(action: { 
-                        sessionManager.logout()
-                        showRegister = true 
-                    }) {
-                        Text(t("sign_up"))
-                            .font(.system(size: 24, weight: .bold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 68)
-                    }
-                    .buttonStyle(KleosOutlinedButtonStyle(strokeColor: .white, foregroundColor: .white))
-                    
-                    Button(action: {
-                        sessionManager.saveUser(fullName: t("guest"), email: "guest@local")
-                        sessionManager.saveToken(UUID().uuidString)
-                    }) {
-                        Text(t("login_as_guest"))
-                            .font(.system(size: 14))
+                    VStack(spacing: 12) {
+                        Text(t("welcome"))
+                            .font(.system(size: 38, weight: .bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                        
+                        Text(t("auth_description"))
+                            .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
                     }
-                    .padding(.top, 20)
+                    .padding(.horizontal, 30)
+                    
+                    Spacer()
+                    
+                    VStack(spacing: 16) {
+                        Button(action: { 
+                            sessionManager.logout()
+                            showLogin = true 
+                        }) {
+                            Text(t("sign_in"))
+                                .font(.system(size: 20, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 60)
+                        }
+                        .buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: .black))
+                        
+                        Button(action: { 
+                            sessionManager.logout()
+                            showRegister = true 
+                        }) {
+                            Text(t("sign_up"))
+                                .font(.system(size: 20, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 60)
+                        }
+                        .buttonStyle(KleosOutlinedButtonStyle(strokeColor: .white, foregroundColor: .white))
+                        
+                        Button(action: {
+                            sessionManager.saveUser(fullName: t("guest"), email: "guest@local")
+                            sessionManager.saveToken(UUID().uuidString)
+                        }) {
+                            Text(t("login_as_guest"))
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                        .padding(.top, 10)
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 60)
                 }
-                .padding(.horizontal, 40)
-                .padding(.bottom, 60)
             }
         }
         .kleosBackground(showGradientShape: true, circlePositions: .center, isSplashOrAuth: true) 
