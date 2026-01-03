@@ -42,10 +42,10 @@ struct BlurredCircle: View {
 // MARK: - Gradient Shape (Ribbon Image)
 struct KleosRibbon: View {
     var body: some View {
-        Image("gradient_shape") // Используем именно картинку
+        Image("gradient_shape")
             .resizable()
-            .aspectRatio(contentMode: .fit)
-            .opacity(0.9)
+            .scaledToFill()
+            .opacity(1.0)
     }
 }
 
@@ -69,7 +69,7 @@ struct KleosBackground: ViewModifier {
                 // 2. Слои свечения (Адаптивные)
                 Group {
                     if circlePositions == .center {
-                        // Auth/Splash: Центрированные пятна (по 60% от ширины экрана)
+                        // Auth/Splash: Центрированные пятна
                         VStack {
                             BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.5)
                                 .offset(y: -geo.size.height * 0.25)
@@ -80,21 +80,21 @@ struct KleosBackground: ViewModifier {
                     } else {
                         // Home/Main: Угловые пятна
                         ZStack {
-                            // Верхнее правое
                             BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.8)
                                 .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
                             
-                            // Нижнее левое
                             BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.8)
                                 .position(x: geo.size.width * 0.1, y: geo.size.height * 0.9)
                         }
                     }
                     
                     if showGradientShape {
-                        // Градиентная "лента" (рибон) как в Android
+                        // Картинка ленты сверху как на макете
                         KleosRibbon()
-                            .frame(width: geo.size.width * 1.5, height: geo.size.height * 0.8)
-                            .position(x: geo.size.width * 0.5, y: geo.size.height * 0.3)
+                            .frame(width: geo.size.width, height: geo.size.height * 0.5)
+                            .position(x: geo.size.width * 0.5, y: geo.size.height * 0.1)
+                            .clipped()
+                            .allowsHitTesting(false)
                     }
                 }
                 .ignoresSafeArea()
