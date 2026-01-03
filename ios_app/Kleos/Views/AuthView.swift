@@ -38,9 +38,9 @@ struct AuthView: View {
                             showLogin = true 
                         }) {
                             Text(t("sign_in"))
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 60)
+                                .frame(height: 64)
                         }
                         .buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: .black))
                         
@@ -49,9 +49,9 @@ struct AuthView: View {
                             showRegister = true 
                         }) {
                             Text(t("sign_up"))
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 60)
+                                .frame(height: 64)
                         }
                         .buttonStyle(KleosOutlinedButtonStyle(strokeColor: .white, foregroundColor: .white))
                         
@@ -61,11 +61,11 @@ struct AuthView: View {
                         }) {
                             Text(t("login_as_guest"))
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(.white.opacity(0.8))
                         }
-                        .padding(.top, 10)
+                        .padding(.top, 24)
                     }
-                    .padding(.horizontal, 40)
+                    .padding(.horizontal, 30)
                     .padding(.bottom, 60)
                 }
             }
