@@ -129,6 +129,12 @@ struct HomeView: View {
     }
     
     private func loadUserProfile() {
+        // Если гость - не запрашиваем профиль с сервера, используем локальные данные
+        if sessionManager.isGuest() {
+            self.userProfile = sessionManager.currentUser
+            return
+        }
+        
         Task {
             do {
                 let profile = try await apiClient.getProfile()

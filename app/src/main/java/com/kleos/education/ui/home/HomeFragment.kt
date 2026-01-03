@@ -155,17 +155,19 @@ class HomeFragment : Fragment() {
         binding.userNameText.isClickable = true
         binding.userNameText.isFocusable = true
         
-        // Загружаем аватарку пользователя
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val profile = withContext(Dispatchers.IO) {
-                    com.kleos.education.data.profile.ProfileRepository().getProfile()
+        // Загружаем аватарку пользователя (только для зарегистрированных)
+        if (user != null && !user.email.contains("guest")) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val profile = withContext(Dispatchers.IO) {
+                        com.kleos.education.data.profile.ProfileRepository().getProfile()
+                    }
+                    if (!profile.avatarUrl.isNullOrEmpty()) {
+                        loadAvatar(binding.profileImage, profile.avatarUrl)
+                    }
+                } catch (e: Exception) {
+                    // Игнорируем ошибки загрузки аватара
                 }
-                if (!profile.avatarUrl.isNullOrEmpty()) {
-                    loadAvatar(binding.profileImage, profile.avatarUrl)
-                }
-            } catch (e: Exception) {
-                // Игнорируем ошибки загрузки аватара
             }
         }
     }

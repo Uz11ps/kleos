@@ -144,8 +144,6 @@ struct CategoryBadge: View {
             .foregroundColor(isInteresting ? .black : .white)
     }
 }
-    }
-}
 
 struct KleosButtonStyle: ButtonStyle {
     var backgroundColor: Color = .white

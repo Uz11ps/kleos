@@ -41,7 +41,8 @@ class ApiClient: ObservableObject {
         let lang = UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en"
         request.setValue(lang, forHTTPHeaderField: "Accept-Language")
         
-        if let token = SessionManager.shared.getToken() {
+        // Не отправляем заголовок Authorization, если пользователь — гость
+        if !SessionManager.shared.isGuest(), let token = SessionManager.shared.getToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         

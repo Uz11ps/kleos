@@ -27,10 +27,16 @@ object ApiClient {
     private class AuthInterceptor(private val context: Context) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val original = chain.request()
+            val sessionManager = com.kleos.education.data.auth.SessionManager(context)
             val token = try {
-                com.kleos.education.data.auth.SessionManager(context).getToken()
+                sessionManager.getToken()
             } catch (_: Throwable) { null }
-            val req = if (!token.isNullOrBlank()) {
+            
+            // Не отправляем заголовок, если пользователь — гость (у гостя токен — это UUID, а не JWT)
+            val currentUser = sessionManager.getCurrentUser()
+            val isGuest = currentUser?.email == "guest@local"
+            
+            val req = if (!token.isNullOrBlank() && !isGuest) {
                 original.newBuilder().addHeader("Authorization", "Bearer $token").build()
             } else original
             return chain.proceed(req)

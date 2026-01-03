@@ -16,6 +16,37 @@ struct KleosApp: App {
         WindowGroup {
             SplashView()
                 .environmentObject(sessionManager)
+                .onOpenURL { url in
+                    handleDeepLink(url)
+                }
+        }
+    }
+    
+    private func handleDeepLink(_ url: URL) {
+        print("🔗 Received Deep Link: \(url.absoluteString)")
+        
+        // kleos://verify?token=...
+        guard url.scheme == "kleos", url.host == "verify" else { return }
+        
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
+        let token = components?.queryItems?.first(where: { $0.name == "token" })?.value
+        
+        if let token = token {
+            print("🔗 Verification token found: \(token)")
+            Task {
+                do {
+                    let response = try await ApiClient.shared.verifyConsume(token: token)
+                    if let newToken = response.token, let user = response.user {
+                        await MainActor.run {
+                            sessionManager.saveToken(newToken)
+                            sessionManager.saveUser(fullName: user.fullName, email: user.email, role: user.role)
+                            print("✅ Deep Link login successful")
+                        }
+                    }
+                } catch {
+                    print("❌ Deep Link verification failed: \(error)")
+                }
+            }
         }
     }
     
