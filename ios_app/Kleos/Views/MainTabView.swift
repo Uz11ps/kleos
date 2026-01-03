@@ -8,7 +8,7 @@ struct MainTabView: View {
     @State private var activeSheet: ActiveSheet?
     
     enum ActiveSheet: Identifiable {
-        case profile, admission, support, news, programs, partners, universities
+        case profile, admission, support, news, programs, partners, universities, gallery
         var id: Int { hashValue }
     }
     
@@ -35,6 +35,14 @@ struct MainTabView: View {
                     
                     NavigationView {
                         GalleryView()
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button(action: { withAnimation { showDrawer = true } }) {
+                                        Image(systemName: "line.3.horizontal").foregroundColor(.white)
+                                    }
+                                }
+                            }
                     }
                     .tabItem { Label(t("gallery"), systemImage: "photo.on.rectangle.angled") }.tag(1)
                 } else {
@@ -66,6 +74,14 @@ struct MainTabView: View {
                     
                     NavigationView {
                         GalleryView()
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button(action: { withAnimation { showDrawer = true } }) {
+                                        Image(systemName: "line.3.horizontal").foregroundColor(.white)
+                                    }
+                                }
+                            }
                     }
                     .tabItem { Label(t("gallery"), systemImage: "photo.on.rectangle.angled") }.tag(2)
                 }
@@ -103,6 +119,7 @@ struct MainTabView: View {
                 case .programs: ProgramsView()
                 case .partners: PartnersView()
                 case .universities: UniversitiesView()
+                case .gallery: GalleryView()
                 }
             }
         }
@@ -179,10 +196,13 @@ struct DrawerMenuView: View {
                                 DrawerMenuItem(icon: "message.fill", title: t("support")) { navigate(.support) }
                             }
                             
-                            DrawerMenuItem(icon: "newspaper.fill", title: t("news")) { navigate(.news) }
+                            // РАЗДЕЛ УНИВЕРСИТЕТЫ (ТЕПЕРЬ ВЫШЕ И ЗАМЕТНЕЕ)
                             DrawerMenuItem(icon: "graduationcap.fill", title: t("universities")) { navigate(.universities) }
+                            
+                            DrawerMenuItem(icon: "newspaper.fill", title: t("news")) { navigate(.news) }
                             DrawerMenuItem(icon: "book.fill", title: t("programs")) { navigate(.programs) }
                             DrawerMenuItem(icon: "person.2.fill", title: t("partners")) { navigate(.partners) }
+                            DrawerMenuItem(icon: "photo.on.rectangle.angled", title: t("gallery")) { navigate(.gallery) } // Добавил и галерею для удобства
                             
                             Divider().background(Color.white.opacity(0.2)).padding(.vertical, 10)
                             DrawerMenuItem(icon: "arrow.right.square.fill", title: t("logout")) {

@@ -129,6 +129,15 @@ class ApiClient: ObservableObject {
         return try JSONDecoder().decode([University].self, from: data)
     }
     
+    func getUniversity(id: String) async throws -> University {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/universities/\(id)") else { throw ApiError.badURL }
+        let request = createRequest(url: url)
+        let (data, _) = try await performRequest(request)
+        let response = try JSONDecoder().decode(ApiResponse<University>.self, from: data)
+        if let university = response.data { return university }
+        throw ApiError.decodingError
+    }
+    
     // Gallery
     func getGallery() async throws -> [GalleryItem] {
         guard let url = URL(string: "\(baseURL)\(apiPrefix)/gallery") else { throw ApiError.badURL }

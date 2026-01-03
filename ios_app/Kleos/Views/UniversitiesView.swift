@@ -10,6 +10,20 @@ struct UniversitiesView: View {
         ZStack {
             if isLoading {
                 LoadingView()
+            } else if universities.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "graduationcap")
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray)
+                    Text(t("no_content"))
+                        .foregroundColor(.white)
+                    Button(action: { loadUniversities() }) {
+                        Text(t("reset_filters")) // Используем "Сбросить" как "Обновить"
+                            .fontWeight(.semibold)
+                    }
+                    .buttonStyle(KleosButtonStyle(backgroundColor: .white.opacity(0.1), foregroundColor: .white))
+                    .frame(width: 200)
+                }
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -46,7 +60,7 @@ struct UniversitiesView: View {
         isLoading = true
         Task {
             do {
-                let fetched = try await apiClient.fetchUniversities()
+                let fetched = try await apiClient.getUniversities()
                 await MainActor.run {
                     self.universities = fetched
                     self.isLoading = false
@@ -99,7 +113,7 @@ struct UniversityCard: View {
                     .foregroundColor(.white)
                 HStack {
                     Image(systemName: "mappin.and.ellipse")
-                    Text(university.location)
+                    Text(university.city ?? "")
                 }
                 .font(.system(size: 14)).foregroundColor(.white.opacity(0.8))
             }
@@ -140,7 +154,7 @@ struct UniversityDetailView: View {
                             Text(university.name).font(.system(size: 28, weight: .bold)).foregroundColor(.white).multilineTextAlignment(.center)
                             HStack {
                                 Image(systemName: "mappin.and.ellipse")
-                                Text(university.location)
+                                Text(university.city ?? "")
                             }
                             .font(.system(size: 16)).foregroundColor(.gray)
                         }
@@ -190,7 +204,7 @@ struct UniversityDetailView: View {
     private func loadUniversity() {
         Task {
             do {
-                let fetched = try await apiClient.fetchUniversity(id: universityId)
+                let fetched = try await apiClient.getUniversity(id: universityId)
                 await MainActor.run { self.university = fetched; self.isLoading = false }
             } catch {
                 await MainActor.run { self.isLoading = false }
