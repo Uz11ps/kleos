@@ -202,7 +202,7 @@ struct DrawerMenuView: View {
                             DrawerMenuItem(icon: "newspaper.fill", title: t("news")) { navigate(.news) }
                             DrawerMenuItem(icon: "book.fill", title: t("programs")) { navigate(.programs) }
                             DrawerMenuItem(icon: "person.2.fill", title: t("partners")) { navigate(.partners) }
-                            DrawerMenuItem(icon: "photo.on.rectangle.angled", title: t("gallery")) { navigate(.gallery) } // Добавил и галерею для удобства
+                            DrawerMenuItem(icon: "photo.on.rectangle.angled", title: t("gallery")) { navigate(.gallery) }
                             
                             Divider().background(Color.white.opacity(0.2)).padding(.vertical, 10)
                             DrawerMenuItem(icon: "arrow.right.square.fill", title: t("logout")) {

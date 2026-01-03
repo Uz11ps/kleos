@@ -20,13 +20,13 @@ struct GalleryView: View {
                     VStack(spacing: 0) {
                         Color.clear.frame(height: 100)
                         
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(galleryItems) { item in
-                                NavigationLink(destination: GalleryDetailView(item: item)) {
-                                    GalleryCard(item: item)
-                                }
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(galleryItems) { item in
+                            NavigationLink(destination: GalleryDetailView(item: item)) {
+                                GalleryCard(item: item)
                             }
                         }
+                    }
                         .padding(.horizontal)
                     }
                     .padding(.bottom, 20)
@@ -36,7 +36,7 @@ struct GalleryView: View {
         .kleosBackground()
         .navigationTitle(t("gallery"))
         .navigationBarTitleDisplayMode(.large)
-        .task {
+            .task {
             if galleryItems.isEmpty && !isLoading { loadGallery() }
         }
         .onChange(of: localizationManager.currentLanguage) { _, _ in loadGallery() }
