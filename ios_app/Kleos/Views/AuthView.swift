@@ -2,378 +2,272 @@ import SwiftUI
 import Foundation
 
 struct AuthView: View {
-    @StateObject private var sessionManager = SessionManager.shared
+    @ObservedObject private var sessionManager = SessionManager.shared
+    @StateObject private var localizationManager = LocalizationManager.shared
     @State private var showLogin = false
     @State private var showRegister = false
+    @State private var showVerifyEmail = false
+    @State private var verifyEmail = ""
     
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-            
-            VStack(spacing: 16) {
-                Text("Welcome")
-                    .font(.system(size: 40, weight: .bold))
-                    .foregroundColor(.white)
+        ZStack {
+            VStack(spacing: 0) {
+                Spacer()
                 
-                Text("Log in or create a profile")
-                    .font(.system(size: 16))
-                    .foregroundColor(.gray)
-            }
-            
-            Spacer()
-            
-            VStack(spacing: 12) {
-                Button(action: {
-                    showLogin = true
-                }) {
-                    Text("Sign In")
-                        .font(.system(size: 24, weight: .semibold))
-                        .frame(width: 214, height: 62)
-                }
-                .buttonStyle(KleosButtonStyle())
-                
-                Button(action: {
-                    showRegister = true
-                }) {
-                    Text("Sign Up")
-                        .font(.system(size: 24, weight: .semibold))
-                        .frame(width: 214, height: 62)
-                }
-                .buttonStyle(KleosOutlinedButtonStyle())
-                
-                Button(action: {
-                    // Guest login
-                    sessionManager.saveUser(fullName: "Guest", email: "guest@local")
-                    sessionManager.saveToken(UUID().uuidString)
-                }) {
-                    Text("Or login as guest")
-                        .font(.system(size: 14))
+                VStack(spacing: 16) {
+                    Text(t("welcome"))
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                    Text(t("auth_description"))
+                        .font(.system(size: 16))
                         .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
                 }
-                .padding(.top, 12)
+                .padding(.horizontal, 24)
+                
+                Spacer()
+                
+                VStack(spacing: 12) {
+                    Button(action: { showLogin = true }) {
+                        Text(t("sign_in")).font(.system(size: 24, weight: .semibold)).frame(width: 214, height: 62)
+                    }.buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: Color(hex: "0E080F")))
+                    
+                    Button(action: { showRegister = true }) {
+                        Text(t("sign_up")).font(.system(size: 24, weight: .semibold)).frame(width: 214, height: 62)
+                    }.buttonStyle(KleosOutlinedButtonStyle(strokeColor: .white, foregroundColor: .white))
+                    
+                    Button(action: {
+                        sessionManager.saveUser(fullName: t("guest"), email: "guest@local")
+                        sessionManager.saveToken(UUID().uuidString)
+                    }) {
+                        Text(t("login_as_guest")).font(.system(size: 14)).foregroundColor(Color(hex: "CBD5E1"))
+                    }.padding(.top, 12)
+                }
+                .padding(.bottom, 50)
+                
+                Spacer()
             }
-            .padding(.bottom, 32)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.bottom, 200)
         }
-        .kleosBackground() // Используем централизованный фон
-        .sheet(isPresented: $showLogin) {
-            LoginView()
+        .kleosBackground(showGradientShape: true, circlePositions: .center, isSplashOrAuth: true) 
+        .sheet(isPresented: $showLogin) { LoginView() }
+        .sheet(isPresented: $showRegister) { 
+            RegisterView(onSuccess: { email in
+                self.verifyEmail = email
+                self.showVerifyEmail = true
+            }) 
         }
-
-        .sheet(isPresented: $showRegister) {
-            RegisterView()
-        }
-        .fullScreenCover(isPresented: $sessionManager.isLoggedIn) {
-            MainTabView()
-        }
+        .sheet(isPresented: $showVerifyEmail) { VerifyEmailView(email: verifyEmail) }
     }
 }
 
 struct LoginView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var apiClient = ApiClient.shared
-    @StateObject private var sessionManager = SessionManager.shared
-    
+    @ObservedObject private var sessionManager = SessionManager.shared
+    @StateObject private var localizationManager = LocalizationManager.shared
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.white.ignoresSafeArea()
+        ZStack(alignment: .bottom) {
+            Color.clear.kleosBackground(showGradientShape: true, circlePositions: .center, isSplashOrAuth: true)
+                .onTapGesture { dismiss() }
+            
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 40, height: 6)
+                    .padding(.top, 12)
                 
-                VStack(spacing: 24) {
-                    Text("Sign In")
+                VStack(spacing: 32) {
+                    Text(t("sign_in"))
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.black)
-                        .padding(.top, 32)
                     
                     VStack(spacing: 16) {
-                        TextField("Email", text: $email)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(t("email")).font(.system(size: 14)).foregroundColor(.gray)
+                            TextField("", text: $email)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .foregroundColor(.black)
+                                .keyboardType(.emailAddress)
+                                .autocapitalization(.none)
+                            Divider().background(Color.gray.opacity(0.5))
+                        }
                         
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(.roundedBorder)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(t("password")).font(.system(size: 14)).foregroundColor(.gray)
+                            SecureField("", text: $password)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .foregroundColor(.black)
+                            Divider().background(Color.gray.opacity(0.5))
+                        }
                         
                         if let error = errorMessage {
-                            Text(error)
-                                .foregroundColor(.red)
-                                .font(.caption)
+                            Text(error).foregroundColor(.red).font(.system(size: 14, weight: .medium)).multilineTextAlignment(.center)
                         }
                         
                         Button(action: performLogin) {
-                            if isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Sign In")
-                                    .fontWeight(.semibold)
-                            }
+                            if isLoading { ProgressView().tint(.white) }
+                            else { Text(t("sign_in")).fontWeight(.semibold) }
                         }
-                        .buttonStyle(KleosButtonStyle(backgroundColor: .blue, foregroundColor: .white))
+                        .buttonStyle(KleosButtonStyle(backgroundColor: Color.kleosBlue, foregroundColor: .white))
+                        .padding(.top, 8)
                         .disabled(isLoading || email.isEmpty || password.isEmpty)
                     }
-                    .padding(.horizontal, 24)
-                    
-                    Spacer()
                 }
+                .padding(24)
+                .padding(.bottom, 40)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                }
-            }
+            .background(Color.white)
+            .cornerRadius(24, corners: [.topLeft, .topRight])
+            .padding(.bottom, 160) // Поднимаем блок вверх, оставляя место снизу
         }
+        .ignoresSafeArea(.keyboard) // Предотвращаем автоматическое сжатие контента клавиатурой
     }
     
     private func performLogin() {
-        // Валидация перед отправкой запроса
-        if email.isEmpty {
-            errorMessage = "Введите email"
-            return
-        }
-        
-        if !isValidEmail(email) {
-            errorMessage = "Некорректный email"
-            return
-        }
-        
-        if password.isEmpty {
-            errorMessage = "Введите пароль"
-            return
-        }
-        
-        if password.count < 6 {
-            errorMessage = "Пароль должен быть не менее 6 символов"
-            return
-        }
-        
-        isLoading = true
-        errorMessage = nil
-        
+        if email.isEmpty { errorMessage = t("enter_email"); return }
+        if password.isEmpty { errorMessage = t("enter_password"); return }
+        isLoading = true; errorMessage = nil
         Task {
             do {
                 let response = try await apiClient.login(email: email, password: password)
-                
                 if let token = response.token, let user = response.user {
                     await MainActor.run {
                         sessionManager.saveToken(token)
                         sessionManager.saveUser(fullName: user.fullName, email: user.email, role: user.role)
                         dismiss()
                     }
-                } else if let error = response.error {
-                    await MainActor.run {
-                        errorMessage = getErrorMessage(error)
-                        isLoading = false
-                    }
-                }
-            } catch let error as ApiError {
-                await MainActor.run {
-                    switch error {
-                    case .httpError(let code):
-                        if code == 403 {
-                            errorMessage = "Email не подтвержден. Проверьте почту."
-                        } else {
-                            errorMessage = "Ошибка входа (Error \(code)). Попробуйте снова."
-                        }
-                    case .serverError(let message):
-                        errorMessage = getErrorMessage(message)
-                    default:
-                        errorMessage = "Ошибка входа. Проверьте подключение к интернету."
-                    }
-                    isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = "Ошибка входа. Попробуйте снова."
-                    isLoading = false
-                }
-            }
-        }
-    }
-    
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPredicate = NSPredicate(format:"SELF MATCHES %@", emailRegex)
-        return emailPredicate.evaluate(with: email)
-    }
-    
-    private func getErrorMessage(_ error: String) -> String {
-        switch error {
-        case "invalid_credentials":
-            return "Неверный email или пароль"
-        case "email_not_verified":
-            return "Email не подтвержден. Проверьте почту."
-        case "email_taken":
-            return "Email уже используется"
-        default:
-            return error
+                } else if let error = response.error { await MainActor.run { errorMessage = error; isLoading = false } }
+            } catch { await MainActor.run { errorMessage = t("login_error"); isLoading = false } }
         }
     }
 }
 
 struct RegisterView: View {
     @Environment(\.dismiss) var dismiss
+    let onSuccess: (String) -> Void
     @StateObject private var apiClient = ApiClient.shared
-    @StateObject private var sessionManager = SessionManager.shared
-    
+    @ObservedObject private var sessionManager = SessionManager.shared
+    @StateObject private var localizationManager = LocalizationManager.shared
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var showVerifyEmail = false
-    @State private var verifyEmail = ""
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.white.ignoresSafeArea()
+        ZStack(alignment: .bottom) {
+            Color.clear.kleosBackground(showGradientShape: true, circlePositions: .center, isSplashOrAuth: true)
+                .onTapGesture { dismiss() }
+            
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 40, height: 6)
+                    .padding(.top, 12)
                 
                 VStack(spacing: 24) {
-                    Text("Sign Up")
+                    Text(t("sign_up"))
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.black)
-                        .padding(.top, 32)
                     
                     VStack(spacing: 16) {
-                        TextField("Full Name", text: $fullName)
-                            .textFieldStyle(.roundedBorder)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(t("full_name")).font(.system(size: 14)).foregroundColor(.gray)
+                            TextField("", text: $fullName)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .foregroundColor(.black)
+                            Divider().background(Color.gray.opacity(0.5))
+                        }
                         
-                        TextField("Email", text: $email)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(t("email")).font(.system(size: 14)).foregroundColor(.gray)
+                            TextField("", text: $email)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .foregroundColor(.black)
+                                .keyboardType(.emailAddress)
+                                .autocapitalization(.none)
+                            Divider().background(Color.gray.opacity(0.5))
+                        }
                         
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(.roundedBorder)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(t("password")).font(.system(size: 14)).foregroundColor(.gray)
+                            SecureField("", text: $password)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .foregroundColor(.black)
+                            Divider().background(Color.gray.opacity(0.5))
+                        }
                         
                         if let error = errorMessage {
-                            Text(error)
-                                .foregroundColor(.red)
-                                .font(.caption)
+                            Text(error).foregroundColor(.red).font(.system(size: 14, weight: .medium)).multilineTextAlignment(.center)
                         }
                         
                         Button(action: performRegister) {
-                            if isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Sign Up")
-                                    .fontWeight(.semibold)
-                            }
+                            if isLoading { ProgressView().tint(.white) }
+                            else { Text(t("sign_up")).fontWeight(.semibold) }
                         }
-                        .buttonStyle(KleosButtonStyle(backgroundColor: .blue, foregroundColor: .white))
+                        .buttonStyle(KleosButtonStyle(backgroundColor: Color.kleosBlue, foregroundColor: .white))
+                        .padding(.top, 8)
                         .disabled(isLoading || fullName.isEmpty || email.isEmpty || password.isEmpty)
                     }
-                    .padding(.horizontal, 24)
-                    
-                    Spacer()
                 }
+                .padding(24)
+                .padding(.bottom, 40)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                }
-            }
-            .sheet(isPresented: $showVerifyEmail) {
-                VerifyEmailView(email: verifyEmail)
-            }
+            .background(Color.white)
+            .cornerRadius(24, corners: [.topLeft, .topRight])
+            .padding(.bottom, 160) // Поднимаем блок вверх
         }
+        .ignoresSafeArea(.keyboard)
     }
     
     private func performRegister() {
-        // Валидация перед отправкой запроса
-        if fullName.isEmpty {
-            errorMessage = "Введите ФИО"
-            return
-        }
+        if fullName.isEmpty { errorMessage = t("enter_full_name"); return }
+        if email.isEmpty { errorMessage = t("enter_email"); return }
+        if password.count < 6 { errorMessage = t("password_too_short"); return }
         
-        if email.isEmpty {
-            errorMessage = "Введите email"
-            return
-        }
-        
-        if !isValidEmail(email) {
-            errorMessage = "Некорректный email"
-            return
-        }
-        
-        if password.isEmpty {
-            errorMessage = "Введите пароль"
-            return
-        }
-        
-        if password.count < 6 {
-            errorMessage = "Пароль должен быть не менее 6 символов"
-            return
-        }
-        
-        isLoading = true
-        errorMessage = nil
-        
+        isLoading = true; errorMessage = nil
         Task {
             do {
                 let response = try await apiClient.register(fullName: fullName, email: email, password: password)
-                
-                if response.requiresVerification == true {
-                    await MainActor.run {
-                        verifyEmail = email
-                        showVerifyEmail = true
+                await MainActor.run {
+                    if response.requiresVerification == true {
+                        onSuccess(email)
                         dismiss()
-                    }
-                } else if let error = response.error {
-                    await MainActor.run {
-                        errorMessage = getErrorMessage(error)
+                    } else if let token = response.token, let user = response.user {
+                        sessionManager.saveToken(token)
+                        sessionManager.saveUser(fullName: user.fullName, email: user.email, role: user.role)
+                        dismiss()
+                    } else if let error = response.error {
+                        errorMessage = error
                         isLoading = false
+                    } else {
+                        onSuccess(email)
+                        dismiss()
                     }
                 }
             } catch let error as ApiError {
                 await MainActor.run {
                     switch error {
-                    case .httpError(let code):
-                        errorMessage = "Ошибка регистрации (Error \(code)). Попробуйте снова."
-                    case .serverError(let message):
-                        errorMessage = getErrorMessage(message)
-                    default:
-                        errorMessage = "Ошибка регистрации. Проверьте подключение к интернету."
+                    case .serverError(let msg): errorMessage = msg
+                    case .httpError(let code): errorMessage = "Error \(code)"
+                    default: errorMessage = t("register_error")
                     }
                     isLoading = false
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "Ошибка регистрации. Попробуйте снова."
+                    errorMessage = error.localizedDescription
                     isLoading = false
                 }
             }
-        }
-    }
-    
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPredicate = NSPredicate(format:"SELF MATCHES %@", emailRegex)
-        return emailPredicate.evaluate(with: email)
-    }
-    
-    private func getErrorMessage(_ error: String) -> String {
-        switch error {
-        case "invalid_credentials":
-            return "Неверный email или пароль"
-        case "email_not_verified":
-            return "Email не подтвержден. Проверьте почту."
-        case "email_taken":
-            return "Email уже используется"
-        default:
-            return error
         }
     }
 }
@@ -381,33 +275,51 @@ struct RegisterView: View {
 struct VerifyEmailView: View {
     let email: String
     @Environment(\.dismiss) var dismiss
-    
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                Text("Verify Email")
-                    .font(.system(size: 32, weight: .bold))
-                
-                Text("We sent an email with a verification link. Open the link from the email on this device to complete registration.")
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                Text("Address: \(email)")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                
+        ZStack {
+            Color.white.ignoresSafeArea()
+            VStack(spacing: 0) {
+                Spacer()
+                VStack(spacing: 24) {
+                    Text(LocalizationManager.shared.t("verify_email"))
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.black)
+                    
+                    Text(LocalizationManager.shared.t("verify_email_description"))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                        .foregroundColor(.black.opacity(0.7))
+                    
+                    Text("\(LocalizationManager.shared.t("address")): \(email)")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color.kleosBlue)
+                }
+                .padding()
+                Spacer()
                 Spacer()
             }
-            .padding()
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(LocalizationManager.shared.t("close")) { dismiss() }
+                    .foregroundColor(.black)
             }
         }
     }
 }
 
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
+    }
+}

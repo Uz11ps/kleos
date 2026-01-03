@@ -2,91 +2,80 @@ import SwiftUI
 
 struct NewsView: View {
     @StateObject private var apiClient = ApiClient.shared
+    @StateObject private var localizationManager = LocalizationManager.shared
     @State private var news: [NewsItem] = []
-    @State private var isLoading = true
+    @State private var isLoading = false
     @State private var selectedTab = "all"
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.kleosBackground.ignoresSafeArea()
-                
-                VStack {
-                    // Tabs
+        ZStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Color.clear.frame(height: 150)
+                    
                     HStack(spacing: 12) {
-                        TabButton(title: "All", isSelected: selectedTab == "all") {
+                        TabButton(title: t("all"), isSelected: selectedTab == "all") {
                             selectedTab = "all"
                             loadContent()
                         }
-                        
-                        TabButton(title: "News", isSelected: selectedTab == "news") {
+                        TabButton(title: t("news"), isSelected: selectedTab == "news") {
                             selectedTab = "news"
                             loadContent()
                         }
-                        
-                        TabButton(title: "Interesting", isSelected: selectedTab == "interesting") {
+                        TabButton(title: t("interesting"), isSelected: selectedTab == "interesting") {
                             selectedTab = "interesting"
                             loadContent()
                         }
                     }
-                    .padding()
+                    .padding(.horizontal, 24).padding(.bottom, 24)
                     
-                    // News List
                     if isLoading {
-                        LoadingView()
+                        LoadingView().frame(height: 400)
                     } else {
-                        ScrollView {
+                        let filtered = filteredNews
+                        if filtered.isEmpty {
+                            Text(t("no_news")).foregroundColor(.gray).padding().frame(maxWidth: .infinity)
+                        } else {
                             LazyVStack(spacing: 16) {
-                                ForEach(filteredNews) { item in
+                                ForEach(filtered) { item in
                                     NavigationLink(destination: NewsDetailView(newsId: item.id)) {
                                         NewsCard(item: item)
                                     }
                                 }
                             }
-                            .padding()
+                            .padding(.horizontal, 24)
                         }
                     }
                 }
             }
-            .navigationTitle("News")
-            .navigationBarTitleDisplayMode(.large)
-            .onAppear {
-                loadContent()
-            }
+            .refreshable { loadContent() }
         }
+        .kleosBackground()
+        .navigationTitle(t("news"))
+        .navigationBarTitleDisplayMode(.large)
+        .task {
+            if news.isEmpty && !isLoading { loadContent() }
+        }
+        .onChange(of: localizationManager.currentLanguage) { _, _ in loadContent() }
     }
     
     private var filteredNews: [NewsItem] {
         switch selectedTab {
-        case "news":
-            // Если isInteresting не задан, считаем все новостями
-            return news.filter { !($0.isInteresting ?? false) }
-        case "interesting":
-            // Если isInteresting не задан, не показываем в интересном
-            return news.filter { $0.isInteresting == true }
-        default:
-            return news
+        case "news": return news.filter { !($0.isInteresting ?? false) }
+        case "interesting": return news.filter { $0.isInteresting == true }
+        default: return news
         }
     }
     
     private func loadContent() {
+        guard !isLoading else { return }
         isLoading = true
-        
         Task {
             do {
-                print("🔄 Loading news...")
                 let fetchedNews = try await apiClient.fetchNews()
-                print("✅ Loaded \(fetchedNews.count) news items")
-                await MainActor.run {
-                    self.news = fetchedNews
-                    self.isLoading = false
-                }
+                await MainActor.run { self.news = fetchedNews; self.isLoading = false }
             } catch {
-                print("❌ Error loading news: \(error)")
-                await MainActor.run {
-                    self.isLoading = false
-                    print("⚠️ Failed to load news: \(error.localizedDescription)")
-                }
+                await MainActor.run { self.isLoading = false }
             }
         }
     }
@@ -95,52 +84,37 @@ struct NewsView: View {
 struct NewsDetailView: View {
     let newsId: String
     @StateObject private var apiClient = ApiClient.shared
+    @StateObject private var localizationManager = LocalizationManager.shared
     @State private var news: NewsItem?
     @State private var isLoading = true
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         ZStack {
-            Color.kleosBackground.ignoresSafeArea()
-            
             if isLoading {
                 LoadingView()
             } else if let news = news {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // Image
+                        Color.clear.frame(height: 150)
                         AsyncImage(url: apiClient.getFullUrl(news.imageUrl)) { phase in
                             if case .success(let image) = phase {
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
+                                image.resizable().aspectRatio(contentMode: .fill)
                             } else {
                                 Color.gray.opacity(0.3)
                             }
                         }
-                        .frame(height: 300)
-                        .clipped()
+                        .frame(height: 300).clipped()
                         
-                        // Content
                         VStack(alignment: .leading, spacing: 16) {
                             CategoryBadge(
-                                text: (news.isInteresting ?? false) ? "Interesting" : "News",
+                                text: (news.isInteresting ?? false) ? t("interesting") : t("news"),
                                 isInteresting: news.isInteresting ?? false
                             )
-                            
-                            Text(news.title)
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(.white)
-                            
-                            Text(news.dateText)
-                                .font(.system(size: 14))
-                                .foregroundColor(.gray)
-                            
+                            Text(news.title).font(.system(size: 28, weight: .bold)).foregroundColor(.white)
+                            Text(news.dateText).font(.system(size: 14)).foregroundColor(.gray)
                             if let content = news.content {
-                                Text(content)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white)
-                                    .lineSpacing(4)
+                                Text(content).font(.system(size: 16)).foregroundColor(.white).lineSpacing(4)
                             }
                         }
                         .padding()
@@ -148,34 +122,20 @@ struct NewsDetailView: View {
                 }
             }
         }
+        .kleosBackground()
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "arrow.left")
-                        .foregroundColor(.white)
-                }
-            }
-        }
-        .onAppear {
-            loadNews()
-        }
+        .task { loadNews() }
+        .onChange(of: localizationManager.currentLanguage) { _, _ in loadNews() }
     }
     
     private func loadNews() {
         Task {
             do {
                 let fetchedNews = try await apiClient.fetchNewsDetail(id: newsId)
-                await MainActor.run {
-                    self.news = fetchedNews
-                    self.isLoading = false
-                }
+                await MainActor.run { self.news = fetchedNews; self.isLoading = false }
             } catch {
-                await MainActor.run {
-                    self.isLoading = false
-                }
+                await MainActor.run { self.isLoading = false }
             }
         }
     }
 }
-

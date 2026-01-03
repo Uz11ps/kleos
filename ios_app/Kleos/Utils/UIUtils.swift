@@ -1,21 +1,112 @@
 import SwiftUI
 
-// MARK: - Blurred Circle View
-struct BlurredCircle: View {
-    var color: Color = Color(hex: "7E5074")
-    var size: CGFloat = 450 // Увеличим размер для мягкости
-    var blurRadius: CGFloat = 120 // Еще сильнее размытие
-    
-    var body: some View {
-        Circle()
-            .fill(color)
-            .frame(width: size, height: size)
-            .blur(radius: blurRadius)
-            .opacity(0.45) // Мягкая прозрачность для глубины
+// MARK: - Эффект зернистости (Noise)
+struct NoiseModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content.overlay(
+            ZStack {
+                Color.white.opacity(0.01)
+            }
+            .allowsHitTesting(false)
+        )
     }
 }
 
-// MARK: - Color Extensions
+// MARK: - Адаптивное свечение
+struct BlurredCircle: View {
+    var color: Color
+    var size: CGFloat
+    
+    var body: some View {
+        ZStack {
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    color.opacity(0.6),
+                    color.opacity(0.25),
+                    .clear
+                ]),
+                center: .center,
+                startRadius: 0,
+                endRadius: size * 0.5
+            )
+            
+            Circle()
+                .fill(color.opacity(0.15))
+                .blur(radius: size * 0.2)
+        }
+        .frame(width: size, height: size)
+        .blendMode(.screen)
+    }
+}
+
+// MARK: - Background View Modifier
+struct KleosBackground: ViewModifier {
+    var showGradientShape: Bool = false
+    var circlePositions: CircleLayout = .corners
+    var isSplashOrAuth: Bool = false
+    
+    enum CircleLayout {
+        case center, corners
+    }
+    
+    func body(content: Content) -> some View {
+        GeometryReader { geo in
+            ZStack {
+                // 1. Фон
+                (isSplashOrAuth ? Color(hex: "0E080F") : Color(hex: "0A0E1A"))
+                    .ignoresSafeArea()
+                
+                // 2. Слои свечения (Адаптивные)
+                Group {
+                    if circlePositions == .center {
+                        // Auth/Splash: Центрированные пятна (по 60% от ширины экрана)
+                        VStack {
+                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.5)
+                                .offset(y: -geo.size.height * 0.25)
+                            Spacer()
+                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.5)
+                                .offset(y: geo.size.height * 0.25)
+                        }
+                    } else {
+                        // Home/Main: Угловые пятна
+                        ZStack {
+                            // Верхнее правое
+                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.8)
+                                .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
+                            
+                            // Нижнее левое
+                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.8)
+                                .position(x: geo.size.width * 0.1, y: geo.size.height * 0.9)
+                        }
+                    }
+                    
+                    if showGradientShape {
+                        // Синий акцент (градиентная форма)
+                        BlurredCircle(color: Color.kleosBlue, size: geo.size.width * 1.4)
+                            .opacity(0.5)
+                            .position(x: 0, y: geo.size.height * 0.1)
+                            .scaleEffect(x: 1.8, y: 1.2)
+                    }
+                }
+                .ignoresSafeArea()
+                .modifier(NoiseModifier())
+                .allowsHitTesting(false)
+                
+                content
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+extension View {
+    func kleosBackground(showGradientShape: Bool = false, circlePositions: KleosBackground.CircleLayout = .corners, isSplashOrAuth: Bool = false) -> some View {
+        modifier(KleosBackground(showGradientShape: showGradientShape, circlePositions: circlePositions, isSplashOrAuth: isSplashOrAuth))
+    }
+}
+
+// Вспомогательные компоненты
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -23,163 +114,53 @@ extension Color {
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
+        case 3: (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default: (a, r, g, b) = (255, 0, 0, 0)
         }
-
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
+        self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue:  Double(b) / 255, opacity: Double(a) / 255)
     }
     
-    static let kleosBackground = Color(hex: "0E080F")
-    static let kleosAccent = Color(hex: "7E5074")
+    static let kleosBackground = Color(hex: "0A0E1A")
+    static let kleosPurple = Color(hex: "8B5CF6")
     static let kleosBlue = Color(hex: "3B82F6")
+    static let kleosYellow = Color(hex: "FFD600")
+    static let kleosPinkAccent = Color(hex: "FF6B9D")
 }
 
-// MARK: - Background View Modifier
-struct KleosBackground: ViewModifier {
-    func body(content: Content) -> some View {
-        ZStack {
-            // 1. Фиксированный цвет фона (как в Android onboarding_background)
-            Color(hex: "0E080F")
-                .ignoresSafeArea()
-            
-            // 2. Светящиеся круги (1 в 1 как в Android layout)
-            Group {
-                // Верхний круг (blurredCircleTop)
-                Circle()
-                    .fill(Color(hex: "7E5074"))
-                    .frame(width: 318, height: 318)
-                    .blur(radius: 120)
-                    .opacity(0.5)
-                    .offset(y: -150)
-                
-                // Нижний круг (blurredCircle)
-                VStack {
-                    Spacer()
-                    Circle()
-                        .fill(Color(hex: "7E5074"))
-                        .frame(width: 318, height: 318)
-                        .blur(radius: 120)
-                        .opacity(0.5)
-                        .offset(y: 150)
-                }
-                
-                // Синий градиент слева (gradientShape)
-                VStack {
-                    HStack {
-                        Circle()
-                            .fill(Color(hex: "3B82F6").opacity(0.2))
-                            .frame(width: 400, height: 400)
-                            .blur(radius: 100)
-                            .offset(x: -100, y: -100)
-                        Spacer()
-                    }
-                    Spacer()
-                }
-            }
-            .ignoresSafeArea()
-            
-            content
-        }
+struct LoadingView: View {
+    var body: some View {
+        ProgressView().tint(.white).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-
-extension View {
-    func kleosBackground() -> some View {
-        modifier(KleosBackground())
+struct CategoryBadge: View {
+    let text: String
+    let isInteresting: Bool
+    var body: some View {
+        Text(text).font(.system(size: 12, weight: .bold)).padding(.horizontal, 8).padding(.vertical, 4)
+            .background(isInteresting ? Color.kleosYellow : Color(hex: "D4B5FF")).cornerRadius(4)
+            .foregroundColor(isInteresting ? .black : .white)
     }
 }
 
-// MARK: - Custom Button Styles
 struct KleosButtonStyle: ButtonStyle {
     var backgroundColor: Color = .white
     var foregroundColor: Color = .black
-    
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(.horizontal, 32)
-            .padding(.vertical, 16)
-            .background(backgroundColor)
-            .foregroundColor(foregroundColor)
-            .cornerRadius(31)
+        configuration.label.padding(.horizontal, 32).padding(.vertical, 16)
+            .background(backgroundColor).foregroundColor(foregroundColor).cornerRadius(31)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
 struct KleosOutlinedButtonStyle: ButtonStyle {
     var strokeColor: Color = .white
     var foregroundColor: Color = .white
-    
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(.horizontal, 32)
-            .padding(.vertical, 16)
-            .background(Color.clear)
-            .foregroundColor(foregroundColor)
-            .overlay(
-                RoundedRectangle(cornerRadius: 31)
-                    .stroke(strokeColor, lineWidth: 2)
-            )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-// MARK: - Category Badge
-struct CategoryBadge: View {
-    let text: String
-    let isInteresting: Bool
-    
-    var body: some View {
-        Text(text)
-            .font(.system(size: 12, weight: .bold))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(isInteresting ? Color.purple.opacity(0.6) : Color.blue.opacity(0.6))
-            .foregroundColor(.white)
-            .cornerRadius(4)
-    }
-}
-
-// MARK: - Loading View
-struct LoadingView: View {
-    var body: some View {
-        ProgressView()
-            .tint(.white)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// MARK: - Error View
-struct ErrorView: View {
-    let message: String
-    let retry: (() -> Void)?
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            Text(message)
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-            
-            if let retry = retry {
-                Button("Retry", action: retry)
-                    .buttonStyle(KleosButtonStyle())
-            }
-        }
-        .padding()
+        configuration.label.padding(.horizontal, 32).padding(.vertical, 16)
+            .overlay(RoundedRectangle(cornerRadius: 31).stroke(strokeColor, lineWidth: 2))
+            .foregroundColor(foregroundColor).scaleEffect(configuration.isPressed ? 0.95 : 1.0)
     }
 }
