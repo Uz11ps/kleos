@@ -89,11 +89,10 @@ struct KleosBackground: ViewModifier {
                     }
                     
                     if showGradientShape {
-                        // Картинка ленты как на макете: большая и сверху
+                        // Картинка ленты точно как на макете
                         KleosRibbon()
-                            .frame(width: geo.size.width * 1.4)
-                            .position(x: geo.size.width * 0.4, y: geo.size.height * 0.15)
-                            .rotationEffect(.degrees(-5))
+                            .frame(width: geo.size.width * 1.5)
+                            .position(x: geo.size.width * 0.35, y: geo.size.height * 0.1)
                             .allowsHitTesting(false)
                     }
                 }
@@ -159,6 +158,9 @@ struct KleosButtonStyle: ButtonStyle {
     var foregroundColor: Color = .black
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
+            .font(.system(size: 20, weight: .bold))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
             .background(backgroundColor)
             .foregroundColor(foregroundColor)
             .clipShape(Capsule())
@@ -171,6 +173,9 @@ struct KleosOutlinedButtonStyle: ButtonStyle {
     var foregroundColor: Color = .white
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
+            .font(.system(size: 20, weight: .bold))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
             .foregroundColor(foregroundColor)
             .background(
                 Capsule()
