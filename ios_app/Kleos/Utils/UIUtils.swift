@@ -30,6 +30,7 @@ struct BlurredCircle: View {
 struct KleosBackground: ViewModifier {
     var showGradientShape: Bool = false
     var circlePositions: CircleLayout = .corners
+    var isSplashOrAuth: Bool = false // Добавил обратно для совместимости
     
     enum CircleLayout {
         case center, corners
@@ -43,7 +44,7 @@ struct KleosBackground: ViewModifier {
             
             // 2. Слои свечения (точно как в Android layout)
             Group {
-                if circlePositions == .center {
+                if circlePositions == .center || isSplashOrAuth {
                     // Расположение для Auth/Splash (по центру сверху и снизу)
                     VStack {
                         BlurredCircle(color: Color(hex: "7E5074"), size: 318)
@@ -92,8 +93,8 @@ struct KleosBackground: ViewModifier {
 }
 
 extension View {
-    func kleosBackground(showGradientShape: Bool = false, circlePositions: KleosBackground.CircleLayout = .corners) -> some View {
-        modifier(KleosBackground(showGradientShape: showGradientShape, circlePositions: circlePositions))
+    func kleosBackground(showGradientShape: Bool = false, circlePositions: KleosBackground.CircleLayout = .corners, isSplashOrAuth: Bool = false) -> some View {
+        modifier(KleosBackground(showGradientShape: showGradientShape, circlePositions: circlePositions, isSplashOrAuth: isSplashOrAuth))
     }
 }
 
