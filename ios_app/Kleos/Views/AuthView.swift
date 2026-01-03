@@ -12,28 +12,29 @@ struct AuthView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // 1. Верхняя часть (Лента и Заголовок)
-                VStack(spacing: 12) {
-                    Spacer()
-                        .frame(height: 220) // Место для ленты
-                    
+                // 1. Свободное место для ленты (занимает почти половину экрана)
+                Spacer()
+                    .frame(height: 340)
+                
+                // 2. Блок с текстом (строго по центру)
+                VStack(spacing: 8) {
                     Text(t("welcome"))
-                        .font(.system(size: 44, weight: .black))
+                        .font(.custom("Arial-Black", size: 42)) // Пытаемся использовать максимально жирный шрифт
+                        .font(.system(size: 42, weight: .black))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                        .lineSpacing(-2)
                     
                     Text(t("auth_description"))
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.5))
+                        .font(.system(size: 18))
+                        .foregroundColor(.white.opacity(0.4))
                         .multilineTextAlignment(.center)
                 }
-                .padding(.horizontal, 30)
+                .padding(.horizontal, 24)
                 
                 Spacer()
                 
-                // 2. Нижняя часть (Кнопки)
-                VStack(spacing: 16) {
+                // 3. Блок с кнопками
+                VStack(spacing: 12) {
                     Button(action: { 
                         sessionManager.logout()
                         showLogin = true 
@@ -56,12 +57,12 @@ struct AuthView: View {
                     }) {
                         Text(t("login_as_guest"))
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(.white.opacity(0.5))
                     }
-                    .padding(.top, 20)
+                    .padding(.top, 24)
                 }
-                .padding(.horizontal, 40)
-                .padding(.bottom, 50)
+                .padding(.horizontal, 32)
+                .padding(.bottom, 40)
             }
         }
         .kleosBackground(showGradientShape: true, circlePositions: .center, isSplashOrAuth: true) 
