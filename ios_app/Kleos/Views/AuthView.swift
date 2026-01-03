@@ -302,15 +302,15 @@ struct VerifyEmailView: View {
                         .foregroundColor(Color.kleosBlue)
                     
                     Button(action: {
-                        // Мануальная проверка статуса
                         Task {
                             do {
                                 let profile = try await ApiClient.shared.getProfile()
                                 await MainActor.run {
                                     sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
+                                    dismiss()
                                 }
                             } catch {
-                                print("❌ Manual status check failed: \(error)")
+                                print("❌ Confirmation check failed")
                             }
                         }
                     }) {

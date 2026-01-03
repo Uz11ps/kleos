@@ -12,52 +12,54 @@ struct KleosBackground: ViewModifier {
     
     func body(content: Content) -> some View {
         ZStack {
-            // 1. Основной фон - ТОЧНО #0E080F
+            // 1. Фон - ТОЧНО #0E080F
             Color(hex: "0E080F")
                 .ignoresSafeArea()
             
             // 2. Светящиеся слои (точно как в Android layout)
-            ZStack {
-                if circlePositions == .center || isSplashOrAuth {
-                    // ВЕРХНИЙ КРУГ (как в Android layout_marginTop="-150dp")
-                    Circle()
-                        .fill(Color(hex: "7E5074"))
-                        .frame(width: 318, height: 318)
-                        .blur(radius: 80)
-                        .opacity(0.6)
-                        .offset(y: -UIScreen.main.bounds.height / 2 + 9) 
+            GeometryReader { geo in
+                ZStack {
+                    if circlePositions == .center || isSplashOrAuth {
+                        // ВЕРХНИЙ КРУГ (Розовый)
+                        Circle()
+                            .fill(Color(hex: "7E5074"))
+                            .frame(width: 350, height: 350)
+                            .blur(radius: 70)
+                            .opacity(0.7)
+                            .position(x: geo.size.width / 2, y: 0)
 
-                    // НИЖНИЙ КРУГ (как в Android layout_marginBottom="-150dp")
-                    Circle()
-                        .fill(Color(hex: "7E5074"))
-                        .frame(width: 318, height: 318)
-                        .blur(radius: 80)
-                        .opacity(0.6)
-                        .offset(y: UIScreen.main.bounds.height / 2 - 9)
-                } else {
-                    // Угловые пятна для внутренних страниц
-                    Circle()
-                        .fill(Color(hex: "7E5074"))
-                        .frame(width: 450, height: 450)
-                        .blur(radius: 100)
-                        .opacity(0.4)
-                        .offset(x: 150, y: -350)
+                        // НИЖНИЙ КРУГ (Розовый)
+                        Circle()
+                            .fill(Color(hex: "7E5074"))
+                            .frame(width: 350, height: 350)
+                            .blur(radius: 70)
+                            .opacity(0.7)
+                            .position(x: geo.size.width / 2, y: geo.size.height)
+                    } else {
+                        // Угловые свечения
+                        Circle()
+                            .fill(Color(hex: "7E5074"))
+                            .frame(width: geo.size.width * 1.2, height: geo.size.width * 1.2)
+                            .blur(radius: 100)
+                            .opacity(0.4)
+                            .position(x: geo.size.width, y: 0)
+                        
+                        Circle()
+                            .fill(Color(hex: "7E5074"))
+                            .frame(width: geo.size.width * 1.2, height: geo.size.width * 1.2)
+                            .blur(radius: 100)
+                            .opacity(0.4)
+                            .position(x: 0, y: geo.size.height)
+                    }
                     
-                    Circle()
-                        .fill(Color(hex: "7E5074"))
-                        .frame(width: 450, height: 450)
-                        .blur(radius: 100)
-                        .opacity(0.4)
-                        .offset(x: -150, y: 350)
-                }
-                
-                // СИНИЙ ГРАДИЕНТ (как gradient_shape в Android)
-                if showGradientShape {
-                    Circle()
-                        .fill(Color(hex: "3B82F6").opacity(0.25))
-                        .frame(width: 400, height: 400)
-                        .blur(radius: 90)
-                        .offset(x: -180, y: -350)
+                    // СИНИЙ КРУГ (Градиент слева сверху)
+                    if showGradientShape {
+                        Circle()
+                            .fill(Color(hex: "3B82F6").opacity(0.3))
+                            .frame(width: 400, height: 400)
+                            .blur(radius: 100)
+                            .position(x: 0, y: 0)
+                    }
                 }
             }
             .ignoresSafeArea()

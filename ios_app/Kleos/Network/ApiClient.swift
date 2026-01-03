@@ -37,12 +37,11 @@ class ApiClient: ObservableObject {
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        // Добавляем язык в заголовки
         let lang = UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en"
         request.setValue(lang, forHTTPHeaderField: "Accept-Language")
         
-        // Не отправляем заголовок Authorization, если пользователь — гость
-        if !SessionManager.shared.isGuest(), let token = SessionManager.shared.getToken() {
+        // ЕСЛИ ЕСТЬ JWT ТОКЕН - ОТПРАВЛЯЕМ ЕГО ВСЕГДА
+        if let token = SessionManager.shared.getToken(), token.contains(".") {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
