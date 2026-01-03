@@ -159,13 +159,13 @@ struct KleosButtonStyle: ButtonStyle {
     var foregroundColor: Color = .black
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 20, weight: .bold))
+            .padding(.horizontal, 24)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
+            .frame(height: 62)
             .background(backgroundColor)
             .foregroundColor(foregroundColor)
             .clipShape(Capsule())
-            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
     }
 }
 
@@ -174,14 +174,14 @@ struct KleosOutlinedButtonStyle: ButtonStyle {
     var foregroundColor: Color = .white
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 20, weight: .bold))
+            .padding(.horizontal, 24)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
+            .frame(height: 62)
             .foregroundColor(foregroundColor)
             .background(
                 Capsule()
                     .stroke(strokeColor, lineWidth: 2)
             )
-            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
     }
 }

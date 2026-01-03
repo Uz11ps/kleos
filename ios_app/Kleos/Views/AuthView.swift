@@ -41,7 +41,7 @@ struct AuthView: View {
                             showLogin = true 
                         }) {
                             Text(t("sign_in"))
-                                .frame(height: 72)
+                                .font(.system(size: 24, weight: .bold))
                         }
                         .buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: .black))
                         
@@ -50,7 +50,7 @@ struct AuthView: View {
                             showRegister = true 
                         }) {
                             Text(t("sign_up"))
-                                .frame(height: 72)
+                                .font(.system(size: 24, weight: .bold))
                         }
                         .buttonStyle(KleosOutlinedButtonStyle(strokeColor: .white, foregroundColor: .white))
                         
@@ -64,7 +64,7 @@ struct AuthView: View {
                         }
                         .padding(.top, 24)
                     }
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, 40)
                     .padding(.bottom, geo.size.height * 0.05)
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
