@@ -5,109 +5,64 @@ struct ProfileView: View {
     @StateObject private var sessionManager = SessionManager.shared
     @State private var profile: UserProfile?
     @State private var isLoading = true
-    @State private var isEditing = false
     @State private var errorMessage: String?
-    @State private var successMessage: String?
-    
-    @State private var fullName = ""
-    @State private var phone = ""
-    @State private var course = ""
-    @State private var speciality = ""
-    @State private var status = ""
-    @State private var university = ""
-    @State private var payment = ""
-    @State private var penalties = ""
-    @State private var notes = ""
-    
-    private var isGuest: Bool {
-        sessionManager.currentUser?.email == "guest@local" || !sessionManager.isLoggedIn
-    }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.kleosBackground.ignoresSafeArea()
-                
-                // Background circles
-                VStack {
-                    HStack {
-                        BlurredCircle()
-                            .offset(x: -100, y: -100)
-                        Spacer()
-                    }
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        BlurredCircle(color: Color.kleosBlue.opacity(0.3))
-                            .offset(x: 100, y: 100)
-                    }
-                }
-                .ignoresSafeArea()
-                
-                if isGuest {
-                    guestLoginView
-                } else if isLoading {
-                    LoadingView()
-                } else if let profile = profile {
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            // Avatar
-                            AsyncImage(url: apiClient.getFullUrl(profile.avatarUrl)) { phase in
-                                if case .success(let image) = phase {
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                } else {
-                                    Image(systemName: "person.circle.fill")
-                                        .resizable()
-                                }
+        ZStack {
+            if isLoading {
+                LoadingView()
+            } else {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Avatar
+                        AsyncImage(url: apiClient.getFullUrl(profile?.avatarUrl)) { phase in
+                            if case .success(let image) = phase {
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } else {
+                                Image(systemName: "person.circle.fill")
+                                    .resizable()
+                                    .foregroundColor(.gray)
                             }
-                            .frame(width: 100, height: 100)
-                            .clipShape(Circle())
-                            .foregroundColor(.gray)
-                            
-                            // Profile fields
-                            VStack(spacing: 16) {
-                                ProfileField(label: "Full Name", value: $fullName, isEditable: isEditing)
-                                ProfileField(label: "Email", value: .constant(profile.email), isEditable: false)
-                                ProfileField(label: "Role", value: .constant(profile.role), isEditable: false)
-                                ProfileField(label: "Student ID", value: .constant(profile.studentId ?? ""), isEditable: false)
-                                ProfileField(label: "Phone", value: $phone, isEditable: isEditing)
-                                ProfileField(label: "Course", value: $course, isEditable: isEditing)
-                                ProfileField(label: "Speciality", value: $speciality, isEditable: isEditing)
-                                ProfileField(label: "Status", value: $status, isEditable: isEditing)
-                                ProfileField(label: "University", value: $university, isEditable: isEditing)
-                                ProfileField(label: "Payment", value: $payment, isEditable: isEditing)
-                                ProfileField(label: "Penalties", value: $penalties, isEditable: isEditing)
-                                ProfileField(label: "Notes", value: $notes, isEditable: isEditing, isMultiline: true)
-                            }
-                            .padding()
-                            
-                            if let error = errorMessage {
-                                Text(error)
-                                    .foregroundColor(.red)
-                                    .font(.caption)
-                                    .padding(.horizontal)
-                            }
-                            
-                            if let success = successMessage {
-                                Text(success)
-                                    .foregroundColor(.green)
-                                    .font(.caption)
-                                    .padding(.horizontal)
-                            }
-                            
-                            if isEditing {
-                                Button(action: saveProfile) {
-                                    Text("Save")
-                                        .fontWeight(.semibold)
-                                        .frame(maxWidth: .infinity)
-                                }
-                                .buttonStyle(KleosButtonStyle())
+                        }
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                        
+                        // Error message
+                        if let error = errorMessage {
+                            Text("Error: \(error)")
+                                .foregroundColor(.red)
+                                .font(.caption)
                                 .padding()
-                            }
-                            
-                            // Logout button
+                        }
+                        
+                        // Profile fields
+                        VStack(spacing: 16) {
+                            ProfileField(label: "Full Name", value: profile?.fullName ?? sessionManager.currentUser?.fullName ?? "")
+                            ProfileField(label: "Email", value: profile?.email ?? sessionManager.currentUser?.email ?? "")
+                            ProfileField(label: "Role", value: profile?.role ?? sessionManager.currentUser?.role ?? "")
+                            ProfileField(label: "Student ID", value: profile?.studentId ?? "")
+                            ProfileField(label: "Phone", value: profile?.phone ?? "")
+                            ProfileField(label: "Course", value: profile?.course ?? "")
+                            ProfileField(label: "Speciality", value: profile?.speciality ?? "")
+                            ProfileField(label: "Status", value: profile?.status ?? "")
+                            ProfileField(label: "University", value: profile?.university ?? "")
+                            ProfileField(label: "Payment", value: profile?.payment ?? "")
+                            ProfileField(label: "Penalties", value: profile?.penalties ?? "")
+                            ProfileField(label: "Notes", value: profile?.notes ?? "", isMultiline: true)
+                        }
+                        .padding()
+                        
+                        // Info message
+                        Text("Profile information can only be edited by administrators")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        
+                        // Logout button
+                        if !sessionManager.isGuest() {
                             Button(action: {
                                 sessionManager.logout()
                             }) {
@@ -118,23 +73,17 @@ struct ProfileView: View {
                             }
                             .padding()
                         }
-                        .padding(.top, 20)
                     }
+                    .padding(.top, 60)
+                    .padding(.bottom, 100)
                 }
             }
-            .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Cancel" : "Edit") {
-                        if isEditing {
-                            loadProfile()
-                        }
-                        isEditing.toggle()
-                    }
-                }
-            }
-            .onAppear {
+        }
+        .kleosBackground()
+        .navigationTitle("Profile")
+        .navigationBarTitleDisplayMode(.large)
+        .task {
+            if profile == nil {
                 loadProfile()
             }
         }
@@ -142,104 +91,36 @@ struct ProfileView: View {
     
     private func loadProfile() {
         isLoading = true
+        errorMessage = nil
+        
+        if let currentUser = sessionManager.currentUser {
+            self.profile = currentUser
+        }
         
         Task {
             do {
                 let fetched = try await apiClient.getProfile()
                 await MainActor.run {
                     self.profile = fetched
-                    self.fullName = fetched.fullName
-                    self.phone = fetched.phone ?? ""
-                    self.course = fetched.course ?? ""
-                    self.speciality = fetched.speciality ?? ""
-                    self.status = fetched.status ?? ""
-                    self.university = fetched.university ?? ""
-                    self.payment = fetched.payment ?? ""
-                    self.penalties = fetched.penalties ?? ""
-                    self.notes = fetched.notes ?? ""
                     self.isLoading = false
+                    self.errorMessage = nil
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
-                }
-            }
-        }
-    }
-    
-    private func saveProfile() {
-        errorMessage = nil
-        successMessage = nil
-        
-        let request = UpdateProfileRequest(
-            fullName: fullName.isEmpty ? nil : fullName,
-            phone: phone.isEmpty ? nil : phone,
-            course: course.isEmpty ? nil : course,
-            speciality: speciality.isEmpty ? nil : speciality,
-            status: status.isEmpty ? nil : status,
-            university: university.isEmpty ? nil : university,
-            payment: payment.isEmpty ? nil : payment,
-            penalties: penalties.isEmpty ? nil : penalties,
-            notes: notes.isEmpty ? nil : notes
-        )
-        
-        Task {
-            do {
-                let updated = try await apiClient.updateProfile(request)
-                await MainActor.run {
-                    self.profile = updated
-                    self.isEditing = false
-                    self.successMessage = "Profile updated successfully"
-                    
-                    // Clear success message after 3 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        self.successMessage = nil
+                    self.errorMessage = error.localizedDescription
+                    if self.profile == nil {
+                        self.errorMessage = "Failed to load profile. Using cached data."
                     }
                 }
-            } catch let error as ApiError {
-                await MainActor.run {
-                    switch error {
-                    case .httpError(let code):
-                        errorMessage = "Error updating profile (Error \(code)). Please try again."
-                    case .serverError(let message):
-                        errorMessage = message
-                    default:
-                        errorMessage = "Error updating profile. Check your internet connection."
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = "Error updating profile. Please try again."
-                }
             }
         }
-    }
-    
-    private var guestLoginView: some View {
-        VStack(spacing: 24) {
-            Text("Please sign in to view your profile")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-            
-            Button(action: {
-                // Navigate to auth
-            }) {
-                Text("Sign In")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(KleosButtonStyle())
-            .padding(.horizontal, 40)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
 struct ProfileField: View {
     let label: String
-    @Binding var value: String
-    let isEditable: Bool
+    let value: String
     var isMultiline: Bool = false
     
     var body: some View {
@@ -248,30 +129,13 @@ struct ProfileField: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.gray)
             
-            if isEditable {
-                if isMultiline {
-                    TextEditor(text: $value)
-                        .frame(height: 100)
-                        .background(Color.white.opacity(0.1))
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                } else {
-                    TextField("", text: $value)
-                        .textFieldStyle(.plain)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(8)
-                }
-            } else {
-                Text(value.isEmpty ? "—" : value)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(8)
-            }
+            Text(value.isEmpty ? "—" : value)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(8)
+                .frame(minHeight: isMultiline ? 100 : nil)
         }
     }
 }
-

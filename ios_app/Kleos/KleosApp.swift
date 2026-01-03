@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 @main
 struct KleosApp: App {
@@ -17,6 +20,7 @@ struct KleosApp: App {
     }
     
     private func setupAppearance() {
+        #if os(iOS)
         // Navigation bar appearance
         let navBarAppearance = UINavigationBarAppearance()
         navBarAppearance.configureWithOpaqueBackground()
@@ -35,6 +39,7 @@ struct KleosApp: App {
         
         UITabBar.appearance().standardAppearance = tabBarAppearance
         UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+        #endif
     }
 }
 

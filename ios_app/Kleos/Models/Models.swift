@@ -21,7 +21,6 @@ struct NewsItem: Codable, Identifiable {
         content = try? container.decode(String.self, forKey: .content)
         imageUrl = try? container.decode(String.self, forKey: .imageUrl)
         
-        // Обрабатываем publishedAt - может быть строкой или датой
         if let dateString = try? container.decode(String.self, forKey: .publishedAt) {
             publishedAt = dateString
         } else if let date = try? container.decode(Date.self, forKey: .publishedAt) {
@@ -35,7 +34,6 @@ struct NewsItem: Codable, Identifiable {
     }
     
     var dateText: String {
-        // Пробуем разные форматы даты
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
@@ -45,7 +43,6 @@ struct NewsItem: Codable, Identifiable {
             return displayFormatter.string(from: date)
         }
         
-        // Пробуем без дробных секунд
         isoFormatter.formatOptions = [.withInternetDateTime]
         if let date = isoFormatter.date(from: publishedAt) {
             let displayFormatter = DateFormatter()
@@ -53,7 +50,6 @@ struct NewsItem: Codable, Identifiable {
             return displayFormatter.string(from: date)
         }
         
-        // Если не получилось, возвращаем как есть
         return publishedAt
     }
 }
@@ -77,7 +73,7 @@ struct UserProfile: Codable {
     let avatarUrl: String?
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
+        case id // Сервер возвращает "id", а не "_id"
         case email, fullName, role, phone, course, speciality, status, university
         case payment, penalties, notes, studentId, emailVerified, avatarUrl
     }
@@ -130,7 +126,7 @@ struct University: Codable, Identifiable {
     let contentBlocks: [ContentBlock]?
     
     enum CodingKeys: String, CodingKey {
-        case id // Сервер возвращает "id", а не "_id"
+        case id
         case name, city, country, description, website, logoUrl, socialLinks, degreePrograms, contentBlocks
     }
     
@@ -148,17 +144,18 @@ struct Program: Codable, Identifiable {
     let title: String
     let description: String?
     let language: String?
-    let level: String? // "Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"
-    let university: String? // Legacy field for backward compatibility
-    let universityId: String? // New field linking to University model
+    let level: String?
+    let university: String?
+    let universityId: String?
+    let universityName: String? // Добавлено для отображения названия ВУЗа
     let tuition: Double?
-    let durationYears: Double? // Changed from durationMonths to durationYears
+    let durationYears: Double?
     let active: Bool?
     let order: Int?
     
     enum CodingKeys: String, CodingKey {
-        case id // Сервер возвращает "id", а не "_id"
-        case title, description, language, level, university, universityId, tuition, durationYears, active, order
+        case id
+        case title, description, language, level, university, universityId, universityName, tuition, durationYears, active, order
     }
     
     var name: String { title }
@@ -170,11 +167,11 @@ struct Program: Codable, Identifiable {
 }
 
 struct ProgramFilters: Codable {
-    let language: String?
-    let level: String?
-    let university: String?
-    let universityId: String?
-    let searchQuery: String?
+    var language: String?
+    var level: String?
+    var university: String?
+    var universityId: String?
+    var searchQuery: String?
 }
 
 // MARK: - Gallery Models
@@ -184,10 +181,10 @@ struct GalleryItem: Codable, Identifiable {
     let description: String?
     let mediaUrl: String
     let mediaType: String
-    let createdAt: String? // Сервер возвращает createdAt
+    let createdAt: String?
     
     enum CodingKeys: String, CodingKey {
-        case id // Сервер возвращает "id", а не "_id"
+        case id
         case title, description, mediaUrl, mediaType, createdAt
     }
 }
@@ -198,12 +195,12 @@ struct Partner: Codable, Identifiable {
     let name: String
     let description: String?
     let logoUrl: String?
-    let website: String? // Маппинг с серверного поля "url"
+    let website: String?
     
     enum CodingKeys: String, CodingKey {
-        case id // Сервер возвращает "id", а не "_id"
+        case id
         case name, description, logoUrl
-        case website = "url" // Сервер возвращает "url", а не "website"
+        case website = "url"
     }
 }
 
@@ -223,7 +220,6 @@ struct AdmissionApplication: Codable {
     let visaCity: String?
     let program: String
     let comment: String?
-    // Note: sex field removed to match Android version
 }
 
 struct AdmissionResponse: Codable {
@@ -238,7 +234,7 @@ struct Chat: Codable, Identifiable {
     let lastMessageAt: String?
     
     enum CodingKeys: String, CodingKey {
-        case id // Сервер возвращает "id"
+        case id
         case status, lastMessageAt
     }
 }
@@ -247,18 +243,18 @@ struct ChatCreateResponse: Codable {
     let id: String
     
     enum CodingKeys: String, CodingKey {
-        case id // Сервер возвращает "id"
+        case id
     }
 }
 
 struct ChatMessage: Codable, Identifiable {
     let id: String
     let text: String
-    let senderRole: String // "student" or "admin"
+    let senderRole: String
     let createdAt: String
     
     enum CodingKeys: String, CodingKey {
-        case id // Сервер возвращает "id"
+        case id
         case text, senderRole, createdAt
     }
     
@@ -271,7 +267,6 @@ struct FAQItem: Codable, Identifiable {
     let id: String
     let question: String
     let answer: String
-    
     var isExpanded: Bool = false
 }
 

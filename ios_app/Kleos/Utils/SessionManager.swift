@@ -7,6 +7,11 @@ class SessionManager: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var currentUser: UserProfile?
     
+    enum DeepLinkAction {
+        case openProfile
+    }
+    @Published var deepLinkAction: DeepLinkAction?
+    
     private let userDefaults = UserDefaults.standard
     private let tokenKey = "kleos_auth_token"
     private let userEmailKey = "kleos_user_email"

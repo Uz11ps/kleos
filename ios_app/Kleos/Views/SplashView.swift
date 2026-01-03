@@ -1,43 +1,53 @@
 import SwiftUI
 
 struct SplashView: View {
-    @StateObject private var sessionManager = SessionManager.shared
-    @State private var isActive = false
-    @State private var showOnboarding = false
+    @ObservedObject private var sessionManager = SessionManager.shared
+    @State private var isSplashFinished = false
+    @AppStorage("has_seen_onboarding") var hasSeenOnboarding: Bool = false
     
     var body: some View {
-        VStack {
-            Spacer()
-            Text("Kleos")
-                .font(.system(size: 48, weight: .bold))
-                .foregroundColor(.white)
-            Spacer()
-        }
-        .kleosBackground() // Централизованный фон
-        .onAppear {
-
-            // Проверяем, показывали ли onboarding
-            let hasSeenOnboarding = UserDefaults.standard.bool(forKey: "has_seen_onboarding")
+        ZStack {
+            // Фон всегда один
+            Color(hex: "0E080F").ignoresSafeArea()
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if !isSplashFinished {
+                // КЛЕОС ЦЕНТРАЛИЗОВАННЫЙ
+                VStack {
+                    Spacer()
+                    Text("Kleos")
+                        .font(.system(size: 64, weight: .bold))
+                        .foregroundColor(.white)
+                        .tracking(2)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .kleosBackground(showGradientShape: false, circlePositions: .center, isSplashOrAuth: true)
+                .transition(.opacity)
+            } else {
+                // Основная логика навигации
                 if !hasSeenOnboarding {
-                    showOnboarding = true
+                    OnboardingView {
+                        withAnimation {
+                            hasSeenOnboarding = true
+                        }
+                    }
+                    .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .opacity))
+                } else if sessionManager.isLoggedIn {
+                    MainTabView()
+                        .transition(.opacity)
+                        .id("MainApp") // Force re-render when switching
                 } else {
-                    isActive = true
+                    AuthView()
+                        .transition(.opacity)
+                        .id("AuthFlow")
                 }
             }
         }
-        .fullScreenCover(isPresented: $showOnboarding) {
-            OnboardingView {
-                UserDefaults.standard.set(true, forKey: "has_seen_onboarding")
-                isActive = true
-            }
-        }
-        .fullScreenCover(isPresented: $isActive) {
-            if sessionManager.isLoggedIn {
-                MainTabView()
-            } else {
-                AuthView()
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    isSplashFinished = true
+                }
             }
         }
     }
@@ -46,95 +56,46 @@ struct SplashView: View {
 struct OnboardingView: View {
     let onComplete: () -> Void
     
-    @State private var currentPage = 0
-    
-    let pages = [
-        OnboardingPage(
-            title: "Discover and explore famed Russian universities",
-            subtitle: "Through our mobile application, you will be able to discover first‑rate & notable Russian universities and all their programs"
-        ),
-        OnboardingPage(
-            title: "StudyInRussia Awesome\nTalk Show and Broadcast",
-            subtitle: "The distinctive feature of our mobile application which enables you to watch live talk show & broadcast with leading Russian universities to discuss and obtain the latest"
-        ),
-        OnboardingPage(
-            title: "Forum, the excellent venue for study discussion and social interaction",
-            subtitle: "Forum, the outstanding and designated space created with the intention for you to join, share and post the brilliant ideas in your mind to interact with each other"
-        )
-    ]
-    
     var body: some View {
-        TabView(selection: $currentPage) {
-            ForEach(0..<pages.count, id: \.self) { index in
-                OnboardingPageView(page: pages[index])
-                    .tag(index)
-            }
-        }
-        .tabViewStyle(.page)
-        .indexViewStyle(.page(backgroundDisplayMode: .always))
-        .overlay(
+        ZStack {
             VStack {
                 Spacer()
-                HStack {
-                    if currentPage > 0 {
-                        Button("Back") {
-                            withAnimation {
-                                currentPage -= 1
-                            }
-                        }
-                        .buttonStyle(KleosOutlinedButtonStyle())
-                    }
+                
+                // Текст в левом нижнем углу
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(LocalizationManager.shared.t("study"))
+                        .font(.system(size: 32, weight: .regular))
+                        .foregroundColor(.white)
                     
-                    Spacer()
+                    Text(LocalizationManager.shared.t("programs_and"))
+                        .font(.system(size: 32, weight: .regular))
+                        .foregroundColor(.white)
                     
-                    if currentPage < pages.count - 1 {
-                        Button("Next") {
-                            withAnimation {
-                                currentPage += 1
-                            }
-                        }
-                        .buttonStyle(KleosButtonStyle())
-                    } else {
-                        Button("Start") {
-                            onComplete()
-                        }
-                        .buttonStyle(KleosButtonStyle())
+                    Text(LocalizationManager.shared.t("submit_apps"))
+                        .font(.system(size: 32, weight: .regular))
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 24)
+                .padding(.bottom, 180)
+                
+                // Кнопка со стрелкой внизу по центру
+                Button(action: {
+                    onComplete()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 108, height: 108)
+                        
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.black)
                     }
                 }
-                .padding()
+                .padding(.bottom, 44)
             }
-        )
-        .kleosBackground() // Централизованный фон
-    }
-}
-
-
-struct OnboardingPage {
-    let title: String
-    let subtitle: String
-}
-
-struct OnboardingPageView: View {
-    let page: OnboardingPage
-    
-    var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            
-            Text(page.title)
-                .font(.system(size: 32, weight: .bold))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-            
-            Text(page.subtitle)
-                .font(.system(size: 16))
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-            
-            Spacer()
         }
+        .kleosBackground(showGradientShape: true, circlePositions: .corners, isSplashOrAuth: true)
     }
 }
-

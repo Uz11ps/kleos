@@ -2,72 +2,57 @@ import SwiftUI
 
 struct UniversitiesView: View {
     @StateObject private var apiClient = ApiClient.shared
+    @StateObject private var localizationManager = LocalizationManager.shared
     @State private var universities: [University] = []
-    @State private var isLoading = true
+    @State private var isLoading = false
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.kleosBackground.ignoresSafeArea()
-                
-                // Background circles
-                VStack {
-                    HStack {
-                        Spacer()
-                        BlurredCircle(color: Color.kleosBlue.opacity(0.2))
-                            .offset(x: 50, y: -50)
-                    }
-                    Spacer()
-                }
-                
-                if isLoading {
-                    LoadingView()
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
-                            Text("Universities")
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 24)
-                            
-                            LazyVStack(spacing: 16) {
-                                ForEach(universities) { uni in
-                                    NavigationLink(destination: UniversityDetailView(universityId: uni.id)) {
-                                        UniversityCard(university: uni)
-                                    }
+        ZStack {
+            if isLoading {
+                LoadingView()
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Color.clear.frame(height: 150)
+                        
+                        LazyVStack(spacing: 16) {
+                            ForEach(universities) { uni in
+                                NavigationLink(destination: UniversityDetailView(universityId: uni.id)) {
+                                    UniversityCard(university: uni)
                                 }
                             }
-                            .padding(.horizontal, 24)
                         }
-                        .padding(.top, 20)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 20)
                     }
                 }
             }
-            .navigationTitle("Universities")
-            .navigationBarTitleDisplayMode(.large)
-            .onAppear {
+        }
+        .kleosBackground()
+        .navigationTitle(t("universities"))
+        .navigationBarTitleDisplayMode(.large)
+        .task {
+            if universities.isEmpty && !isLoading {
                 loadUniversities()
             }
+        }
+        .onChange(of: localizationManager.currentLanguage) { _, _ in
+            loadUniversities()
         }
     }
     
     private func loadUniversities() {
+        guard !isLoading else { return }
         isLoading = true
         Task {
             do {
-                print("🔄 Loading universities...")
                 let fetched = try await apiClient.fetchUniversities()
-                print("✅ Loaded \(fetched.count) universities")
                 await MainActor.run {
                     self.universities = fetched
                     self.isLoading = false
                 }
             } catch {
-                print("❌ Error loading universities: \(error)")
-                await MainActor.run {
-                    self.isLoading = false
-                    print("⚠️ Failed to load universities: \(error.localizedDescription)")
-                }
+                await MainActor.run { self.isLoading = false }
             }
         }
     }
@@ -75,279 +60,124 @@ struct UniversitiesView: View {
 
 struct UniversityCard: View {
     let university: University
-    
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // Background
             AsyncImage(url: ApiClient.shared.getFullUrl(university.logoUrl)) { phase in
                 if case .success(let image) = phase {
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
+                    image.resizable().aspectRatio(contentMode: .fill)
                 } else {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.1))
                 }
             }
-            .frame(height: 180)
-            .clipped()
-            
-            // Overlay
-            LinearGradient(
-                gradient: Gradient(colors: [.black.opacity(0.7), .clear]),
-                startPoint: .bottom,
-                endPoint: .center
-            )
-            
+            .frame(height: 180).clipped()
+            LinearGradient(gradient: Gradient(colors: [.black.opacity(0.7), .clear]), startPoint: .bottom, endPoint: .center)
             VStack(alignment: .leading, spacing: 4) {
-                CategoryBadge(text: "Universities", isInteresting: false)
-                
-                Text(university.name)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-                
+                CategoryBadge(text: LocalizationManager.shared.t("university"), isInteresting: false)
+                Text(university.name).font(.system(size: 20, weight: .bold)).foregroundColor(.white)
                 HStack {
                     Image(systemName: "mappin.and.ellipse")
                     Text(university.location)
                 }
-                .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .font(.system(size: 14)).foregroundColor(.gray)
             }
             .padding(20)
-            
-            // Arrow button
             VStack {
                 Spacer()
                 HStack {
                     Spacer()
-                    Image(systemName: "arrow.up.right.circle.fill")
-                        .resizable()
-                        .frame(width: 32, height: 32)
-                        .foregroundColor(.white)
-                        .padding(20)
+                    Image(systemName: "arrow.up.right.circle.fill").resizable().frame(width: 32, height: 32).foregroundColor(.white).padding(20)
                 }
             }
         }
-        .cornerRadius(20)
-        .shadow(radius: 10)
+        .cornerRadius(20).shadow(radius: 10)
     }
 }
 
 struct UniversityDetailView: View {
     let universityId: String
     @StateObject private var apiClient = ApiClient.shared
+    @StateObject private var localizationManager = LocalizationManager.shared
     @State private var university: University?
     @State private var isLoading = true
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         ZStack {
-            Color.kleosBackground.ignoresSafeArea()
-            
-            // Background circles
-            VStack {
-                HStack {
-                    BlurredCircle()
-                        .offset(x: -100, y: -100)
-                    Spacer()
-                }
-                Spacer()
-                HStack {
-                    Spacer()
-                    BlurredCircle(color: Color.kleosBlue.opacity(0.3))
-                        .offset(x: 100, y: 100)
-                }
-            }
-            .ignoresSafeArea()
-            
             if isLoading {
                 LoadingView()
             } else if let university = university {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Logo
+                    VStack(alignment: .center, spacing: 24) {
+                        Color.clear.frame(height: 150)
+                        
                         AsyncImage(url: apiClient.getFullUrl(university.logoUrl)) { phase in
                             if case .success(let image) = phase {
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
+                                image.resizable().aspectRatio(contentMode: .fit)
                             } else {
-                                Color.gray.opacity(0.3)
+                                Color.white.opacity(0.1).overlay(Image(systemName: "graduationcap").foregroundColor(.gray))
                             }
                         }
-                        .frame(height: 200)
-                        .padding()
+                        .frame(height: 160).cornerRadius(12).padding(.horizontal)
                         
-                        // Content
-                        VStack(alignment: .leading, spacing: 20) {
-                            Text(university.name)
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(.white)
-                            
+                        VStack(alignment: .center, spacing: 12) {
+                            Text(university.name).font(.system(size: 28, weight: .bold)).foregroundColor(.white).multilineTextAlignment(.center)
                             HStack {
                                 Image(systemName: "mappin.and.ellipse")
                                 Text(university.location)
                             }
-                            .font(.system(size: 16))
-                            .foregroundColor(.gray)
-                            
-                            if let description = university.description {
-                                Text(description)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white)
-                                    .lineSpacing(4)
-                            }
-                            
-                            // Social Links
-                            if let socialLinks = university.socialLinks {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text("Contacts")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.white)
-                                    
-                                    if let website = university.website, let url = URL(string: website) {
-                                        Link(destination: url) {
-                                            HStack {
-                                                Image(systemName: "globe")
-                                                Text("Website")
-                                                Spacer()
-                                                Image(systemName: "arrow.up.right")
-                                            }
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.blue)
-                                        }
-                                    }
-                                    
-                                    if let email = socialLinks.email {
-                                        Link(destination: URL(string: "mailto:\(email)")!) {
-                                            HStack {
-                                                Image(systemName: "envelope")
-                                                Text(email)
-                                                Spacer()
-                                            }
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.blue)
-                                        }
-                                    }
-                                    
-                                    if let phone = socialLinks.phone {
-                                        Link(destination: URL(string: "tel:\(phone)")!) {
-                                            HStack {
-                                                Image(systemName: "phone")
-                                                Text(phone)
-                                                Spacer()
-                                            }
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.blue)
-                                        }
-                                    }
-                                    
-                                    HStack(spacing: 16) {
-                                        if let facebook = socialLinks.facebook, let url = URL(string: facebook) {
-                                            Link(destination: url) {
-                                                Image(systemName: "link")
-                                                    .foregroundColor(.blue)
-                                            }
-                                        }
-                                        if let instagram = socialLinks.instagram, let url = URL(string: instagram) {
-                                            Link(destination: url) {
-                                                Image(systemName: "camera")
-                                                    .foregroundColor(.blue)
-                                            }
-                                        }
-                                        if let youtube = socialLinks.youtube, let url = URL(string: youtube) {
-                                            Link(destination: url) {
-                                                Image(systemName: "play.circle")
-                                                    .foregroundColor(.blue)
-                                            }
-                                        }
-                                    }
-                                }
-                                .padding()
-                                .background(Color.white.opacity(0.1))
-                                .cornerRadius(16)
-                            }
-                            
-                            // Degree Programs
-                            if let degreePrograms = university.degreePrograms, !degreePrograms.isEmpty {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text("Programs")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.white)
-                                    
-                                    ForEach(degreePrograms, id: \.type) { program in
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(program.type)
-                                                .font(.system(size: 16, weight: .semibold))
-                                                .foregroundColor(.white)
-                                            
-                                            if let description = program.description {
-                                                Text(description)
-                                                    .font(.system(size: 14))
-                                                    .foregroundColor(.gray)
-                                            }
-                                        }
-                                        .padding()
-                                        .background(Color.white.opacity(0.1))
-                                        .cornerRadius(12)
-                                    }
-                                }
-                            }
-                            
-                            // Content Blocks
-                            if let contentBlocks = university.contentBlocks, !contentBlocks.isEmpty {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text("Additional Information")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.white)
-                                    
-                                    ForEach(contentBlocks.sorted(by: { ($0.order ?? 0) < ($1.order ?? 0) }), id: \.type) { block in
-                                        if let content = block.content {
-                                            Text(content)
-                                                .font(.system(size: 16))
-                                                .foregroundColor(.white)
-                                                .lineSpacing(4)
-                                                .padding()
-                                                .background(Color.white.opacity(0.1))
-                                                .cornerRadius(12)
-                                        }
-                                    }
-                                }
-                            }
+                            .font(.system(size: 16)).foregroundColor(.gray)
                         }
-                        .padding()
+                        .padding(.horizontal)
+                        
+                        if let description = university.description, !description.isEmpty {
+                            Text(description).font(.system(size: 16)).foregroundColor(.white.opacity(0.9)).lineSpacing(6).multilineTextAlignment(.center).padding(.horizontal, 24)
+                        }
+                        
+                        if let socialLinks = university.socialLinks {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text(t("contacts")).font(.system(size: 20, weight: .bold)).foregroundColor(.white).padding(.bottom, 4)
+                                if let website = university.website, let url = URL(string: website.contains("://") ? website : "https://\(website)") {
+                                    Link(destination: url) { contactRow(icon: "globe", text: t("website")) }
+                                }
+                                if let email = socialLinks.email {
+                                    Link(destination: URL(string: "mailto:\(email)")!) { contactRow(icon: "envelope", text: email) }
+                                }
+                                if let phone = socialLinks.phone {
+                                    Link(destination: URL(string: "tel:\(phone.filter { "0123456789+".contains($0) })")!) { contactRow(icon: "phone", text: phone) }
+                                }
+                            }
+                            .padding(20).background(Color.white.opacity(0.08)).cornerRadius(20).padding(.horizontal, 24)
+                        }
+                        Color.clear.frame(height: 50)
                     }
                 }
             }
         }
+        .kleosBackground()
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "arrow.left")
-                        .foregroundColor(.white)
-                }
-            }
+        .task { loadUniversity() }
+        .onChange(of: localizationManager.currentLanguage) { _, _ in loadUniversity() }
+    }
+    
+    @ViewBuilder
+    private func contactRow(icon: String, text: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon).foregroundColor(Color.kleosPurple).frame(width: 24)
+            Text(text).font(.system(size: 16)).foregroundColor(.white)
+            Spacer()
+            Image(systemName: "arrow.up.right").font(.system(size: 12)).foregroundColor(.gray)
         }
-        .onAppear {
-            loadUniversity()
-        }
+        .padding(.vertical, 8).contentShape(Rectangle())
     }
     
     private func loadUniversity() {
         Task {
             do {
                 let fetched = try await apiClient.fetchUniversity(id: universityId)
-                await MainActor.run {
-                    self.university = fetched
-                    self.isLoading = false
-                }
+                await MainActor.run { self.university = fetched; self.isLoading = false }
             } catch {
-                await MainActor.run {
-                    self.isLoading = false
-                }
+                await MainActor.run { self.isLoading = false }
             }
         }
     }
 }
-

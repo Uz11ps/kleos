@@ -3,111 +3,89 @@ import SwiftUI
 struct HomeView: View {
     @StateObject private var apiClient = ApiClient.shared
     @StateObject private var sessionManager = SessionManager.shared
+    @StateObject private var localizationManager = LocalizationManager.shared
     
     @State private var news: [NewsItem] = []
-    @State private var isLoading = true
-    @State private var selectedTab = "all" // all, news, interesting
+    @State private var isLoading = false
+    @State private var hasLoadedOnce = false
+    @State private var selectedTab = "all"
     @State private var userProfile: UserProfile?
     @State private var errorMessage: String?
-    @State private var debugInfo: String = ""
+    @State private var loadingTask: Task<Void, Never>?
+    
+    @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Header
-                headerView
-                
-                // Welcome Section
-                welcomeSection
-                
-                // Tabs
-                tabsView
-                
-                // News Section
-                newsSection
+        ZStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    Color.clear.frame(height: 90)
+                    
+                    headerView
+                    welcomeSection
+                    tabsView
+                    newsSection
+                }
             }
-            .padding(.top, 20)
+            .refreshable {
+                loadData()
+            }
         }
-        .kleosBackground() // Используем централизованный фон
-        .onAppear {
-            print("🏠 HomeView appeared, loading data...")
-            print("🏠 Current news count: \(news.count)")
-            print("🏠 isLoading: \(isLoading)")
-            loadData()
-        }
-
-        .refreshable {
-            print("🔄 HomeView refresh triggered")
-            loadData()
-        }
+        .kleosBackground()
         .task {
-            // Альтернативный способ загрузки через task
-            print("📋 HomeView task started")
+            if !hasLoadedOnce && !isLoading && news.isEmpty {
+                loadData()
+            }
+        }
+        // Перезагружаем данные при смене языка
+        .onChange(of: localizationManager.currentLanguage) { _, _ in
             loadData()
         }
     }
     
     private var headerView: some View {
         HStack {
-            Button(action: {
-                // Open drawer menu
-            }) {
-                Image(systemName: "line.3.horizontal")
-                    .font(.title2)
-                    .foregroundColor(.white)
-            }
-            
-            Spacer()
-            
-            Button(action: {
-                // Navigate to profile
-            }) {
+            NavigationLink(destination: ProfileView()) {
                 AsyncImage(url: apiClient.getFullUrl(userProfile?.avatarUrl)) { phase in
                     if case .success(let image) = phase {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
+                        image.resizable().aspectRatio(contentMode: .fill)
                     } else {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
+                        Image(systemName: "person.circle.fill").resizable().foregroundColor(Color.kleosPurple)
                     }
                 }
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
-                .foregroundColor(.gray)
+                .frame(width: 40, height: 40).clipShape(Circle())
             }
+            Spacer()
         }
         .padding(.horizontal, 24)
     }
     
     private var welcomeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Welcome back,")
-                .font(.system(size: 16))
-                .foregroundColor(.gray)
+            Text(t("welcome_back"))
+                .font(.system(size: 16)).foregroundColor(.gray)
             
-            let userName = userProfile?.fullName ?? sessionManager.currentUser?.fullName ?? "Guest"
+            let userName = userProfile?.fullName ?? sessionManager.currentUser?.fullName ?? t("guest")
             Text("\(userName)")
-                .font(.system(size: 32, weight: .bold))
-                .foregroundColor(.white)
-                .lineSpacing(4)
+                .font(.system(size: 32, weight: .bold)).foregroundColor(.white).lineSpacing(4)
+            
+            Text(t("explore_new_areas"))
+                .font(.system(size: 32, weight: .bold)).foregroundColor(.white).lineSpacing(4).padding(.top, 8)
         }
         .padding(.horizontal, 24)
     }
     
     private var tabsView: some View {
         HStack(spacing: 12) {
-            TabButton(title: "All", isSelected: selectedTab == "all") {
+            TabButton(title: t("all"), isSelected: selectedTab == "all") {
                 selectedTab = "all"
                 loadContent()
             }
-            
-            TabButton(title: "News", isSelected: selectedTab == "news") {
+            TabButton(title: t("news"), isSelected: selectedTab == "news") {
                 selectedTab = "news"
                 loadContent()
             }
-            
-            TabButton(title: "Interesting", isSelected: selectedTab == "interesting") {
+            TabButton(title: t("interesting"), isSelected: selectedTab == "interesting") {
                 selectedTab = "interesting"
                 loadContent()
             }
@@ -117,79 +95,21 @@ struct HomeView: View {
     
     private var newsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Debug info
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Debug: isLoading=\(isLoading ? "true" : "false"), news.count=\(news.count), selectedTab=\(selectedTab)")
-                    .font(.caption2)
-                    .foregroundColor(.yellow)
-                if let error = errorMessage {
-                    Text("Error: \(error)")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                }
-                if !debugInfo.isEmpty {
-                    Text("Info: \(debugInfo)")
-                        .font(.caption2)
-                        .foregroundColor(.gray)
-                }
-            }
-            .padding(.horizontal, 24)
-            
             if isLoading {
-                VStack {
-                    LoadingView()
-                        .frame(height: 400)
-                    Text("Loading...")
-                        .foregroundColor(.gray)
-                        .padding()
-                }
+                LoadingView().frame(height: 200)
             } else {
                 let filteredNews = filteredNewsItems
-                
                 if filteredNews.isEmpty {
-                    VStack(spacing: 12) {
-                        Text("No content available")
-                            .foregroundColor(.gray)
-                        Text("Total news: \(news.count)")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text("Filtered news: \(filteredNews.count)")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text("Selected tab: \(selectedTab)")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        if let error = errorMessage {
-                            Text("Error: \(error)")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                                .padding()
-                        }
-                        if !debugInfo.isEmpty {
-                            Text(debugInfo)
-                                .font(.caption2)
-                                .foregroundColor(.gray)
-                                .padding()
-                        }
-                        Button("Retry") {
-                            loadContent()
-                        }
-                        .buttonStyle(KleosButtonStyle())
-                        .padding(.top, 8)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
+                    Text(t("no_content")).foregroundColor(.gray).padding().frame(maxWidth: .infinity)
                 } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(filteredNews) { item in
-                                NavigationLink(destination: NewsDetailView(newsId: item.id)) {
-                                    NewsCard(item: item)
-                                }
+                    VStack(spacing: 16) {
+                        ForEach(filteredNews) { item in
+                            NavigationLink(destination: NewsDetailView(newsId: item.id)) {
+                                NewsCard(item: item)
                             }
                         }
-                        .padding(.horizontal, 24)
                     }
+                    .padding(.horizontal, 24)
                 }
             }
         }
@@ -197,14 +117,9 @@ struct HomeView: View {
     
     private var filteredNewsItems: [NewsItem] {
         switch selectedTab {
-        case "news":
-            // Если isInteresting не задан, считаем все новостями
-            return news.filter { !($0.isInteresting ?? false) }
-        case "interesting":
-            // Если isInteresting не задан, не показываем в интересном
-            return news.filter { $0.isInteresting == true }
-        default:
-            return news
+        case "news": return news.filter { !($0.isInteresting ?? false) }
+        case "interesting": return news.filter { $0.isInteresting == true }
+        default: return news
         }
     }
     
@@ -217,16 +132,8 @@ struct HomeView: View {
         Task {
             do {
                 let profile = try await apiClient.getProfile()
-                await MainActor.run {
-                    self.userProfile = profile
-                    sessionManager.saveUser(
-                        fullName: profile.fullName,
-                        email: profile.email,
-                        role: profile.role
-                    )
-                }
+                await MainActor.run { self.userProfile = profile }
             } catch {
-                // Guest or error - use session data
                 if let currentUser = sessionManager.currentUser {
                     self.userProfile = currentUser
                 }
@@ -235,33 +142,25 @@ struct HomeView: View {
     }
     
     private func loadContent() {
-        print("🔄 loadContent() called")
-        print("🔄 Current state - isLoading: \(isLoading), news count: \(news.count)")
-        
+        loadingTask?.cancel()
+        guard !isLoading else { return }
         isLoading = true
-        errorMessage = nil
-        debugInfo = "Loading..."
-        
-        Task { @MainActor in
+        loadingTask = Task {
             do {
-                print("🔄 Task started, calling fetchNews()...")
                 let fetchedNews = try await apiClient.fetchNews()
-                print("✅ fetchNews() returned \(fetchedNews.count) items")
-                
-                self.news = fetchedNews
-                self.isLoading = false
-                self.debugInfo = "Loaded \(fetchedNews.count) items"
-                self.errorMessage = nil
-                
-                print("✅ State updated - news count: \(self.news.count), isLoading: \(self.isLoading)")
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    self.news = fetchedNews
+                    self.isLoading = false
+                    self.hasLoadedOnce = true
+                }
             } catch {
-                print("❌ Error in loadContent: \(error)")
-                print("❌ Error type: \(type(of: error))")
-                print("❌ Error description: \(error.localizedDescription)")
-                
-                self.isLoading = false
-                self.errorMessage = error.localizedDescription
-                self.debugInfo = "Error: \(error.localizedDescription)"
+                if error is CancellationError { return }
+                await MainActor.run {
+                    self.isLoading = false
+                    self.hasLoadedOnce = true
+                    self.errorMessage = error.localizedDescription
+                }
             }
         }
     }
@@ -271,14 +170,12 @@ struct TabButton: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
-    
     var body: some View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
                 .foregroundColor(isSelected ? .black : .white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 16).padding(.vertical, 8)
                 .background(isSelected ? Color.white : Color.white.opacity(0.26))
                 .cornerRadius(20)
         }
@@ -287,50 +184,38 @@ struct TabButton: View {
 
 struct NewsCard: View {
     let item: NewsItem
-    
+    var isInteresting: Bool { item.isInteresting ?? false }
+    var backgroundColor: Color { isInteresting ? Color(hex: "FFD700") : Color(hex: "E8D5FF") }
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            // Background image
-            AsyncImage(url: ApiClient.shared.getFullUrl(item.imageUrl)) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                default:
-                    Color.gray.opacity(0.3)
+        ZStack(alignment: .topLeading) {
+            backgroundColor.frame(width: UIScreen.main.bounds.width - 48, height: 200)
+            if let imageUrl = item.imageUrl, !imageUrl.isEmpty {
+                AsyncImage(url: ApiClient.shared.getFullUrl(imageUrl)) { phase in
+                    if case .success(let image) = phase {
+                        image.resizable().aspectRatio(contentMode: .fill)
+                            .frame(width: UIScreen.main.bounds.width - 48, height: 200).clipped()
+                    }
                 }
             }
-            .frame(width: 280, height: 380)
-            .clipped()
-            
-            // Overlay gradient
-            LinearGradient(
-                gradient: Gradient(colors: [.black.opacity(0.7), .clear]),
-                startPoint: .bottom,
-                endPoint: .center
-            )
-            
-            VStack(alignment: .leading, spacing: 8) {
-                // Category badge
-                CategoryBadge(
-                    text: (item.isInteresting ?? false) ? "Interesting" : "News",
-                    isInteresting: item.isInteresting ?? false
-                )
-                
-                Text(item.title)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                
-                Text(item.dateText)
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
+            VStack {
+                HStack {
+                    Spacer()
+                    Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)).foregroundColor(.black)
+                        .frame(width: 32, height: 32).background(Color.white).clipShape(Circle())
+                        .padding(.top, 16).padding(.trailing, 16)
+                }
+                Spacer()
             }
-            .padding(20)
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer()
+                CategoryBadge(text: isInteresting ? LocalizationManager.shared.t("interesting") : LocalizationManager.shared.t("news"), isInteresting: isInteresting)
+                    .padding(.leading, 20).padding(.bottom, 8)
+                Text(item.title).font(.system(size: 20, weight: .bold)).foregroundColor(isInteresting ? .black : .white)
+                    .padding(.horizontal, 20).padding(.bottom, 4)
+                Text(item.dateText).font(.system(size: 14)).foregroundColor(isInteresting ? Color.gray.opacity(0.8) : Color.white.opacity(0.8))
+                    .padding(.leading, 20).padding(.bottom, 20)
+            }
         }
-        .frame(width: 280, height: 380)
-        .cornerRadius(24)
-        .shadow(radius: 10)
+        .frame(width: UIScreen.main.bounds.width - 48, height: 200).cornerRadius(20)
     }
 }

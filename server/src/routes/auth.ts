@@ -175,18 +175,21 @@ router.post('/verify/consume', async (req, res) => {
   <body>
     <div class="card">
       <h2>Email подтверждён</h2>
-      <p>Сейчас откроется приложение Kleos.</p>
-      <p>Если этого не произошло, нажмите кнопку:</p>
-      <p><a class="btn" href="${appLink}">Открыть приложение</a></p>
-      <p style="margin-top:8px;"><a class="btn" href="${intentLink}">Открыть через intent</a></p>
+      <p>Теперь вы можете вернуться в приложение Kleos. Ваш вход будет выполнен автоматически.</p>
+      <div style="text-align:center;margin:24px 0;">
+        <a class="btn" href="${appLink}" style="background:#10b981;padding:14px 24px;font-size:18px;">Открыть приложение Kleos</a>
+      </div>
+      <p style="font-size:14px;color:#666;">Если приложение не открылось автоматически, нажмите кнопку выше.</p>
     </div>
     <script>
       (function(){
-        var opened = false;
-        try { window.location.href='${appLink}'; opened = true; } catch(e) {}
+        // Пытаемся открыть приложение сразу
+        window.location.href = '${appLink}';
+        
+        // Повторная попытка через полсекунды на случай, если браузер заблокировал первую
         setTimeout(function(){
-          if (!opened) { window.location.href='${intentLink}'; }
-        }, 250);
+          window.location.href = '${appLink}';
+        }, 500);
       })();
     </script>
   </body>

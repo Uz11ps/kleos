@@ -1,13 +1,24 @@
 import Foundation
+import Combine
 
 class ApiClient: ObservableObject {
     static let shared = ApiClient()
     
+    @Published var lastError: String? = nil // Добавляем @Published поле для соответствия протоколу
+    
     // Замените на ваш реальный URL сервера
     let baseURL = "https://api.kleos-study.ru"
     
-    // Используем относительные пути без /api префикса, так как сервер работает без него
-    private let apiPrefix = ""
+    // Префикс API
+    private let apiPrefix = "/api"
+    
+    // Кастомный URLSession с увеличенным таймаутом
+    private lazy var urlSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 120.0 // 120 секунд
+        configuration.timeoutIntervalForResource = 120.0
+        return URLSession(configuration: configuration)
+    }()
     
     private init() {}
     
@@ -25,6 +36,10 @@ class ApiClient: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Добавляем язык в заголовки
+        let lang = UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en"
+        request.setValue(lang, forHTTPHeaderField: "Accept-Language")
         
         if let token = SessionManager.shared.getToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -53,7 +68,7 @@ class ApiClient: ObservableObject {
         print("📤 Request headers: \(request.allHTTPHeaderFields ?? [:])")
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await urlSession.data(for: request)
         
             if let httpResponse = response as? HTTPURLResponse {
                 let responseString = String(data: data, encoding: .utf8) ?? "no data"
@@ -103,7 +118,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         return try JSONDecoder().decode(NewsItem.self, from: data)
     }
     
@@ -117,7 +132,7 @@ class ApiClient: ObservableObject {
         let body = try JSONEncoder().encode(loginRequest)
         let request = createRequest(url: url, method: "POST", body: body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             if let errorResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
@@ -138,9 +153,9 @@ class ApiClient: ObservableObject {
         let body = try JSONEncoder().encode(registerRequest)
         let request = createRequest(url: url, method: "POST", body: body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
-        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+        if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
             if let errorResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
                 throw ApiError.serverError(errorResponse.error ?? "Registration failed")
             }
@@ -158,7 +173,7 @@ class ApiClient: ObservableObject {
         let body = try JSONEncoder().encode(["token": token])
         let request = createRequest(url: url, method: "POST", body: body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             if let errorResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
@@ -178,7 +193,7 @@ class ApiClient: ObservableObject {
         let body = try JSONEncoder().encode(["email": email])
         let request = createRequest(url: url, method: "POST", body: body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             throw ApiError.httpError(httpResponse.statusCode)
@@ -194,7 +209,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         return try JSONDecoder().decode(UserProfile.self, from: data)
     }
     
@@ -206,7 +221,7 @@ class ApiClient: ObservableObject {
         let body = try JSONEncoder().encode(request)
         let urlRequest = createRequest(url: url, method: "PUT", body: body)
         
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let (data, _) = try await urlSession.data(for: urlRequest)
         return try JSONDecoder().decode(UserProfile.self, from: data)
     }
     
@@ -218,7 +233,7 @@ class ApiClient: ObservableObject {
         let body = try JSONEncoder().encode(["token": token])
         let request = createRequest(url: url, method: "POST", body: body)
         
-        let (_, _) = try await URLSession.shared.data(for: request)
+        let (_, _) = try await urlSession.data(for: request)
     }
     
     // MARK: - Universities API
@@ -228,7 +243,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse {
             print("🔍 Universities response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "no data")")
@@ -269,7 +284,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         return try JSONDecoder().decode(University.self, from: data)
     }
     
@@ -305,7 +320,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse {
             print("🔍 Programs response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "no data")")
@@ -346,7 +361,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         return try JSONDecoder().decode(Program.self, from: data)
     }
     
@@ -357,7 +372,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse {
             print("🔍 Gallery response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "no data")")
@@ -399,7 +414,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse {
             print("🔍 Partners response (\(httpResponse.statusCode)): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "no data")")
@@ -443,7 +458,7 @@ class ApiClient: ObservableObject {
         let body = try JSONEncoder().encode(application)
         let request = createRequest(url: url, method: "POST", body: body)
         
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         return try JSONDecoder().decode(AdmissionResponse.self, from: data)
     }
     
@@ -460,7 +475,7 @@ class ApiClient: ObservableObject {
             throw URLError(.badURL)
         }
         let chatsRequest = createRequest(url: chatsUrl)
-        let (chatsData, _) = try await URLSession.shared.data(for: chatsRequest)
+        let (chatsData, _) = try await urlSession.data(for: chatsRequest)
         let chats = try JSONDecoder().decode([Chat].self, from: chatsData)
         
         // Ищем открытый чат
@@ -474,7 +489,7 @@ class ApiClient: ObservableObject {
             throw URLError(.badURL)
         }
         let createRequest = createRequest(url: createUrl, method: "POST")
-        let (createData, _) = try await URLSession.shared.data(for: createRequest)
+        let (createData, _) = try await urlSession.data(for: createRequest)
         let createResponse = try JSONDecoder().decode(ChatCreateResponse.self, from: createData)
         cachedChatId = createResponse.id
         return createResponse.id
@@ -487,7 +502,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         return try JSONDecoder().decode([ChatMessage].self, from: data)
     }
     
@@ -500,7 +515,7 @@ class ApiClient: ObservableObject {
         let body = try JSONEncoder().encode(["text": text])
         let request = createRequest(url: url, method: "POST", body: body)
         
-        let (_, _) = try await URLSession.shared.data(for: request)
+        let (_, _) = try await urlSession.data(for: request)
         // Сервер возвращает { id: ... }, сообщения будут перезагружены отдельно
     }
     
@@ -511,7 +526,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         return try JSONDecoder().decode(ConsentText.self, from: data)
     }
     
@@ -521,7 +536,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         let response = try JSONDecoder().decode(CountriesResponse.self, from: data)
         return response.countries.map { Country(id: $0, name: $0) }
     }
@@ -533,7 +548,7 @@ class ApiClient: ObservableObject {
         }
         
         let request = createRequest(url: url)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await urlSession.data(for: request)
         return try JSONDecoder().decode([String: String].self, from: data)
     }
 }
