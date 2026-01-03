@@ -39,47 +39,13 @@ struct BlurredCircle: View {
     }
 }
 
-// MARK: - Gradient Shape (Ribbon)
+// MARK: - Gradient Shape (Ribbon Image)
 struct KleosRibbon: View {
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Path { path in
-                    let w = geometry.size.width
-                    let h = geometry.size.height
-                    
-                    // Улучшенная swirly-линия (лента)
-                    path.move(to: CGPoint(x: w * -0.2, y: h * 0.4))
-                    
-                    path.addCurve(to: CGPoint(x: w * 0.4, y: h * 0.1),
-                                 control1: CGPoint(x: w * 0.0, y: h * 0.5),
-                                 control2: CGPoint(x: w * 0.2, y: h * -0.1))
-                    
-                    path.addCurve(to: CGPoint(x: w * 0.8, y: h * 0.6),
-                                 control1: CGPoint(x: w * 0.6, y: h * 0.3),
-                                 control2: CGPoint(x: w * w * 0.002, y: h * 0.8)) // w*w is just to make it wider
-                    
-                    path.addCurve(to: CGPoint(x: w * 1.2, y: h * 0.2),
-                                 control1: CGPoint(x: w * 1.0, y: h * 0.4),
-                                 control2: CGPoint(x: w * 1.1, y: h * 0.1))
-                }
-                .stroke(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color(hex: "E8D5FF"), // Лавандовый
-                            Color(hex: "D4A5FF"), // Светло-фиолетовый
-                            Color(hex: "FFB6C1"), // Розовый
-                            Color(hex: "FFD700")  // Желтый/золотой
-                        ]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    style: StrokeStyle(lineWidth: 120, lineCap: .round, lineJoin: .round)
-                )
-                .blur(radius: 60)
-                .opacity(0.6)
-            }
-        }
+        Image("gradient_shape") // Используем именно картинку
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .opacity(0.9)
     }
 }
 
