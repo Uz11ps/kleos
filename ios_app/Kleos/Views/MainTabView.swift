@@ -71,7 +71,19 @@ struct MainTabView: View {
                 }
             }
             .accentColor(Color.kleosPurple)
-            .onAppear { setupTabBarAppearance() }
+            .onAppear {
+                setupTabBarAppearance()
+                // Проверяем действие при появлении, если оно уже было установлено
+                if sessionManager.deepLinkAction == .openProfile {
+                    print("📱 MainTabView onAppear: deepLinkAction is .openProfile")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        withAnimation {
+                            self.activeSheet = .profile
+                            sessionManager.deepLinkAction = nil
+                        }
+                    }
+                }
+            }
             
             if showDrawer {
                 DrawerMenuView(isPresented: $showDrawer, onNavigate: { sheet in
@@ -90,6 +102,18 @@ struct MainTabView: View {
                 case .news: NewsView()
                 case .programs: ProgramsView()
                 case .partners: PartnersView()
+                }
+            }
+        }
+        .onReceive(sessionManager.$deepLinkAction) { action in
+            if action == .openProfile {
+                print("📱 MainTabView onReceive: deepLinkAction is .openProfile")
+                // Небольшая задержка, чтобы SwiftUI успел отрисовать основной экран и закрыть Splash/Auth
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    withAnimation {
+                        self.activeSheet = .profile
+                        sessionManager.deepLinkAction = nil
+                    }
                 }
             }
         }
