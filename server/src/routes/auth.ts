@@ -228,21 +228,47 @@ router.post('/register', async (req, res) => {
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ error: 'email_taken' });
     const passwordHash = await bcrypt.hash(password, 10);
+    
+    // Генерируем токен на всякий случай (для истории или если понадобится позже)
     const verifyToken = crypto.randomBytes(32).toString('hex');
     const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    // userId присваивается только после верификации email
-    // При регистрации устанавливаем роль 'user' (после принятия admission станет 'student')
-    const user = await User.create({ fullName, email, passwordHash, role: 'user', emailVerifyToken: verifyToken, emailVerifyExpires: verifyExpires, emailVerified: false });
+    
+    // СРАЗУ генерируем уникальный ID пользователя
+    const userId = await generateUniqueUserId();
+    
+    // Создаем пользователя СРАЗУ верифицированным (emailVerified: true)
+    // Это позволит пользователю сразу войти в приложение без подтверждения ссылки
+    const user = await User.create({ 
+      fullName, 
+      email, 
+      passwordHash, 
+      role: 'user', 
+      emailVerified: true, // <--- Сразу верифицирован
+      userId, 
+      emailVerifyToken: verifyToken, 
+      emailVerifyExpires: verifyExpires 
+    });
+    
+    // Генерируем JWT токен для мгновенного входа
+    const token = jwt.sign({ uid: user._id.toString(), role: user.role }, process.env.JWT_SECRET!, { expiresIn: '30d' });
+
     const base = process.env.PUBLIC_BASE_URL || `https://${req.get('host')}`;
     const webLink = `${base}/auth/verify?token=${verifyToken}`;
     const appScheme = process.env.APP_DEEP_LINK_SCHEME || 'kleos';
     const appHost = process.env.APP_DEEP_LINK_HOST || 'verify';
     const appLink = `${appScheme}://${appHost}?token=${verifyToken}`;
-    // Send email in background to avoid client timeout if SMTP is slow
+    
+    // Отправляем письмо в фоне (оно придет, но не будет блокировать вход)
     sendVerificationEmail(email, fullName, webLink, appLink)
-      .then(() => console.log(`Verification email queued to ${email}`))
-      .catch((e) => console.error('Send verification email failed', e));
-    return res.json({ requiresVerification: true, verifyUrl: webLink, appLink });
+      .then(() => console.log(`Welcome email sent to ${email}`))
+      .catch((e) => console.error('Welcome email failed', e));
+      
+    // Возвращаем токен, чтобы приложение сразу вошло
+    return res.json({ 
+      token, 
+      user: { id: user._id, fullName: user.fullName, email, role: user.role },
+      requiresVerification: false 
+    });
   } catch (e: any) {
     return res.status(400).json({ error: e?.message || 'bad_request' });
   }
