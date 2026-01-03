@@ -26,8 +26,8 @@ class SessionManager: ObservableObject {
     }
     
     func checkLoginStatus() {
-        let email = userDefaults.string(forKey: userEmailKey)
         _token = userDefaults.string(forKey: tokenKey)
+        let email = userDefaults.string(forKey: userEmailKey)
         
         isLoggedIn = _token != nil && email != nil
         isUserGuest = determineGuestStatus()
@@ -38,10 +38,9 @@ class SessionManager: ObservableObject {
     }
     
     private func determineGuestStatus() -> Bool {
-        if let t = _token, t.contains(".") { return false }
-        let email = userDefaults.string(forKey: userEmailKey)
-        if email == "guest@local" { return true }
-        return _token == nil || email == nil
+        guard let t = _token else { return true }
+        // ГЛАВНОЕ ИСПРАВЛЕНИЕ: Мы НЕ гость, ТОЛЬКО если у нас есть JWT токен (с точками)
+        return !t.contains(".")
     }
     
     func isGuest() -> Bool {
@@ -49,24 +48,24 @@ class SessionManager: ObservableObject {
     }
     
     func saveToken(_ token: String) {
-        // Если это новый JWT - принудительно стираем старые гостевые данные ПЕРЕД сохранением
-        if token.contains(".") {
-            print("✅ SessionManager: Real user token (JWT) detected")
+        print("🔑 SessionManager: Saving token...")
+        self._token = token
+        userDefaults.set(token, forKey: tokenKey)
+        
+        let isRealUser = token.contains(".")
+        if isRealUser {
+            // Если это реальный вход, чистим гостевые метки
             if userDefaults.string(forKey: userEmailKey) == "guest@local" {
                 userDefaults.removeObject(forKey: userEmailKey)
                 userDefaults.removeObject(forKey: userFullNameKey)
             }
         }
         
-        self._token = token
-        userDefaults.set(token, forKey: tokenKey)
+        // Синхронно обновляем статус, чтобы ApiClient сразу его увидел
+        self.isUserGuest = !isRealUser
+        self.isLoggedIn = true
+        self.objectWillChange.send()
         userDefaults.synchronize()
-        
-        DispatchQueue.main.async {
-            self.isUserGuest = !token.contains(".")
-            self.isLoggedIn = true
-            self.objectWillChange.send()
-        }
     }
     
     func getToken() -> String? {
@@ -81,12 +80,10 @@ class SessionManager: ObservableObject {
         }
         userDefaults.synchronize()
         
-        DispatchQueue.main.async {
-            self.isUserGuest = self.determineGuestStatus()
-            self.isLoggedIn = true
-            self.loadCurrentUser()
-            self.objectWillChange.send()
-        }
+        self.isUserGuest = self.determineGuestStatus()
+        self.isLoggedIn = true
+        self.loadCurrentUser()
+        self.objectWillChange.send()
     }
     
     func loadCurrentUser() {
@@ -116,11 +113,9 @@ class SessionManager: ObservableObject {
         userDefaults.removeObject(forKey: userIdKey)
         userDefaults.synchronize()
         
-        DispatchQueue.main.async {
-            self.isLoggedIn = false
-            self.isUserGuest = true
-            self.currentUser = nil
-            self.objectWillChange.send()
-        }
+        self.isLoggedIn = false
+        self.isUserGuest = true
+        self.currentUser = nil
+        self.objectWillChange.send()
     }
 }
