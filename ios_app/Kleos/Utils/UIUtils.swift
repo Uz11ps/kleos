@@ -96,6 +96,13 @@ struct KleosBackground: ViewModifier {
     }
 }
 
+extension View {
+    func kleosBackground() -> some View {
+        modifier(KleosBackground())
+    }
+}
+
+
 
 extension View {
     func kleosBackground() -> some View {
