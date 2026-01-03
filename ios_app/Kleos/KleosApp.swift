@@ -25,26 +25,36 @@ struct KleosApp: App {
     private func handleDeepLink(_ url: URL) {
         print("🔗 Received Deep Link: \(url.absoluteString)")
         
-        // kleos://verify?token=...
-        guard url.scheme == "kleos", url.host == "verify" else { return }
+        // Поддержка обоих вариантов: 
+        // 1. kleos://verify?token=...
+        // 2. kleos://verified?jwt=...
         
         let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
-        let token = components?.queryItems?.first(where: { $0.name == "token" })?.value
         
-        if let token = token {
-            print("🔗 Verification token found: \(token)")
-            Task {
-                do {
-                    let response = try await ApiClient.shared.verifyConsume(token: token)
-                    if let newToken = response.token, let user = response.user {
-                        await MainActor.run {
-                            sessionManager.saveToken(newToken)
-                            sessionManager.saveUser(fullName: user.fullName, email: user.email, role: user.role)
-                            print("✅ Deep Link login successful")
+        if url.host == "verified" {
+            // Прямой вход с готовым токеном (после нажатия кнопки в браузере)
+            if let jwt = components?.queryItems?.first(where: { $0.name == "jwt" })?.value {
+                print("🔗 JWT found in link, logging in...")
+                sessionManager.saveToken(jwt)
+                // После сохранения токена приложение само перезагрузит профиль
+            }
+        } else if url.host == "verify" {
+            // Вход через проверочный токен (автоматический)
+            if let token = components?.queryItems?.first(where: { $0.name == "token" })?.value {
+                print("🔗 Verification token found: \(token)")
+                Task {
+                    do {
+                        let response = try await ApiClient.shared.verifyConsume(token: token)
+                        if let newToken = response.token, let user = response.user {
+                            await MainActor.run {
+                                sessionManager.saveToken(newToken)
+                                sessionManager.saveUser(fullName: user.fullName, email: user.email, role: user.role)
+                                print("✅ Deep Link login successful")
+                            }
                         }
+                    } catch {
+                        print("❌ Deep Link verification failed: \(error)")
                     }
-                } catch {
-                    print("❌ Deep Link verification failed: \(error)")
                 }
             }
         }

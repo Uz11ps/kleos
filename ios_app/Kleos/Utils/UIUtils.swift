@@ -18,24 +18,11 @@ struct BlurredCircle: View {
     var size: CGFloat
     
     var body: some View {
-        ZStack {
-            RadialGradient(
-                gradient: Gradient(colors: [
-                    color.opacity(0.6),
-                    color.opacity(0.25),
-                    .clear
-                ]),
-                center: .center,
-                startRadius: 0,
-                endRadius: size * 0.5
-            )
-            
-            Circle()
-                .fill(color.opacity(0.15))
-                .blur(radius: size * 0.2)
-        }
-        .frame(width: size, height: size)
-        .blendMode(.screen)
+        Circle()
+            .fill(color)
+            .frame(width: size, height: size)
+            .blur(radius: size * 0.3)
+            .opacity(0.5)
     }
 }
 
@@ -43,70 +30,74 @@ struct BlurredCircle: View {
 struct KleosBackground: ViewModifier {
     var showGradientShape: Bool = false
     var circlePositions: CircleLayout = .corners
-    var isSplashOrAuth: Bool = false
     
     enum CircleLayout {
         case center, corners
     }
     
     func body(content: Content) -> some View {
-        GeometryReader { geo in
-            ZStack {
-                // 1. Фон - всегда используем 0E080F как в Android (onboarding_background)
-                Color(hex: "0E080F")
-                    .ignoresSafeArea()
-                
-                // 2. Слои свечения (Адаптивные)
-                Group {
-                    if circlePositions == .center {
-                        // Auth/Splash: Центрированные пятна (по 60% от ширины экрана)
-                        VStack {
-                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.5)
-                                .offset(y: -geo.size.height * 0.25)
-                            Spacer()
-                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.5)
-                                .offset(y: geo.size.height * 0.25)
-                        }
-                    } else {
-                        // Home/Main: Угловые пятна
-                        ZStack {
-                            // Верхнее правое
-                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.8)
-                                .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
-                            
-                            // Нижнее левое
-                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.8)
-                                .position(x: geo.size.width * 0.1, y: geo.size.height * 0.9)
-                        }
+        ZStack {
+            // 1. Основной фон - точно как в Android (onboarding_background)
+            Color(hex: "0E080F")
+                .ignoresSafeArea()
+            
+            // 2. Слои свечения (точно как в Android layout)
+            Group {
+                if circlePositions == .center {
+                    // Расположение для Auth/Splash (по центру сверху и снизу)
+                    VStack {
+                        BlurredCircle(color: Color(hex: "7E5074"), size: 318)
+                            .offset(y: -150)
+                        Spacer()
+                        BlurredCircle(color: Color(hex: "7E5074"), size: 318)
+                            .offset(y: 150)
                     }
-                    
-                    if showGradientShape {
-                        // Синий акцент (градиентная форма)
-                        BlurredCircle(color: Color.kleosBlue, size: geo.size.width * 1.4)
-                            .opacity(0.5)
-                            .position(x: 0, y: geo.size.height * 0.1)
-                            .scaleEffect(x: 1.8, y: 1.2)
+                } else {
+                    // Расположение для остальных экранов (углы)
+                    VStack {
+                        HStack {
+                            Spacer()
+                            BlurredCircle(color: Color(hex: "7E5074"), size: 400)
+                                .offset(x: 100, y: -100)
+                        }
+                        Spacer()
+                        HStack {
+                            BlurredCircle(color: Color(hex: "7E5074"), size: 400)
+                                .offset(x: -100, y: 100)
+                            Spacer()
+                        }
                     }
                 }
-                .ignoresSafeArea()
-                .modifier(NoiseModifier())
-                .allowsHitTesting(false)
                 
-                content
+                // Синее свечение (gradientShape из Android)
+                if showGradientShape {
+                    VStack {
+                        HStack {
+                            BlurredCircle(color: Color(hex: "3B82F6"), size: 400)
+                                .opacity(0.2)
+                                .offset(x: -150, y: -150)
+                            Spacer()
+                        }
+                        Spacer()
+                    }
+                }
             }
-            .frame(width: geo.size.width, height: geo.size.height)
+            .ignoresSafeArea()
+            .modifier(NoiseModifier())
+            .allowsHitTesting(false)
+            
+            content
         }
-        .ignoresSafeArea()
     }
 }
 
 extension View {
-    func kleosBackground(showGradientShape: Bool = false, circlePositions: KleosBackground.CircleLayout = .corners, isSplashOrAuth: Bool = false) -> some View {
-        modifier(KleosBackground(showGradientShape: showGradientShape, circlePositions: circlePositions, isSplashOrAuth: isSplashOrAuth))
+    func kleosBackground(showGradientShape: Bool = false, circlePositions: KleosBackground.CircleLayout = .corners) -> some View {
+        modifier(KleosBackground(showGradientShape: showGradientShape, circlePositions: circlePositions))
     }
 }
 
-// Вспомогательные компоненты
+// MARK: - Color Extensions
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -126,9 +117,9 @@ extension Color {
     static let kleosPurple = Color(hex: "8B5CF6")
     static let kleosBlue = Color(hex: "3B82F6")
     static let kleosYellow = Color(hex: "FFD600")
-    static let kleosPinkAccent = Color(hex: "FF6B9D")
 }
 
+// MARK: - UI Components
 struct LoadingView: View {
     var body: some View {
         ProgressView().tint(.white).frame(maxWidth: .infinity, maxHeight: .infinity)
