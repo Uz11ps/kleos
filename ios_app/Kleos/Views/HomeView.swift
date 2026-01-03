@@ -32,20 +32,14 @@ struct HomeView: View {
             }
         }
         .kleosBackground()
-        .task {
-            // Загружаем данные только если не гость или если есть токен
+        .onAppear {
+            // Загружаем данные только если они еще не были загружены
             if !hasLoadedOnce && !isLoading {
                 loadData()
             }
         }
         .onChange(of: localizationManager.currentLanguage) { _, _ in
             loadData()
-        }
-        .onReceive(sessionManager.$isUserGuest) { isGuest in
-            // Перезагружаем при смене статуса (из гостя в юзера)
-            if !isGuest {
-                loadData()
-            }
         }
     }
     
@@ -135,21 +129,21 @@ struct HomeView: View {
     }
     
     private func loadUserProfile() {
-        // Если гость - не запрашиваем профиль с сервера
+        // Если гость - не запрашиваем профиль
         if sessionManager.isGuest() {
-            print("👤 HomeView: Guest mode, using local data")
             self.userProfile = sessionManager.currentUser
             return
         }
         
         Task {
             do {
-                // Ждем немного, чтобы токен "прописался" в системе
-                try await Task.sleep(nanoseconds: 300_000_000)
+                // ПРОВЕРКА ТОКЕНА ПЕРЕД ЗАПРОСОМ
+                guard let token = sessionManager.getToken(), token.contains(".") else { return }
+                
                 let profile = try await apiClient.getProfile()
                 await MainActor.run { self.userProfile = profile }
             } catch {
-                print("⚠️ HomeView: Profile load failed, using local")
+                print("⚠️ HomeView: Profile load failed")
                 await MainActor.run {
                     if let currentUser = sessionManager.currentUser {
                         self.userProfile = currentUser

@@ -8,6 +8,13 @@ class SessionManager: ObservableObject {
     @Published var currentUser: UserProfile?
     @Published var isUserGuest: Bool = true
     
+    // Переменная для глубоких ссылок (чтобы открывать профиль и т.д.)
+    @Published var deepLinkAction: DeepLinkAction?
+    
+    enum DeepLinkAction {
+        case openProfile
+    }
+    
     private let userDefaults = UserDefaults.standard
     private let tokenKey = "kleos_auth_token"
     private let userEmailKey = "kleos_user_email"
@@ -24,6 +31,8 @@ class SessionManager: ObservableObject {
     
     func checkLoginStatus() {
         let email = userDefaults.string(forKey: userEmailKey)
+        _token = userDefaults.string(forKey: tokenKey)
+        
         isLoggedIn = _token != nil && email != nil
         isUserGuest = determineGuestStatus()
         
@@ -34,7 +43,6 @@ class SessionManager: ObservableObject {
     
     private func determineGuestStatus() -> Bool {
         let email = userDefaults.string(forKey: userEmailKey)
-        // JWT токен всегда содержит "."
         if let t = _token, t.contains(".") { return false }
         if email == "guest@local" { return true }
         return _token == nil || email == nil
@@ -48,37 +56,44 @@ class SessionManager: ObservableObject {
         print("🔑 SessionManager: Saving token...")
         self._token = token
         userDefaults.set(token, forKey: tokenKey)
+        userDefaults.synchronize()
         
-        // Сбрасываем гостевые данные при получении JWT
-        if token.contains(".") {
-            print("✅ SessionManager: Real user token saved")
+        // Сразу определяем статус
+        let isRealUser = token.contains(".")
+        if isRealUser {
+            print("✅ SessionManager: JWT Token detected")
             if userDefaults.string(forKey: userEmailKey) == "guest@local" {
                 userDefaults.removeObject(forKey: userEmailKey)
                 userDefaults.removeObject(forKey: userFullNameKey)
             }
         }
         
-        isUserGuest = determineGuestStatus()
-        isLoggedIn = true
-        objectWillChange.send()
+        DispatchQueue.main.async {
+            self.isUserGuest = !isRealUser
+            self.isLoggedIn = true
+            self.objectWillChange.send()
+        }
     }
     
     func getToken() -> String? {
-        return _token
+        return _token ?? userDefaults.string(forKey: tokenKey)
     }
     
     func saveUser(fullName: String, email: String, role: String? = nil) {
-        print("👤 SessionManager: Saving user data")
+        print("👤 SessionManager: Saving user info (\(email))")
         userDefaults.set(fullName, forKey: userFullNameKey)
         userDefaults.set(email, forKey: userEmailKey)
         if let role = role {
             userDefaults.set(role, forKey: userRoleKey)
         }
+        userDefaults.synchronize()
         
-        isUserGuest = determineGuestStatus()
-        isLoggedIn = true
-        loadCurrentUser()
-        objectWillChange.send()
+        DispatchQueue.main.async {
+            self.isUserGuest = self.determineGuestStatus()
+            self.isLoggedIn = true
+            self.loadCurrentUser()
+            self.objectWillChange.send()
+        }
     }
     
     func loadCurrentUser() {
@@ -99,16 +114,20 @@ class SessionManager: ObservableObject {
     }
     
     func logout() {
-        print("🚪 SessionManager: Logging out...")
+        print("🚪 SessionManager: Logging out and cleaning data")
         _token = nil
         userDefaults.removeObject(forKey: tokenKey)
         userDefaults.removeObject(forKey: userEmailKey)
         userDefaults.removeObject(forKey: userFullNameKey)
         userDefaults.removeObject(forKey: userRoleKey)
+        userDefaults.removeObject(forKey: userIdKey)
+        userDefaults.synchronize()
         
-        isLoggedIn = false
-        isUserGuest = true
-        currentUser = nil
-        objectWillChange.send()
+        DispatchQueue.main.async {
+            self.isLoggedIn = false
+            self.isUserGuest = true
+            self.currentUser = nil
+            self.objectWillChange.send()
+        }
     }
 }

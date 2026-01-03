@@ -20,47 +20,56 @@ struct KleosBackground: ViewModifier {
             GeometryReader { geo in
                 ZStack {
                     if circlePositions == .center || isSplashOrAuth {
-                        // ВЕРХНИЙ КРУГ (Розовый #7E5074)
-                        // Android: Center Y = 9dp
-                        Circle()
-                            .fill(Color(hex: "7E5074"))
-                            .frame(width: 318, height: 318)
-                            .blur(radius: 180) // Огромный блюр как в Android
-                            .opacity(1.0)
-                            .position(x: geo.size.width / 2, y: 9)
+                        // ВЕРХНИЙ КРУГ (Розовый #7E5074) - Эффект мягкого свечения
+                        RadialGradient(
+                            gradient: Gradient(colors: [Color(hex: "7E5074").opacity(0.9), Color(hex: "7E5074").opacity(0)]),
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 160
+                        )
+                        .frame(width: 400, height: 400)
+                        .position(x: geo.size.width / 2, y: 9)
 
                         // НИЖНИЙ КРУГ (Розовый #7E5074)
-                        // Android: Center Y = ParentHeight - 9dp
-                        Circle()
-                            .fill(Color(hex: "7E5074"))
-                            .frame(width: 318, height: 318)
-                            .blur(radius: 180)
-                            .opacity(1.0)
-                            .position(x: geo.size.width / 2, y: geo.size.height - 9)
+                        RadialGradient(
+                            gradient: Gradient(colors: [Color(hex: "7E5074").opacity(0.9), Color(hex: "7E5074").opacity(0)]),
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 160
+                        )
+                        .frame(width: 400, height: 400)
+                        .position(x: geo.size.width / 2, y: geo.size.height - 9)
                     } else {
                         // Угловые свечения для внутренних страниц
-                        Circle()
-                            .fill(Color(hex: "7E5074"))
-                            .frame(width: 450, height: 450)
-                            .blur(radius: 200)
-                            .opacity(0.8)
-                            .position(x: geo.size.width, y: 0)
+                        RadialGradient(
+                            gradient: Gradient(colors: [Color(hex: "7E5074").opacity(0.6), Color(hex: "7E5074").opacity(0)]),
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 250
+                        )
+                        .frame(width: 600, height: 600)
+                        .position(x: geo.size.width, y: 0)
                         
-                        Circle()
-                            .fill(Color(hex: "7E5074"))
-                            .frame(width: 450, height: 450)
-                            .blur(radius: 200)
-                            .opacity(0.8)
-                            .position(x: 0, y: geo.size.height)
+                        RadialGradient(
+                            gradient: Gradient(colors: [Color(hex: "7E5074").opacity(0.6), Color(hex: "7E5074").opacity(0)]),
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 250
+                        )
+                        .frame(width: 600, height: 600)
+                        .position(x: 0, y: geo.size.height)
                     }
                     
                     // СИНИЙ ГРАДИЕНТ (как gradient_shape в Android)
                     if showGradientShape {
-                        Circle()
-                            .fill(Color(hex: "3B82F6").opacity(0.4))
-                            .frame(width: 400, height: 400)
-                            .blur(radius: 130)
-                            .position(x: 80, y: 80)
+                        RadialGradient(
+                            gradient: Gradient(colors: [Color(hex: "3B82F6").opacity(0.3), Color(hex: "3B82F6").opacity(0)]),
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 200
+                        )
+                        .frame(width: 500, height: 500)
+                        .position(x: 100, y: 100)
                     }
                 }
             }
