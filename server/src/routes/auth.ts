@@ -145,11 +145,9 @@ router.post('/verify/consume', async (req, res) => {
   await user.save();
   const jwtToken = jwt.sign({ uid: user._id.toString(), role: user.role }, process.env.JWT_SECRET!, { expiresIn: '30d' });
 
-  // Возвращаем HTML только если это прямой переход из браузера (GET) 
-  // или если в заголовках явно запрошен HTML
+  // Возвращаем HTML только если в заголовках явно запрошен HTML (из браузера)
   const wantsHtml = (req.headers.accept || '').includes('text/html');
-  if (wantsHtml && req.method === 'GET') {
-    // Возвращаем HTML, который перекинет пользователя обратно в приложение с готовым JWT
+  if (wantsHtml) {
     const appScheme = process.env.APP_DEEP_LINK_SCHEME || 'kleos';
     const appHost = 'verified';
     const appLink = `${appScheme}://${appHost}?jwt=${jwtToken}`;

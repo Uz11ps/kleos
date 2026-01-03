@@ -32,9 +32,17 @@ class SessionManager: ObservableObject {
     
     func saveToken(_ token: String) {
         userDefaults.set(token, forKey: tokenKey)
+        // Если это реальный JWT (длинная строка с точками), а не временный UUID гостя
+        if token.contains(".") {
+            // Если до этого был гость — очищаем его данные
+            if userDefaults.string(forKey: userEmailKey) == "guest@local" {
+                userDefaults.removeObject(forKey: userEmailKey)
+                userDefaults.removeObject(forKey: userFullNameKey)
+            }
+        }
         isLoggedIn = true
     }
-    
+
     func getToken() -> String? {
         return userDefaults.string(forKey: tokenKey)
     }
@@ -94,10 +102,15 @@ class SessionManager: ObservableObject {
     }
     
     func isGuest() -> Bool {
-        guard let email = userDefaults.string(forKey: userEmailKey) else { return true }
-        return email == "guest@local"
+        let email = userDefaults.string(forKey: userEmailKey)
+        let token = getToken()
+        
+        // Пользователь — гость, если:
+        // 1. У него почта guest@local
+        // 2. ИЛИ у него нет JWT токена (в токене нет точек)
+        return email == "guest@local" || token == nil || !(token?.contains(".") ?? false)
     }
-    
+
     private func generateNumericId(length: Int = 6) -> String {
         let random = Int.random(in: 0..<Int(pow(10.0, Double(length))))
         return String(format: "%0\(length)d", random)

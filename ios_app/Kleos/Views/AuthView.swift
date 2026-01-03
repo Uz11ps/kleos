@@ -304,8 +304,14 @@ struct VerifyEmailView: View {
                     Button(action: {
                         // Мануальная проверка статуса
                         Task {
-                            try? await ApiClient.shared.getProfile()
-                            // Если запрос прошел, значит мы уже залогинены (токен мог прийти через Deep Link)
+                            do {
+                                let profile = try await ApiClient.shared.getProfile()
+                                await MainActor.run {
+                                    sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
+                                }
+                            } catch {
+                                print("❌ Manual status check failed: \(error)")
+                            }
                         }
                     }) {
                         Text(LocalizationManager.shared.t("check_status"))

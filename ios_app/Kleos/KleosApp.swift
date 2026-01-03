@@ -36,7 +36,19 @@ struct KleosApp: App {
             if let jwt = components?.queryItems?.first(where: { $0.name == "jwt" })?.value {
                 print("🔗 JWT found in link, logging in...")
                 sessionManager.saveToken(jwt)
-                // После сохранения токена приложение само перезагрузит профиль
+                
+                // Сразу загружаем профиль, чтобы заполнить имя и email
+                Task {
+                    do {
+                        let profile = try await ApiClient.shared.getProfile()
+                        await MainActor.run {
+                            sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
+                            print("✅ Profile loaded after Deep Link")
+                        }
+                    } catch {
+                        print("❌ Failed to load profile after Deep Link: \(error)")
+                    }
+                }
             }
         } else if url.host == "verify" {
             // Вход через проверочный токен (автоматический)
