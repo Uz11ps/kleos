@@ -34,6 +34,7 @@ class SessionManager: ObservableObject {
     
     private func determineGuestStatus() -> Bool {
         let email = userDefaults.string(forKey: userEmailKey)
+        // JWT токен всегда содержит "."
         if let t = _token, t.contains(".") { return false }
         if email == "guest@local" { return true }
         return _token == nil || email == nil
@@ -44,13 +45,13 @@ class SessionManager: ObservableObject {
     }
     
     func saveToken(_ token: String) {
-        print("🔑 SessionManager: Saving new token...")
+        print("🔑 SessionManager: Saving token...")
         self._token = token
         userDefaults.set(token, forKey: tokenKey)
         
-        // Если это JWT - очищаем старые гостевые данные
+        // Сбрасываем гостевые данные при получении JWT
         if token.contains(".") {
-            print("✅ SessionManager: JWT Detected!")
+            print("✅ SessionManager: Real user token saved")
             if userDefaults.string(forKey: userEmailKey) == "guest@local" {
                 userDefaults.removeObject(forKey: userEmailKey)
                 userDefaults.removeObject(forKey: userFullNameKey)
@@ -67,7 +68,7 @@ class SessionManager: ObservableObject {
     }
     
     func saveUser(fullName: String, email: String, role: String? = nil) {
-        print("👤 SessionManager: Saving profile for \(email)")
+        print("👤 SessionManager: Saving user data")
         userDefaults.set(fullName, forKey: userFullNameKey)
         userDefaults.set(email, forKey: userEmailKey)
         if let role = role {
@@ -98,13 +99,12 @@ class SessionManager: ObservableObject {
     }
     
     func logout() {
-        print("🚪 SessionManager: Cleaning session...")
+        print("🚪 SessionManager: Logging out...")
         _token = nil
         userDefaults.removeObject(forKey: tokenKey)
         userDefaults.removeObject(forKey: userEmailKey)
         userDefaults.removeObject(forKey: userFullNameKey)
         userDefaults.removeObject(forKey: userRoleKey)
-        userDefaults.removeObject(forKey: userIdKey)
         
         isLoggedIn = false
         isUserGuest = true

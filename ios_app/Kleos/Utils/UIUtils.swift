@@ -25,7 +25,7 @@ struct KleosBackground: ViewModifier {
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 318, height: 318)
-                            .blur(radius: 160) // Очень мягкий блюр как в Android
+                            .blur(radius: 180) // Огромный блюр как в Android
                             .opacity(1.0)
                             .position(x: geo.size.width / 2, y: 9)
 
@@ -34,7 +34,7 @@ struct KleosBackground: ViewModifier {
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 318, height: 318)
-                            .blur(radius: 160)
+                            .blur(radius: 180)
                             .opacity(1.0)
                             .position(x: geo.size.width / 2, y: geo.size.height - 9)
                     } else {
@@ -42,24 +42,24 @@ struct KleosBackground: ViewModifier {
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 180)
-                            .opacity(0.7)
+                            .blur(radius: 200)
+                            .opacity(0.8)
                             .position(x: geo.size.width, y: 0)
                         
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 180)
-                            .opacity(0.7)
+                            .blur(radius: 200)
+                            .opacity(0.8)
                             .position(x: 0, y: geo.size.height)
                     }
                     
                     // СИНИЙ ГРАДИЕНТ (как gradient_shape в Android)
                     if showGradientShape {
                         Circle()
-                            .fill(Color(hex: "3B82F6").opacity(0.3))
+                            .fill(Color(hex: "3B82F6").opacity(0.4))
                             .frame(width: 400, height: 400)
-                            .blur(radius: 120)
+                            .blur(radius: 130)
                             .position(x: 80, y: 80)
                     }
                 }
