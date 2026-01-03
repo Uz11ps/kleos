@@ -23,32 +23,32 @@ struct KleosBackground: ViewModifier {
                         // ВЕРХНИЙ КРУГ (Розовый #7E5074)
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 320, height: 320)
+                            .frame(width: 400, height: 400)
                             .blur(radius: 120) // Большой блюр как в Android
-                            .opacity(1.0)
-                            .position(x: geo.size.width / 2, y: 10) // Позиция -150dp -> край круга за экраном
+                            .opacity(0.85)
+                            .position(x: geo.size.width / 2, y: 0)
 
                         // НИЖНИЙ КРУГ (Розовый #7E5074)
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 320, height: 320)
+                            .frame(width: 400, height: 400)
                             .blur(radius: 120)
-                            .opacity(1.0)
-                            .position(x: geo.size.width / 2, y: geo.size.height - 10)
+                            .opacity(0.85)
+                            .position(x: geo.size.width / 2, y: geo.size.height)
                     } else {
                         // Угловые свечения для внутренних страниц
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 400, height: 400)
+                            .frame(width: 450, height: 450)
                             .blur(radius: 140)
-                            .opacity(0.8)
+                            .opacity(0.7)
                             .position(x: geo.size.width + 50, y: -50)
                         
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 400, height: 400)
+                            .frame(width: 450, height: 450)
                             .blur(radius: 140)
-                            .opacity(0.8)
+                            .opacity(0.7)
                             .position(x: -50, y: geo.size.height + 50)
                     }
                     
@@ -56,9 +56,9 @@ struct KleosBackground: ViewModifier {
                     if showGradientShape {
                         Circle()
                             .fill(Color(hex: "3B82F6").opacity(0.35))
-                            .frame(width: 420, height: 420)
+                            .frame(width: 440, height: 440)
                             .blur(radius: 110)
-                            .position(x: 20, y: 20)
+                            .position(x: 0, y: 0)
                     }
                 }
             }
