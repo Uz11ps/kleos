@@ -16,25 +16,25 @@ struct KleosBackground: ViewModifier {
             Color(hex: "0E080F")
                 .ignoresSafeArea()
             
-            // 2. Светящиеся слои (ТОЧНАЯ КОПИЯ ANDROID)
+            // 2. Светящиеся слои (ТОЧНАЯ КОПИЯ ANDROID ПО КООРДИНАТАМ)
             GeometryReader { geo in
                 ZStack {
                     if circlePositions == .center || isSplashOrAuth {
                         // ВЕРХНИЙ КРУГ (Розовый #7E5074)
-                        // В Android: Center Y = 9dp
+                        // Android: width 318dp, radius 159dp, marginTop -150dp => Center Y = 9dp
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 318, height: 318)
-                            .blur(radius: 120)
+                            .blur(radius: 110)
                             .opacity(1.0)
                             .position(x: geo.size.width / 2, y: 9)
 
                         // НИЖНИЙ КРУГ (Розовый #7E5074)
-                        // В Android: Center Y = ParentHeight - 9dp
+                        // Android: marginBottom -150dp => Center Y = Height - 9dp
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 318, height: 318)
-                            .blur(radius: 120)
+                            .blur(radius: 110)
                             .opacity(1.0)
                             .position(x: geo.size.width / 2, y: geo.size.height - 9)
                     } else {
@@ -54,13 +54,14 @@ struct KleosBackground: ViewModifier {
                             .position(x: 0, y: geo.size.height)
                     }
                     
-                    // СИНИЙ ГРАДИЕНТ (как gradient_shape в Android)
+                    // СИНИЙ ГРАДИЕНТ (gradient_shape в Android)
+                    // Android: width 400dp, radius 200dp, margin -100dp => Center 100, 100
                     if showGradientShape {
                         Circle()
-                            .fill(Color(hex: "3B82F6").opacity(0.35))
+                            .fill(Color(hex: "3B82F6").opacity(0.4))
                             .frame(width: 400, height: 400)
                             .blur(radius: 100)
-                            .position(x: 100, y: 100) // Позиция центра как в Android
+                            .position(x: 100, y: 100)
                     }
                 }
             }

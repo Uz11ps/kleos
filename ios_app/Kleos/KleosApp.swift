@@ -27,18 +27,26 @@ struct KleosApp: App {
         
         if url.host == "verified" {
             if let jwt = components?.queryItems?.first(where: { $0.name == "jwt" })?.value {
-                print("🔗 Received JWT, confirming...")
+                print("🔗 Received JWT from Safari")
+                
+                // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА СТАРОЙ СЕССИИ
+                sessionManager.logout()
+                
+                // Сохраняем новый токен
                 sessionManager.saveToken(jwt)
                 
                 Task {
                     do {
-                        try await Task.sleep(nanoseconds: 300_000_000)
+                        // Ждем 0.5 сек, чтобы все части приложения увидели новый токен
+                        try await Task.sleep(nanoseconds: 500_000_000)
+                        
                         let profile = try await ApiClient.shared.getProfile()
                         await MainActor.run {
                             sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
+                            print("✅ Session updated successfully")
                         }
                     } catch {
-                        print("❌ Profile load error: \(error)")
+                        print("❌ Profile load error (expected if too fast): \(error)")
                     }
                 }
             }
@@ -56,4 +64,3 @@ struct KleosApp: App {
         #endif
     }
 }
-
