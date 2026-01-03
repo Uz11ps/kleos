@@ -25,10 +25,6 @@ struct KleosApp: App {
     private func handleDeepLink(_ url: URL) {
         print("🔗 Received Deep Link: \(url.absoluteString)")
         
-        // Поддержка обоих вариантов: 
-        // 1. kleos://verify?token=...
-        // 2. kleos://verified?jwt=...
-        
         let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
         
         if url.host == "verified" {
@@ -37,13 +33,15 @@ struct KleosApp: App {
                 print("🔗 JWT found in link, logging in...")
                 sessionManager.saveToken(jwt)
                 
-                // Сразу загружаем профиль, чтобы заполнить имя и email
+                // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ СЕССИИ
                 Task {
                     do {
+                        // Небольшая задержка, чтобы токен сохранился
+                        try await Task.sleep(nanoseconds: 500_000_000)
                         let profile = try await ApiClient.shared.getProfile()
                         await MainActor.run {
                             sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
-                            print("✅ Profile loaded after Deep Link")
+                            print("✅ Deep Link login successful: \(profile.fullName)")
                         }
                     } catch {
                         print("❌ Failed to load profile after Deep Link: \(error)")
@@ -95,4 +93,3 @@ struct KleosApp: App {
         #endif
     }
 }
-

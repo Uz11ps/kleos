@@ -1,31 +1,5 @@
 import SwiftUI
 
-// MARK: - Эффект зернистости (Noise)
-struct NoiseModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content.overlay(
-            ZStack {
-                Color.white.opacity(0.01)
-            }
-            .allowsHitTesting(false)
-        )
-    }
-}
-
-// MARK: - Адаптивное свечение
-struct BlurredCircle: View {
-    var color: Color
-    var size: CGFloat
-    
-    var body: some View {
-        Circle()
-            .fill(color)
-            .frame(width: size, height: size)
-            .blur(radius: size * 0.4) // Увеличил размытие для мягкости
-            .opacity(0.5)
-    }
-}
-
 // MARK: - Background View Modifier
 struct KleosBackground: ViewModifier {
     var showGradientShape: Bool = false
@@ -42,36 +16,51 @@ struct KleosBackground: ViewModifier {
             Color(hex: "0E080F")
                 .ignoresSafeArea()
             
-            // 2. Слои свечения
-            GeometryReader { geo in
-                ZStack {
-                    if circlePositions == .center || isSplashOrAuth {
-                        // Верхний круг (как blurredCircleTop в Android)
-                        BlurredCircle(color: Color(hex: "7E5074"), size: 318)
-                            .position(x: geo.size.width / 2, y: 9) // 9 - расчетная точка центра при marginTop -150
-                        
-                        // Нижний круг (как blurredCircle в Android)
-                        BlurredCircle(color: Color(hex: "7E5074"), size: 318)
-                            .position(x: geo.size.width / 2, y: geo.size.height - 9)
-                    } else {
-                        // Для обычных страниц
-                        BlurredCircle(color: Color(hex: "7E5074"), size: 400)
-                            .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
-                        
-                        BlurredCircle(color: Color(hex: "7E5074"), size: 400)
-                            .position(x: geo.size.width * 0.1, y: geo.size.height * 0.9)
-                    }
+            // 2. Светящиеся слои (точно как в Android layout)
+            ZStack {
+                if circlePositions == .center || isSplashOrAuth {
+                    // ВЕРХНИЙ КРУГ (как в Android layout_marginTop="-150dp")
+                    Circle()
+                        .fill(Color(hex: "7E5074"))
+                        .frame(width: 318, height: 318)
+                        .blur(radius: 80)
+                        .opacity(0.6)
+                        .offset(y: -UIScreen.main.bounds.height / 2 + 9) 
+
+                    // НИЖНИЙ КРУГ (как в Android layout_marginBottom="-150dp")
+                    Circle()
+                        .fill(Color(hex: "7E5074"))
+                        .frame(width: 318, height: 318)
+                        .blur(radius: 80)
+                        .opacity(0.6)
+                        .offset(y: UIScreen.main.bounds.height / 2 - 9)
+                } else {
+                    // Угловые пятна для внутренних страниц
+                    Circle()
+                        .fill(Color(hex: "7E5074"))
+                        .frame(width: 450, height: 450)
+                        .blur(radius: 100)
+                        .opacity(0.4)
+                        .offset(x: 150, y: -350)
                     
-                    // Синее свечение (как gradient_shape в Android)
-                    if showGradientShape {
-                        BlurredCircle(color: Color(hex: "3B82F6"), size: 400)
-                            .opacity(0.3)
-                            .position(x: 50, y: 50) // В левом верхнем углу
-                    }
+                    Circle()
+                        .fill(Color(hex: "7E5074"))
+                        .frame(width: 450, height: 450)
+                        .blur(radius: 100)
+                        .opacity(0.4)
+                        .offset(x: -150, y: 350)
+                }
+                
+                // СИНИЙ ГРАДИЕНТ (как gradient_shape в Android)
+                if showGradientShape {
+                    Circle()
+                        .fill(Color(hex: "3B82F6").opacity(0.25))
+                        .frame(width: 400, height: 400)
+                        .blur(radius: 90)
+                        .offset(x: -180, y: -350)
                 }
             }
             .ignoresSafeArea()
-            .modifier(NoiseModifier())
             .allowsHitTesting(false)
             
             content
