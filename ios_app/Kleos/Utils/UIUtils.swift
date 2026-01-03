@@ -52,8 +52,8 @@ struct KleosBackground: ViewModifier {
     func body(content: Content) -> some View {
         GeometryReader { geo in
             ZStack {
-                // 1. Фон
-                (isSplashOrAuth ? Color(hex: "0E080F") : Color(hex: "0A0E1A"))
+                // 1. Фон - всегда используем 0E080F как в Android (onboarding_background)
+                Color(hex: "0E080F")
                     .ignoresSafeArea()
                 
                 // 2. Слои свечения (Адаптивные)
@@ -122,7 +122,7 @@ extension Color {
         self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue:  Double(b) / 255, opacity: Double(a) / 255)
     }
     
-    static let kleosBackground = Color(hex: "0A0E1A")
+    static let kleosBackground = Color(hex: "0E080F")
     static let kleosPurple = Color(hex: "8B5CF6")
     static let kleosBlue = Color(hex: "3B82F6")
     static let kleosYellow = Color(hex: "FFD600")
@@ -135,19 +135,6 @@ struct LoadingView: View {
     }
 }
 
-<<<<<<< HEAD
-extension View {
-    func kleosBackground() -> some View {
-        modifier(KleosBackground())
-    }
-}
-
-
-
-extension View {
-    func kleosBackground() -> some View {
-        modifier(KleosBackground())
-=======
 struct CategoryBadge: View {
     let text: String
     let isInteresting: Bool
@@ -155,7 +142,8 @@ struct CategoryBadge: View {
         Text(text).font(.system(size: 12, weight: .bold)).padding(.horizontal, 8).padding(.vertical, 4)
             .background(isInteresting ? Color.kleosYellow : Color(hex: "D4B5FF")).cornerRadius(4)
             .foregroundColor(isInteresting ? .black : .white)
->>>>>>> f0753bd69a871e1168731f34ebb28881011bbdcb
+    }
+}
     }
 }
 
