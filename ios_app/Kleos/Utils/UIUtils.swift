@@ -20,7 +20,7 @@ struct KleosBackground: ViewModifier {
             GeometryReader { geo in
                 ZStack {
                     if circlePositions == .center || isSplashOrAuth {
-                        // ВЕРХНИЙ КРУГ (Розовый #7E5074) - Эффект мягкого свечения
+                        // ВЕРХНИЙ КРУГ (Розовый #7E5074)
                         RadialGradient(
                             gradient: Gradient(colors: [Color(hex: "7E5074").opacity(0.9), Color(hex: "7E5074").opacity(0)]),
                             center: .center,
