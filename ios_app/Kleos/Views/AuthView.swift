@@ -333,9 +333,10 @@ struct VerifyEmailView: View {
             }
         }
         .onAppear {
-            // Запускаем таймер проверки, если вдруг Deep Link не сработал, но токен сохранился
-            checkTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
-                if sessionManager.isLoggedIn {
+            // Запускаем таймер проверки
+            checkTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+                if !sessionManager.isGuest() && sessionManager.isLoggedIn {
+                    print("✅ VerifyEmailView: User is no longer a guest, dismissing...")
                     dismiss()
                 }
             }
@@ -343,8 +344,9 @@ struct VerifyEmailView: View {
         .onDisappear {
             checkTimer?.invalidate()
         }
-        .onChange(of: sessionManager.isLoggedIn) { _, newValue in
-            if newValue {
+        .onChange(of: sessionManager.isUserGuest) { _, isGuest in
+            if !isGuest && sessionManager.isLoggedIn {
+                print("✅ VerifyEmailView onChange: User is no longer a guest, dismissing...")
                 dismiss()
             }
         }

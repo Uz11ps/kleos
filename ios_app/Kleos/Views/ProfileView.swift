@@ -97,6 +97,13 @@ struct ProfileView: View {
             self.profile = currentUser
         }
         
+        // ЕСЛИ ГОСТЬ - НЕ ДЕЛАЕМ ЗАПРОС К /ME (избегаем 401)
+        if sessionManager.isGuest() {
+            print("👤 ProfileView: Guest mode, skipping API call")
+            self.isLoading = false
+            return
+        }
+        
         Task {
             do {
                 let fetched = try await apiClient.getProfile()

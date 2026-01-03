@@ -7,6 +7,9 @@ class SessionManager: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var currentUser: UserProfile?
     
+    // Новое свойство для отслеживания режима гостя
+    @Published var isUserGuest: Bool = true
+    
     private let userDefaults = UserDefaults.standard
     private let tokenKey = "kleos_auth_token"
     private let userEmailKey = "kleos_user_email"
@@ -21,18 +24,35 @@ class SessionManager: ObservableObject {
     func checkLoginStatus() {
         let token = getToken()
         let email = userDefaults.string(forKey: userEmailKey)
+        
         isLoggedIn = token != nil && email != nil
+        isUserGuest = determineGuestStatus()
+        
         if isLoggedIn {
             loadCurrentUser()
         }
     }
     
+    private func determineGuestStatus() -> Bool {
+        let email = userDefaults.string(forKey: userEmailKey)
+        let token = getToken()
+        
+        // Гость если: email guest@local ИЛИ токен не JWT (нет точки)
+        if email == "guest@local" { return true }
+        if let token = token, !token.contains(".") { return true }
+        if token == nil || email == nil { return true }
+        
+        return false
+    }
+    
+    func isGuest() -> Bool {
+        return isUserGuest
+    }
+    
     func saveToken(_ token: String) {
-        // Если мы переходим из гостя (UUID) в реального пользователя (JWT)
-        if isGuest() && token.contains(".") {
-            logout()
-        }
         userDefaults.set(token, forKey: tokenKey)
+        // Обновляем статус гостя сразу после сохранения токена
+        isUserGuest = determineGuestStatus()
         isLoggedIn = true
         objectWillChange.send()
     }
@@ -47,16 +67,11 @@ class SessionManager: ObservableObject {
         if let role = role {
             userDefaults.set(role, forKey: userRoleKey)
         }
+        
+        isUserGuest = determineGuestStatus()
         isLoggedIn = true
         loadCurrentUser()
         objectWillChange.send()
-    }
-    
-    func isGuest() -> Bool {
-        let email = userDefaults.string(forKey: userEmailKey)
-        let token = getToken()
-        // Гость если: email guest@local ИЛИ нет JWT токена
-        return email == "guest@local" || token == nil || !(token?.contains(".") ?? false)
     }
     
     func loadCurrentUser() {
@@ -82,7 +97,9 @@ class SessionManager: ObservableObject {
         userDefaults.removeObject(forKey: userEmailKey)
         userDefaults.removeObject(forKey: userFullNameKey)
         userDefaults.removeObject(forKey: userRoleKey)
+        
         isLoggedIn = false
+        isUserGuest = true
         currentUser = nil
         objectWillChange.send()
     }
