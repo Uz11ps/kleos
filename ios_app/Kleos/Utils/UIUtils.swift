@@ -66,17 +66,18 @@ struct KleosBackground: ViewModifier {
                 (isSplashOrAuth ? Color(hex: "0E080F") : Color(hex: "0A0E1A"))
                     .ignoresSafeArea()
                 
-                // 2. Слои свечения (Адаптивные)
+                // 2. Слои свечения (Адаптивные как в Android)
                 Group {
                     if circlePositions == .center {
-                        // Auth/Splash: Центрированные пятна
+                        // Auth/Splash: Центрированные пятна #7E5074 (Android match)
                         VStack {
-                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.5)
-                                .offset(y: -geo.size.height * 0.25)
+                            BlurredCircle(color: Color(hex: "7E5074"), size: 318)
+                                .offset(y: -150)
                             Spacer()
-                            BlurredCircle(color: Color(hex: "7E5074"), size: geo.size.width * 1.5)
-                                .offset(y: geo.size.height * 0.25)
+                            BlurredCircle(color: Color(hex: "7E5074"), size: 318)
+                                .offset(y: 150)
                         }
+                        .frame(maxWidth: .infinity)
                     } else {
                         // Home/Main: Угловые пятна
                         ZStack {
@@ -89,11 +90,11 @@ struct KleosBackground: ViewModifier {
                     }
                     
                     if showGradientShape {
-                        // Лента: Гигантская и в верхнем левом углу, 1 в 1 как на фото
+                        // Лента: 400dp, flipped scaleX, positioned exactly like Android
                         KleosRibbon()
-                            .scaleEffect(2.2)
-                            .frame(width: geo.size.width, height: geo.size.height * 0.4)
-                            .position(x: geo.size.width * 0.2, y: geo.size.height * 0.1)
+                            .scaleEffect(x: -1.0, y: 1.0) // scaleX="-1.0"
+                            .frame(width: 400, height: 400)
+                            .position(x: 100, y: 100) // -100 margin -> (400/2 - 100) = 100
                             .allowsHitTesting(false)
                     }
                 }
@@ -159,9 +160,8 @@ struct KleosButtonStyle: ButtonStyle {
     var foregroundColor: Color = .black
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding(.horizontal, 24)
-            .frame(maxWidth: .infinity)
-            .frame(height: 62)
+            .font(.system(size: 24))
+            .frame(width: 214, height: 62)
             .background(backgroundColor)
             .foregroundColor(foregroundColor)
             .clipShape(Capsule())
@@ -174,9 +174,8 @@ struct KleosOutlinedButtonStyle: ButtonStyle {
     var foregroundColor: Color = .white
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding(.horizontal, 24)
-            .frame(maxWidth: .infinity)
-            .frame(height: 62)
+            .font(.system(size: 24))
+            .frame(width: 214, height: 62)
             .foregroundColor(foregroundColor)
             .background(
                 Capsule()

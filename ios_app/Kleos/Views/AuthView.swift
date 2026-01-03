@@ -12,45 +12,57 @@ struct AuthView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                VStack(spacing: 0) {
-                    // 1. Огромное пространство для ленты сверху
+                // 1. Бургер-меню (как в Android)
+                VStack {
+                    HStack {
+                        Button(action: {}) {
+                            Image(systemName: "line.3.horizontal")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                        }
+                        .padding(24)
+                        Spacer()
+                    }
                     Spacer()
-                        .frame(height: geo.size.height * 0.38)
+                }
+                .zIndex(10)
+                
+                VStack(spacing: 0) {
+                    // 2. Блок текста (Vertical bias 0.4)
+                    Spacer()
+                        .frame(height: geo.size.height * 0.35)
                     
-                    // 2. Блок текста
-                    VStack(spacing: 8) {
+                    VStack(spacing: 16) {
                         Text(t("welcome"))
-                            .font(.system(size: 46, weight: .black))
+                            .font(.system(size: 40, weight: .bold))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .lineSpacing(-4)
-                            .frame(maxWidth: geo.size.width * 0.8)
+                            .lineSpacing(4)
                         
                         Text(t("auth_description"))
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white.opacity(0.45))
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                     }
+                    .padding(.horizontal, 24)
                     
                     Spacer()
                     
-                    // 3. Блок кнопок
-                    VStack(spacing: 16) {
+                    // 3. Блок кнопок (Bottom Bar)
+                    VStack(spacing: 12) {
                         Button(action: { 
                             sessionManager.logout()
                             showLogin = true 
                         }) {
                             Text(t("sign_in"))
-                                .font(.system(size: 24, weight: .bold))
                         }
-                        .buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: .black))
+                        .buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: Color(hex: "0E080F")))
                         
                         Button(action: { 
                             sessionManager.logout()
                             showRegister = true 
                         }) {
                             Text(t("sign_up"))
-                                .font(.system(size: 24, weight: .bold))
                         }
                         .buttonStyle(KleosOutlinedButtonStyle(strokeColor: .white, foregroundColor: .white))
                         
@@ -60,12 +72,11 @@ struct AuthView: View {
                         }) {
                             Text(t("login_as_guest"))
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundColor(Color(hex: "CBD5E1"))
                         }
-                        .padding(.top, 24)
+                        .padding(.top, 12)
                     }
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, geo.size.height * 0.05)
+                    .padding(.bottom, 32)
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
             }
