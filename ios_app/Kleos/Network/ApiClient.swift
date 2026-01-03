@@ -208,8 +208,19 @@ class ApiClient: ObservableObject {
             throw URLError(.badURL)
         }
         
+        // ЕСЛИ НЕТ JWT ТОКЕНА - НЕ ДЕЛАЕМ ЗАПРОС (чтобы не было 401 в логах)
+        guard let token = SessionManager.shared.getToken(), token.contains(".") else {
+            print("🚫 ApiClient: Skipping /me request, no JWT token")
+            throw ApiError.unauthorized
+        }
+        
         let request = createRequest(url: url)
-        let (data, _) = try await urlSession.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            throw ApiError.httpError(httpResponse.statusCode)
+        }
+        
         return try JSONDecoder().decode(UserProfile.self, from: data)
     }
     

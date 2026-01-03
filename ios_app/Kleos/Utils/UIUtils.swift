@@ -16,49 +16,51 @@ struct KleosBackground: ViewModifier {
             Color(hex: "0E080F")
                 .ignoresSafeArea()
             
-            // 2. Светящиеся слои (точно как в Android layout)
+            // 2. Светящиеся слои (ТОЧНАЯ КОПИЯ ANDROID)
             GeometryReader { geo in
                 ZStack {
                     if circlePositions == .center || isSplashOrAuth {
                         // ВЕРХНИЙ КРУГ (Розовый #7E5074)
+                        // В Android: layout_marginTop="-150dp", width="318dp"
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 400, height: 400)
-                            .blur(radius: 120) // Большой блюр как в Android
-                            .opacity(0.85)
-                            .position(x: geo.size.width / 2, y: 0)
+                            .frame(width: 318, height: 318)
+                            .blur(radius: 110)
+                            .opacity(0.9)
+                            .position(x: geo.size.width / 2, y: -50) // Центр вынесен за экран
 
                         // НИЖНИЙ КРУГ (Розовый #7E5074)
+                        // В Android: layout_marginBottom="-150dp", width="318dp"
                         Circle()
                             .fill(Color(hex: "7E5074"))
-                            .frame(width: 400, height: 400)
-                            .blur(radius: 120)
-                            .opacity(0.85)
-                            .position(x: geo.size.width / 2, y: geo.size.height)
+                            .frame(width: 318, height: 318)
+                            .blur(radius: 110)
+                            .opacity(0.9)
+                            .position(x: geo.size.width / 2, y: geo.size.height + 50)
                     } else {
                         // Угловые свечения для внутренних страниц
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 140)
-                            .opacity(0.7)
-                            .position(x: geo.size.width + 50, y: -50)
+                            .blur(radius: 130)
+                            .opacity(0.6)
+                            .position(x: geo.size.width + 60, y: -60)
                         
                         Circle()
                             .fill(Color(hex: "7E5074"))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 140)
-                            .opacity(0.7)
-                            .position(x: -50, y: geo.size.height + 50)
+                            .blur(radius: 130)
+                            .opacity(0.6)
+                            .position(x: -60, y: geo.size.height + 60)
                     }
                     
-                    // СИНИЙ ГРАДИЕНТ (как gradient_shape в Android)
+                    // СИНИЙ ГРАДИЕНТ (gradient_shape в Android)
                     if showGradientShape {
                         Circle()
                             .fill(Color(hex: "3B82F6").opacity(0.35))
-                            .frame(width: 440, height: 440)
-                            .blur(radius: 110)
-                            .position(x: 0, y: 0)
+                            .frame(width: 400, height: 400)
+                            .blur(radius: 100)
+                            .position(x: 20, y: 20)
                     }
                 }
             }
