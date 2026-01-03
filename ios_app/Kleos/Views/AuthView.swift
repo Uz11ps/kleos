@@ -13,22 +13,24 @@ struct AuthView: View {
         GeometryReader { geo in
             ZStack {
                 VStack(spacing: 0) {
-                    // Большой отступ сверху, чтобы текст был ниже ленты
+                    // Отступ сверху для ленты
                     Spacer()
-                        .frame(height: geo.size.height * 0.3)
+                        .frame(height: geo.size.height * 0.28)
                     
-                    VStack(spacing: 12) {
+                    VStack(spacing: 10) {
                         Text(t("welcome"))
-                            .font(.system(size: 38, weight: .bold))
+                            .font(.system(size: 48, weight: .black))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                         
                         Text(t("auth_description"))
-                            .font(.system(size: 16))
-                            .foregroundColor(.white.opacity(0.7))
+                            .font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.5))
                             .multilineTextAlignment(.center)
                     }
-                    .padding(.horizontal, 30)
+                    .padding(.horizontal, 40)
                     
                     Spacer()
                     
@@ -38,9 +40,9 @@ struct AuthView: View {
                             showLogin = true 
                         }) {
                             Text(t("sign_in"))
-                                .font(.system(size: 22, weight: .bold))
+                                .font(.system(size: 24, weight: .bold))
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 64)
+                                .frame(height: 68)
                         }
                         .buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: .black))
                         
@@ -49,9 +51,9 @@ struct AuthView: View {
                             showRegister = true 
                         }) {
                             Text(t("sign_up"))
-                                .font(.system(size: 22, weight: .bold))
+                                .font(.system(size: 24, weight: .bold))
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 64)
+                                .frame(height: 68)
                         }
                         .buttonStyle(KleosOutlinedButtonStyle(strokeColor: .white, foregroundColor: .white))
                         
@@ -61,11 +63,11 @@ struct AuthView: View {
                         }) {
                             Text(t("login_as_guest"))
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(.white.opacity(0.6))
                         }
                         .padding(.top, 24)
                     }
-                    .padding(.horizontal, 30)
+                    .padding(.horizontal, 44)
                     .padding(.bottom, 60)
                 }
             }
