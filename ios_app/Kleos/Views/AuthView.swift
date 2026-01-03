@@ -278,7 +278,10 @@ struct VerifyEmailView: View {
     let email: String
     @Environment(\.dismiss) var dismiss
     @ObservedObject private var sessionManager = SessionManager.shared
+    @StateObject private var apiClient = ApiClient.shared
     @State private var checkTimer: Timer?
+    @State private var isLoading = false
+    @State private var errorMessage: String?
     
     var body: some View {
         ZStack {
@@ -303,29 +306,25 @@ struct VerifyEmailView: View {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(Color.kleosBlue)
                     
-                    Button(action: {
-                        Task {
-                            do {
-                                // ПРОВЕРКА: Если нет токена с точкой - даже не пробуем
-                                guard let t = sessionManager.getToken(), t.contains(".") else {
-                                    print("⚠️ No JWT token yet")
-                                    return
-                                }
-                                let profile = try await ApiClient.shared.getProfile()
-                                await MainActor.run {
-                                    sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
-                                    dismiss()
-                                }
-                            } catch {
-                                print("❌ Confirmation check failed")
-                            }
+                    if let error = errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.system(size: 14))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    
+                    Button(action: checkVerificationStatus) {
+                        if isLoading {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text(LocalizationManager.shared.t("check_status"))
+                                .fontWeight(.semibold)
                         }
-                    }) {
-                        Text(LocalizationManager.shared.t("check_status"))
-                            .fontWeight(.semibold)
                     }
                     .buttonStyle(KleosButtonStyle(backgroundColor: Color.kleosBlue, foregroundColor: .white))
                     .padding(.top, 20)
+                    .disabled(isLoading)
                 }
                 .padding()
                 Spacer()
@@ -333,11 +332,14 @@ struct VerifyEmailView: View {
             }
         }
         .onAppear {
-            checkTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
-                // АВТО-ЗАКРЫТИЕ: если токен стал JWT и статус гостя пропал
-                if !sessionManager.isGuest() && sessionManager.isLoggedIn {
-                    print("🚀 Status changed! Closing Verify view...")
-                    dismiss()
+            // Автоматически проверяем статус каждые 2 секунды
+            checkTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+                // Если токен стал JWT и пользователь больше не гость - закрываем экран
+                if let token = sessionManager.getToken(), token.contains("."), !sessionManager.isGuest() {
+                    print("🚀 Token verified! Closing Verify view...")
+                    DispatchQueue.main.async {
+                        dismiss()
+                    }
                 }
             }
         }
@@ -345,7 +347,51 @@ struct VerifyEmailView: View {
             checkTimer?.invalidate()
         }
         .onChange(of: sessionManager.isUserGuest) { _, isGuest in
-            if !isGuest { dismiss() }
+            if !isGuest {
+                DispatchQueue.main.async {
+                    dismiss()
+                }
+            }
+        }
+    }
+    
+    private func checkVerificationStatus() {
+        isLoading = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                // Проверяем, есть ли уже JWT токен
+                if let token = sessionManager.getToken(), token.contains(".") {
+                    // Если токен есть - загружаем профиль
+                    let profile = try await ApiClient.shared.getProfile()
+                    await MainActor.run {
+                        sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
+                        isLoading = false
+                        dismiss()
+                    }
+                } else {
+                    // Если токена нет - значит верификация еще не прошла
+                    await MainActor.run {
+                        isLoading = false
+                        errorMessage = LocalizationManager.shared.t("verification_pending")
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    if let apiError = error as? ApiError {
+                        switch apiError {
+                        case .unauthorized:
+                            errorMessage = LocalizationManager.shared.t("verification_pending")
+                        default:
+                            errorMessage = LocalizationManager.shared.t("check_failed")
+                        }
+                    } else {
+                        errorMessage = LocalizationManager.shared.t("check_failed")
+                    }
+                }
+            }
         }
     }
 }
