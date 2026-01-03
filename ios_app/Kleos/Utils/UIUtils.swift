@@ -21,7 +21,7 @@ struct BlurredCircle: View {
         Circle()
             .fill(color)
             .frame(width: size, height: size)
-            .blur(radius: size * 0.3)
+            .blur(radius: size * 0.4) // Увеличил размытие для мягкости
             .opacity(0.5)
     }
 }
@@ -30,7 +30,7 @@ struct BlurredCircle: View {
 struct KleosBackground: ViewModifier {
     var showGradientShape: Bool = false
     var circlePositions: CircleLayout = .corners
-    var isSplashOrAuth: Bool = false // Добавил обратно для совместимости
+    var isSplashOrAuth: Bool = false
     
     enum CircleLayout {
         case center, corners
@@ -38,48 +38,35 @@ struct KleosBackground: ViewModifier {
     
     func body(content: Content) -> some View {
         ZStack {
-            // 1. Основной фон - точно как в Android (onboarding_background)
+            // 1. Основной фон - ТОЧНО #0E080F
             Color(hex: "0E080F")
                 .ignoresSafeArea()
             
-            // 2. Слои свечения (точно как в Android layout)
-            Group {
-                if circlePositions == .center || isSplashOrAuth {
-                    // Расположение для Auth/Splash (по центру сверху и снизу)
-                    VStack {
+            // 2. Слои свечения
+            GeometryReader { geo in
+                ZStack {
+                    if circlePositions == .center || isSplashOrAuth {
+                        // Верхний круг (как blurredCircleTop в Android)
                         BlurredCircle(color: Color(hex: "7E5074"), size: 318)
-                            .offset(y: -150)
-                        Spacer()
+                            .position(x: geo.size.width / 2, y: 9) // 9 - расчетная точка центра при marginTop -150
+                        
+                        // Нижний круг (как blurredCircle в Android)
                         BlurredCircle(color: Color(hex: "7E5074"), size: 318)
-                            .offset(y: 150)
+                            .position(x: geo.size.width / 2, y: geo.size.height - 9)
+                    } else {
+                        // Для обычных страниц
+                        BlurredCircle(color: Color(hex: "7E5074"), size: 400)
+                            .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
+                        
+                        BlurredCircle(color: Color(hex: "7E5074"), size: 400)
+                            .position(x: geo.size.width * 0.1, y: geo.size.height * 0.9)
                     }
-                } else {
-                    // Расположение для остальных экранов (углы)
-                    VStack {
-                        HStack {
-                            Spacer()
-                            BlurredCircle(color: Color(hex: "7E5074"), size: 400)
-                                .offset(x: 100, y: -100)
-                        }
-                        Spacer()
-                        HStack {
-                            BlurredCircle(color: Color(hex: "7E5074"), size: 400)
-                                .offset(x: -100, y: 100)
-                            Spacer()
-                        }
-                    }
-                }
-                
-                // Синее свечение (gradientShape из Android)
-                if showGradientShape {
-                    VStack {
-                        HStack {
-                            BlurredCircle(color: Color(hex: "3B82F6"), size: 400)
-                                .opacity(0.2)
-                                .offset(x: -150, y: -150)
-                            Spacer()
-                        }
-                        Spacer()
+                    
+                    // Синее свечение (как gradient_shape в Android)
+                    if showGradientShape {
+                        BlurredCircle(color: Color(hex: "3B82F6"), size: 400)
+                            .opacity(0.3)
+                            .position(x: 50, y: 50) // В левом верхнем углу
                     }
                 }
             }
