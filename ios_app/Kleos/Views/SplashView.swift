@@ -84,16 +84,27 @@ struct OnboardingView: View {
                     onComplete()
                 }) {
                     ZStack {
+                        // Внешнее кольцо (прогресс)
+                        Circle()
+                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                            .frame(width: 120, height: 120)
+                        
+                        Circle()
+                            .trim(from: 0, to: 0.7) // Имитация прогресса как на фото
+                            .stroke(Color.white, lineWidth: 2)
+                            .frame(width: 120, height: 120)
+                            .rotationEffect(.degrees(-90))
+                        
                         Circle()
                             .fill(Color.white)
-                            .frame(width: 108, height: 108)
+                            .frame(width: 90, height: 90)
                         
                         Image(systemName: "arrow.right")
-                            .font(.system(size: 32, weight: .bold))
+                            .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.black)
                     }
                 }
-                .padding(.bottom, 44)
+                .padding(.bottom, 60)
             }
         }
         .kleosBackground(showGradientShape: true, circlePositions: .corners, isSplashOrAuth: true)

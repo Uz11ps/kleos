@@ -30,14 +30,14 @@ struct AuthView: View {
                 
                 VStack(spacing: 12) {
                     Button(action: { 
-                        sessionManager.logout() // Очистка перед входом
+                        sessionManager.logout()
                         showLogin = true 
                     }) {
                         Text(t("sign_in")).font(.system(size: 24, weight: .semibold)).frame(width: 214, height: 62)
                     }.buttonStyle(KleosButtonStyle(backgroundColor: .white, foregroundColor: Color(hex: "0E080F")))
                     
                     Button(action: { 
-                        sessionManager.logout() // Очистка перед регистрацией
+                        sessionManager.logout()
                         showRegister = true 
                     }) {
                         Text(t("sign_up")).font(.system(size: 24, weight: .semibold)).frame(width: 214, height: 62)
@@ -69,6 +69,44 @@ struct AuthView: View {
     }
 }
 
+struct KleosInputField: View {
+    let label: String
+    let icon: String
+    let placeholder: String
+    @Binding var text: String
+    var isSecure: Bool = false
+    var keyboardType: UIKeyboardType = .default
+    var autoCap: UITextAutocapitalizationType = .none
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
+            
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .foregroundColor(.gray)
+                    .frame(width: 24)
+                
+                if isSecure {
+                    SecureField(placeholder, text: $text)
+                        .foregroundColor(.black)
+                } else {
+                    TextField(placeholder, text: $text)
+                        .foregroundColor(.black)
+                        .keyboardType(keyboardType)
+                        .autocapitalization(autoCap)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 18)
+            .background(Color(hex: "F3F4F6"))
+            .cornerRadius(12)
+        }
+    }
+}
+
 struct LoginView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var apiClient = ApiClient.shared
@@ -76,6 +114,7 @@ struct LoginView: View {
     @StateObject private var localizationManager = LocalizationManager.shared
     @State private var email = ""
     @State private var password = ""
+    @State private var rememberPassword = false
     @State private var isLoading = false
     @State private var errorMessage: String?
     
@@ -90,28 +129,35 @@ struct LoginView: View {
                     .frame(width: 40, height: 6)
                     .padding(.top, 12)
                 
-                VStack(spacing: 32) {
+                VStack(spacing: 24) {
                     Text(t("sign_in"))
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.black)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    VStack(spacing: 16) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(t("email")).font(.system(size: 14)).foregroundColor(.gray)
-                            TextField("", text: $email)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .foregroundColor(.black)
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                            Divider().background(Color.gray.opacity(0.5))
-                        }
+                    VStack(spacing: 20) {
+                        KleosInputField(label: t("email"), icon: "envelope", placeholder: t("email"), text: $email, keyboardType: .emailAddress)
                         
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(t("password")).font(.system(size: 14)).foregroundColor(.gray)
-                            SecureField("", text: $password)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .foregroundColor(.black)
-                            Divider().background(Color.gray.opacity(0.5))
+                        KleosInputField(label: t("password"), icon: "lock", placeholder: t("password"), text: $password, isSecure: true)
+                        
+                        HStack {
+                            Button(action: { rememberPassword.toggle() }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: rememberPassword ? "checkmark.circle.fill" : "circle")
+                                        .foregroundColor(rememberPassword ? .black : .gray)
+                                    Text(t("remember_password"))
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: {}) {
+                                Text(t("forgot_password"))
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gray)
+                            }
                         }
                         
                         if let error = errorMessage {
@@ -120,11 +166,26 @@ struct LoginView: View {
                         
                         Button(action: performLogin) {
                             if isLoading { ProgressView().tint(.white) }
-                            else { Text(t("sign_in")).fontWeight(.semibold) }
+                            else { 
+                                Text(t("sign_in"))
+                                    .font(.system(size: 24, weight: .bold))
+                            }
                         }
-                        .buttonStyle(KleosButtonStyle(backgroundColor: Color.kleosBlue, foregroundColor: .white))
+                        .buttonStyle(KleosButtonStyle(backgroundColor: Color(hex: "2D262D"), foregroundColor: .white))
                         .padding(.top, 8)
                         .disabled(isLoading || email.isEmpty || password.isEmpty)
+                        
+                        Button(action: { dismiss() }) {
+                            HStack(spacing: 4) {
+                                Text(t("no_account_yet"))
+                                    .foregroundColor(.gray)
+                                Text(t("sign_up"))
+                                    .foregroundColor(.black)
+                                    .fontWeight(.bold)
+                            }
+                            .font(.system(size: 14))
+                        }
+                        .padding(.top, 10)
                     }
                 }
                 .padding(24)
@@ -132,7 +193,7 @@ struct LoginView: View {
             }
             .background(Color.white)
             .cornerRadius(24, corners: [.topLeft, .topRight])
-            .padding(.bottom, 160)
+            .padding(.bottom, 100)
         }
         .ignoresSafeArea(.keyboard)
     }
@@ -165,6 +226,7 @@ struct RegisterView: View {
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
+    @State private var agreeToTerms = false
     @State private var isLoading = false
     @State private var errorMessage: String?
     
@@ -183,33 +245,26 @@ struct RegisterView: View {
                     Text(t("sign_up"))
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.black)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    VStack(spacing: 16) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(t("full_name")).font(.system(size: 14)).foregroundColor(.gray)
-                            TextField("", text: $fullName)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .foregroundColor(.black)
-                            Divider().background(Color.gray.opacity(0.5))
-                        }
+                    VStack(spacing: 20) {
+                        KleosInputField(label: t("full_name"), icon: "person", placeholder: t("full_name"), text: $fullName, autoCap: .words)
                         
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(t("email")).font(.system(size: 14)).foregroundColor(.gray)
-                            TextField("", text: $email)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .foregroundColor(.black)
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                            Divider().background(Color.gray.opacity(0.5))
-                        }
+                        KleosInputField(label: t("email"), icon: "envelope", placeholder: t("email"), text: $email, keyboardType: .emailAddress)
                         
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(t("password")).font(.system(size: 14)).foregroundColor(.gray)
-                            SecureField("", text: $password)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .foregroundColor(.black)
-                            Divider().background(Color.gray.opacity(0.5))
+                        KleosInputField(label: t("password"), icon: "lock", placeholder: t("password"), text: $password, isSecure: true)
+                        
+                        Button(action: { agreeToTerms.toggle() }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: agreeToTerms ? "checkmark.circle.fill" : "circle")
+                                    .foregroundColor(agreeToTerms ? .black : .gray)
+                                Text(t("agree_processing"))
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gray)
+                                    .multilineTextAlignment(.leading)
+                            }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         
                         if let error = errorMessage {
                             Text(error).foregroundColor(.red).font(.system(size: 14, weight: .medium)).multilineTextAlignment(.center)
@@ -217,11 +272,26 @@ struct RegisterView: View {
                         
                         Button(action: performRegister) {
                             if isLoading { ProgressView().tint(.white) }
-                            else { Text(t("sign_up")).fontWeight(.semibold) }
+                            else { 
+                                Text(t("sign_up"))
+                                    .font(.system(size: 24, weight: .bold))
+                            }
                         }
-                        .buttonStyle(KleosButtonStyle(backgroundColor: Color.kleosBlue, foregroundColor: .white))
+                        .buttonStyle(KleosButtonStyle(backgroundColor: Color(hex: "2D262D"), foregroundColor: .white))
                         .padding(.top, 8)
-                        .disabled(isLoading || fullName.isEmpty || email.isEmpty || password.isEmpty)
+                        .disabled(isLoading || fullName.isEmpty || email.isEmpty || password.isEmpty || !agreeToTerms)
+                        
+                        Button(action: { dismiss() }) {
+                            HStack(spacing: 4) {
+                                Text(t("already_have_account"))
+                                    .foregroundColor(.gray)
+                                Text(t("sign_in"))
+                                    .foregroundColor(.black)
+                                    .fontWeight(.bold)
+                            }
+                            .font(.system(size: 14))
+                        }
+                        .padding(.top, 10)
                     }
                 }
                 .padding(24)
@@ -229,7 +299,7 @@ struct RegisterView: View {
             }
             .background(Color.white)
             .cornerRadius(24, corners: [.topLeft, .topRight])
-            .padding(.bottom, 160)
+            .padding(.bottom, 60)
         }
         .ignoresSafeArea(.keyboard)
     }
@@ -332,11 +402,8 @@ struct VerifyEmailView: View {
             }
         }
         .onAppear {
-            // Автоматически проверяем статус каждые 2 секунды
             checkTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
-                // Если токен стал JWT и пользователь больше не гость - закрываем экран
                 if let token = sessionManager.getToken(), token.contains("."), !sessionManager.isGuest() {
-                    print("🚀 Token verified! Closing Verify view...")
                     DispatchQueue.main.async {
                         dismiss()
                     }
@@ -346,24 +413,14 @@ struct VerifyEmailView: View {
         .onDisappear {
             checkTimer?.invalidate()
         }
-        .onChange(of: sessionManager.isUserGuest) { _, isGuest in
-            if !isGuest {
-                DispatchQueue.main.async {
-                    dismiss()
-                }
-            }
-        }
     }
     
     private func checkVerificationStatus() {
         isLoading = true
         errorMessage = nil
-        
         Task {
             do {
-                // Проверяем, есть ли уже JWT токен
                 if let token = sessionManager.getToken(), token.contains(".") {
-                    // Если токен есть - загружаем профиль
                     let profile = try await ApiClient.shared.getProfile()
                     await MainActor.run {
                         sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
@@ -371,7 +428,6 @@ struct VerifyEmailView: View {
                         dismiss()
                     }
                 } else {
-                    // Если токена нет - значит верификация еще не прошла
                     await MainActor.run {
                         isLoading = false
                         errorMessage = LocalizationManager.shared.t("verification_pending")
@@ -380,16 +436,7 @@ struct VerifyEmailView: View {
             } catch {
                 await MainActor.run {
                     isLoading = false
-                    if let apiError = error as? ApiError {
-                        switch apiError {
-                        case .unauthorized:
-                            errorMessage = LocalizationManager.shared.t("verification_pending")
-                        default:
-                            errorMessage = LocalizationManager.shared.t("check_failed")
-                        }
-                    } else {
-                        errorMessage = LocalizationManager.shared.t("check_failed")
-                    }
+                    errorMessage = LocalizationManager.shared.t("check_failed")
                 }
             }
         }

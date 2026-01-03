@@ -94,7 +94,11 @@ class LocalizationManager: ObservableObject {
             "submit_apps": "подавайте заявки",
             "check_status": "Я подтвердил почту",
             "verification_pending": "Верификация еще не завершена. Пожалуйста, откройте ссылку из письма.",
-            "check_failed": "Не удалось проверить статус. Попробуйте позже."
+            "check_failed": "Не удалось проверить статус. Попробуйте позже.",
+            "remember_password": "Запомнить пароль",
+            "forgot_password": "Забыли пароль?",
+            "no_account_yet": "Все еще нету аккаунта?",
+            "already_have_account": "Уже есть аккаунт?"
         ],
         "en": [
             "home": "Home",
@@ -175,7 +179,11 @@ class LocalizationManager: ObservableObject {
             "submit_apps": "submit applications",
             "check_status": "I confirmed my email",
             "verification_pending": "Verification is still pending. Please open the link from the email.",
-            "check_failed": "Failed to check status. Please try again later."
+            "check_failed": "Failed to check status. Please try again later.",
+            "remember_password": "Remember password",
+            "forgot_password": "Forgot password?",
+            "no_account_yet": "Don't have an account yet?",
+            "already_have_account": "Already have an account?"
         ],
         "zh": [
             "home": "首页",
@@ -256,7 +264,11 @@ class LocalizationManager: ObservableObject {
             "submit_apps": "提交申请",
             "check_status": "我确认了我的电子邮件",
             "verification_pending": "验证仍在进行中。请打开电子邮件中的链接。",
-            "check_failed": "无法检查状态。请稍后再试。"
+            "check_failed": "无法检查状态。请稍后再试。",
+            "remember_password": "记住密码",
+            "forgot_password": "忘记密码？",
+            "no_account_yet": "还没有账号？",
+            "already_have_account": "已有账号？"
         ]
     ]
     
