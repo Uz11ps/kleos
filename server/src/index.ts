@@ -1,9 +1,11 @@
 import 'dotenv/config';
+import 'express-async-errors';
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { ZodError } from 'zod';
 import authRoutes from './routes/auth.js';
 import partnersRoutes from './routes/partners.js';
 import admissionsRoutes from './routes/admissions.js';
@@ -110,6 +112,16 @@ app.use('/programs', programsRoutes);
 app.use('/gallery', galleryRoutes);
 app.use('/universities', universitiesRoutes);
 app.use('/', adminWeb);
+
+// Error handler (keeps server stable on invalid input / async throws)
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err instanceof ZodError) {
+    return res.status(400).json({ error: 'validation_error', details: err.issues });
+  }
+  // eslint-disable-next-line no-console
+  console.error('Unhandled error:', err);
+  return res.status(500).json({ error: 'internal_error' });
+});
 
 const port = Number(process.env.PORT) || 8080;
 app.listen(port, () => {
