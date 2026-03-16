@@ -5,6 +5,7 @@ struct GalleryView: View {
     @StateObject private var localizationManager = LocalizationManager.shared
     @State private var galleryItems: [GalleryItem] = []
     @State private var isLoading = false
+    @State private var errorMessage: String? = nil
     
     let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -15,19 +16,42 @@ struct GalleryView: View {
         ZStack {
             if isLoading {
                 LoadingView()
+            } else if let error = errorMessage, galleryItems.isEmpty {
+                VStack(spacing: 16) {
+                    Text(t("error_loading_data"))
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    Button(action: { loadGallery() }) {
+                        Text(t("retry"))
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(20)
+                    }
+                }
+                .frame(maxWidth: .infinity)
             } else {
                 ScrollView {
                     VStack(spacing: 0) {
                         Color.clear.frame(height: 100)
                         
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(galleryItems) { item in
-                            NavigationLink(destination: GalleryDetailView(item: item)) {
-                                GalleryCard(item: item)
+                        if galleryItems.isEmpty {
+                            Text(t("no_content"))
+                                .foregroundColor(.gray)
+                                .padding(.top, 40)
+                        } else {
+                            LazyVGrid(columns: columns, spacing: 16) {
+                                ForEach(galleryItems) { item in
+                                    NavigationLink(destination: GalleryDetailView(item: item)) {
+                                        GalleryCard(item: item)
+                                    }
+                                }
                             }
+                            .padding(.horizontal)
                         }
-                    }
-                        .padding(.horizontal)
                     }
                     .padding(.bottom, 20)
                 }
@@ -36,7 +60,7 @@ struct GalleryView: View {
         .kleosBackground()
         .navigationTitle(t("gallery"))
         .navigationBarTitleDisplayMode(.large)
-            .task {
+        .task {
             if galleryItems.isEmpty && !isLoading { loadGallery() }
         }
         .onChange(of: localizationManager.currentLanguage) { _, _ in loadGallery() }
@@ -45,12 +69,16 @@ struct GalleryView: View {
     private func loadGallery() {
         guard !isLoading else { return }
         isLoading = true
+        errorMessage = nil
         Task {
             do {
                 let fetched = try await apiClient.fetchGallery()
                 await MainActor.run { self.galleryItems = fetched; self.isLoading = false }
             } catch {
-                await MainActor.run { self.isLoading = false }
+                await MainActor.run { 
+                    self.isLoading = false
+                    self.errorMessage = error.localizedDescription
+                }
             }
         }
     }

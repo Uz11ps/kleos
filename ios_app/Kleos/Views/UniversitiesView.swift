@@ -5,38 +5,49 @@ struct UniversitiesView: View {
     @StateObject private var localizationManager = LocalizationManager.shared
     @State private var universities: [University] = []
     @State private var isLoading = false
+    @State private var errorMessage: String? = nil
     
     var body: some View {
         ZStack {
             if isLoading {
                 LoadingView()
-            } else if universities.isEmpty {
-                VStack(spacing: 20) {
-                    Image(systemName: "graduationcap")
-                        .font(.system(size: 60))
+            } else if let error = errorMessage, universities.isEmpty {
+                VStack(spacing: 16) {
+                    Text(t("error_loading_data"))
                         .foregroundColor(.gray)
-                    Text(t("no_content"))
-                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
                     Button(action: { loadUniversities() }) {
-                        Text(t("reset_filters")) // Используем "Сбросить" как "Обновить"
+                        Text(t("retry"))
                             .fontWeight(.semibold)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(20)
                     }
-                    .buttonStyle(KleosButtonStyle(backgroundColor: .white.opacity(0.1), foregroundColor: .white))
-                    .frame(width: 200)
                 }
+                .frame(maxWidth: .infinity)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         Color.clear.frame(height: 150)
                         
-                        LazyVStack(spacing: 16) {
-                            ForEach(universities) { uni in
-                                NavigationLink(destination: UniversityDetailView(universityId: uni.id)) {
-                                    UniversityCard(university: uni)
+                        if universities.isEmpty {
+                            Text(t("no_content"))
+                                .foregroundColor(.gray)
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 40)
+                        } else {
+                            LazyVStack(spacing: 16) {
+                                ForEach(universities) { uni in
+                                    NavigationLink(destination: UniversityDetailView(universityId: uni.id)) {
+                                        UniversityCard(university: uni)
+                                    }
                                 }
                             }
+                            .padding(.horizontal, 24)
                         }
-                        .padding(.horizontal, 24)
                         .padding(.bottom, 20)
                     }
                 }
@@ -58,15 +69,19 @@ struct UniversitiesView: View {
     private func loadUniversities() {
         guard !isLoading else { return }
         isLoading = true
+        errorMessage = nil
         Task {
             do {
-                let fetched = try await apiClient.getUniversities()
+                let fetched = try await apiClient.fetchUniversities()
                 await MainActor.run {
                     self.universities = fetched
                     self.isLoading = false
                 }
             } catch {
-                await MainActor.run { self.isLoading = false }
+                await MainActor.run { 
+                    self.isLoading = false 
+                    self.errorMessage = error.localizedDescription
+                }
             }
         }
     }
@@ -75,49 +90,35 @@ struct UniversitiesView: View {
 struct UniversityCard: View {
     let university: University
     var body: some View {
-        HStack(spacing: 14) {
+        ZStack(alignment: .bottomLeading) {
             AsyncImage(url: ApiClient.shared.getFullUrl(university.logoUrl)) { phase in
                 if case .success(let image) = phase {
-                    image
-                        .resizable()
-                        .scaledToFit()
-                        .padding(10)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    image.resizable().aspectRatio(contentMode: .fill)
                 } else {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.12))
-                        Image(systemName: "graduationcap").foregroundColor(.white.opacity(0.6))
-                    }
+                    RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.1))
                 }
             }
-            .frame(width: 74, height: 74)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(university.name)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                HStack(spacing: 6) {
+            .frame(height: 180).clipped()
+            LinearGradient(gradient: Gradient(colors: [.black.opacity(0.7), .clear]), startPoint: .bottom, endPoint: .center)
+            VStack(alignment: .leading, spacing: 4) {
+                CategoryBadge(text: LocalizationManager.shared.t("university"), isInteresting: false)
+                Text(university.name).font(.system(size: 20, weight: .bold)).foregroundColor(.white)
+                HStack {
                     Image(systemName: "mappin.and.ellipse")
                     Text(university.location)
                 }
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.8))
+                .font(.system(size: 14)).foregroundColor(.gray)
             }
-            Spacer()
-            Image(systemName: "arrow.up.right")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.black)
-                .padding(8)
-                .background(Color.white)
-                .clipShape(Circle())
+            .padding(20)
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Image(systemName: "arrow.up.right.circle.fill").resizable().frame(width: 32, height: 32).foregroundColor(.white).padding(20)
+                }
+            }
         }
-        .padding(16)
-        .background(Color.white.opacity(0.08))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
-        .frame(height: 120)
-        .cornerRadius(20)
+        .cornerRadius(20).shadow(radius: 10)
     }
 }
 
@@ -152,7 +153,7 @@ struct UniversityDetailView: View {
                             Text(university.name).font(.system(size: 28, weight: .bold)).foregroundColor(.white).multilineTextAlignment(.center)
                             HStack {
                                 Image(systemName: "mappin.and.ellipse")
-                                Text(university.city ?? "")
+                                Text(university.location)
                             }
                             .font(.system(size: 16)).foregroundColor(.gray)
                         }
@@ -201,7 +202,7 @@ struct UniversityDetailView: View {
     private func loadUniversity() {
         Task {
             do {
-                let fetched = try await apiClient.getUniversity(id: universityId)
+                let fetched = try await apiClient.fetchUniversity(id: universityId)
                 await MainActor.run { self.university = fetched; self.isLoading = false }
             } catch {
                 await MainActor.run { self.isLoading = false }

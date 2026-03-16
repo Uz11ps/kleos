@@ -13,6 +13,10 @@ class LocalizationManager: ObservableObject {
     
     @Published var translations: [String: String] = [:]
     @Published var isLoading: Bool = false
+    private let cachePrefix = "kleos_translations_"
+    private let retryCooldown: TimeInterval = 180
+    private var lastFailedLoadAt: Date?
+    private var inFlightLoad = false
     
     private let fallbacks: [String: [String: String]] = [
         "ru": [
@@ -98,7 +102,10 @@ class LocalizationManager: ObservableObject {
             "remember_password": "Запомнить пароль",
             "forgot_password": "Забыли пароль?",
             "no_account_yet": "Все еще нету аккаунта?",
-            "already_have_account": "Уже есть аккаунт?"
+            "already_have_account": "Уже есть аккаунт?",
+            "error_loading_news": "Ошибка загрузки новостей",
+            "error_loading_data": "Ошибка загрузки данных",
+            "retry": "Повторить"
         ],
         "en": [
             "home": "Home",
@@ -183,7 +190,10 @@ class LocalizationManager: ObservableObject {
             "remember_password": "Remember password",
             "forgot_password": "Forgot password?",
             "no_account_yet": "Don't have an account yet?",
-            "already_have_account": "Already have an account?"
+            "already_have_account": "Already have an account?",
+            "error_loading_news": "Error loading news",
+            "error_loading_data": "Error loading data",
+            "retry": "Retry"
         ],
         "zh": [
             "home": "首页",
@@ -268,27 +278,52 @@ class LocalizationManager: ObservableObject {
             "remember_password": "记住密码",
             "forgot_password": "忘记密码？",
             "no_account_yet": "还没有账号？",
-            "already_have_account": "已有账号？"
+            "already_have_account": "已有账号？",
+            "error_loading_news": "加载新闻时出错",
+            "error_loading_data": "数据加载出错",
+            "retry": "重试"
         ]
     ]
     
     private init() {
+        // Immediate local fallback to avoid empty UI labels on startup.
+        translations = fallbacks[currentLanguage] ?? [:]
+        if let cached = loadCachedTranslations(language: currentLanguage) {
+            translations = cached
+        }
         loadTranslations()
     }
     
-    func loadTranslations() {
+    func loadTranslations(force: Bool = false) {
+        guard !inFlightLoad else { return }
+        if !force, let lastFailedLoadAt = lastFailedLoadAt,
+           Date().timeIntervalSince(lastFailedLoadAt) < retryCooldown {
+            return
+        }
+        
         isLoading = true
+        inFlightLoad = true
+        let language = currentLanguage
         Task {
             do {
-                let fetched = try await ApiClient.shared.fetchTranslations(language: currentLanguage)
+                let fetched = try await ApiClient.shared.fetchTranslations(language: language)
                 await MainActor.run {
                     self.translations = fetched
                     self.isLoading = false
+                    self.inFlightLoad = false
+                    self.lastFailedLoadAt = nil
                 }
+                cacheTranslations(fetched, language: language)
             } catch {
-                print("❌ Error loading translations: \(error)")
                 await MainActor.run {
+                    if let cached = self.loadCachedTranslations(language: language) {
+                        self.translations = cached
+                    } else {
+                        self.translations = self.fallbacks[language] ?? self.fallbacks["en"] ?? [:]
+                    }
                     self.isLoading = false
+                    self.inFlightLoad = false
+                    self.lastFailedLoadAt = Date()
                 }
             }
         }
@@ -296,6 +331,23 @@ class LocalizationManager: ObservableObject {
     
     func t(_ key: String) -> String {
         return translations[key] ?? fallbacks[currentLanguage]?[key] ?? key
+    }
+    
+    private func cacheKey(for language: String) -> String {
+        "\(cachePrefix)\(language)"
+    }
+    
+    private func cacheTranslations(_ value: [String: String], language: String) {
+        if let data = try? JSONEncoder().encode(value) {
+            UserDefaults.standard.set(data, forKey: cacheKey(for: language))
+        }
+    }
+    
+    private func loadCachedTranslations(language: String) -> [String: String]? {
+        guard let data = UserDefaults.standard.data(forKey: cacheKey(for: language)) else {
+            return nil
+        }
+        return try? JSONDecoder().decode([String: String].self, from: data)
     }
 }
 

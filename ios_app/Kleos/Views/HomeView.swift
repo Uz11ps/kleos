@@ -24,7 +24,28 @@ struct HomeView: View {
                     headerView
                     welcomeSection
                     tabsView
-                    newsSection
+                    
+                    if let error = errorMessage, news.isEmpty {
+                        VStack(spacing: 16) {
+                            Text(t("error_loading_news"))
+                                .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            
+                            Button(action: { loadData() }) {
+                                Text(t("retry"))
+                                    .fontWeight(.semibold)
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 10)
+                                    .background(Color.white.opacity(0.1))
+                                    .cornerRadius(20)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                    } else {
+                        newsSection
+                    }
                 }
             }
             .refreshable {
@@ -32,11 +53,12 @@ struct HomeView: View {
             }
         }
         .kleosBackground()
-        .onAppear {
-            if !hasLoadedOnce && !isLoading {
+        .task {
+            if !hasLoadedOnce && !isLoading && news.isEmpty {
                 loadData()
             }
         }
+        // Перезагружаем данные при смене языка
         .onChange(of: localizationManager.currentLanguage) { _, _ in
             loadData()
         }
@@ -128,20 +150,13 @@ struct HomeView: View {
     }
     
     private func loadUserProfile() {
-        if sessionManager.isGuest() {
-            self.userProfile = sessionManager.currentUser
-            return
-        }
-        
         Task {
             do {
                 let profile = try await apiClient.getProfile()
                 await MainActor.run { self.userProfile = profile }
             } catch {
-                await MainActor.run {
-                    if let currentUser = sessionManager.currentUser {
-                        self.userProfile = currentUser
-                    }
+                if let currentUser = sessionManager.currentUser {
+                    self.userProfile = currentUser
                 }
             }
         }
@@ -151,6 +166,7 @@ struct HomeView: View {
         loadingTask?.cancel()
         guard !isLoading else { return }
         isLoading = true
+        errorMessage = nil
         loadingTask = Task {
             do {
                 let fetchedNews = try await apiClient.fetchNews()
@@ -191,56 +207,37 @@ struct TabButton: View {
 struct NewsCard: View {
     let item: NewsItem
     var isInteresting: Bool { item.isInteresting ?? false }
-    
+    var backgroundColor: Color { isInteresting ? Color(hex: "FFD700") : Color(hex: "E8D5FF") }
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // Background Image
+            backgroundColor.frame(width: UIScreen.main.bounds.width - 48, height: 200)
             if let imageUrl = item.imageUrl, !imageUrl.isEmpty {
                 AsyncImage(url: ApiClient.shared.getFullUrl(imageUrl)) { phase in
                     if case .success(let image) = phase {
                         image.resizable().aspectRatio(contentMode: .fill)
-                    } else {
-                        Color(hex: isInteresting ? "FFD700" : "7E5074").opacity(0.3)
+                            .frame(width: UIScreen.main.bounds.width - 48, height: 200).clipped()
                     }
                 }
-            } else {
-                Color(hex: isInteresting ? "FFD700" : "7E5074").opacity(0.3)
             }
-            
-            // Overlay (Darkening like in Android)
-            Color.black.opacity(0.4)
-            
-            // Content
             VStack {
                 HStack {
                     Spacer()
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.black)
-                        .padding(8)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .padding(16)
+                    Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)).foregroundColor(.black)
+                        .frame(width: 32, height: 32).background(Color.white).clipShape(Circle())
+                        .padding(.top, 16).padding(.trailing, 16)
                 }
                 Spacer()
             }
-            
             VStack(alignment: .leading, spacing: 0) {
                 Spacer()
                 CategoryBadge(text: isInteresting ? LocalizationManager.shared.t("interesting") : LocalizationManager.shared.t("news"), isInteresting: isInteresting)
                     .padding(.leading, 20).padding(.bottom, 8)
-                Text(item.title)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
+                Text(item.title).font(.system(size: 20, weight: .bold)).foregroundColor(isInteresting ? .black : .white)
                     .padding(.horizontal, 20).padding(.bottom, 4)
-                Text(item.dateText)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.8))
+                Text(item.dateText).font(.system(size: 14)).foregroundColor(isInteresting ? Color.gray.opacity(0.8) : Color.white.opacity(0.8))
                     .padding(.leading, 20).padding(.bottom, 20)
             }
         }
-        .frame(height: 200)
-        .cornerRadius(20)
-        .clipped()
+        .frame(width: UIScreen.main.bounds.width - 48, height: 200).cornerRadius(20)
     }
 }

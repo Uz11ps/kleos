@@ -6,10 +6,12 @@ class SessionManager: ObservableObject {
     
     @Published var isLoggedIn: Bool = false
     @Published var currentUser: UserProfile?
-    @Published var isUserGuest: Bool = true
     
+    enum DeepLinkAction {
+        case openProfile
+        case openRegister
+    }
     @Published var deepLinkAction: DeepLinkAction?
-    enum DeepLinkAction { case openProfile }
     
     private let userDefaults = UserDefaults.standard
     private let tokenKey = "kleos_auth_token"
@@ -18,104 +20,88 @@ class SessionManager: ObservableObject {
     private let userIdKey = "kleos_user_id"
     private let userRoleKey = "kleos_user_role"
     
-    private var _token: String?
-
     private init() {
-        _token = userDefaults.string(forKey: tokenKey)
         checkLoginStatus()
     }
     
     func checkLoginStatus() {
-        _token = userDefaults.string(forKey: tokenKey)
-        let email = userDefaults.string(forKey: userEmailKey)
-        
-        isLoggedIn = _token != nil && email != nil
-        isUserGuest = determineGuestStatus()
-        
+        isLoggedIn = getToken() != nil && userDefaults.string(forKey: userEmailKey) != nil
         if isLoggedIn {
             loadCurrentUser()
         }
     }
     
-    private func determineGuestStatus() -> Bool {
-        guard let t = _token else { return true }
-        // ГЛАВНОЕ ИСПРАВЛЕНИЕ: Мы НЕ гость, ТОЛЬКО если у нас есть JWT токен (с точками)
-        return !t.contains(".")
-    }
-    
-    func isGuest() -> Bool {
-        return isUserGuest
-    }
-    
     func saveToken(_ token: String) {
-        print("🔑 SessionManager: Saving token...")
-        self._token = token
         userDefaults.set(token, forKey: tokenKey)
-        
-        let isRealUser = token.contains(".")
-        if isRealUser {
-            // Если это реальный вход, чистим гостевые метки
-            if userDefaults.string(forKey: userEmailKey) == "guest@local" {
-                userDefaults.removeObject(forKey: userEmailKey)
-                userDefaults.removeObject(forKey: userFullNameKey)
-            }
-        }
-        
-        // Синхронно обновляем статус, чтобы ApiClient сразу его увидел
-        self.isUserGuest = !isRealUser
-        self.isLoggedIn = true
-        self.objectWillChange.send()
-        userDefaults.synchronize()
+        isLoggedIn = true
     }
     
     func getToken() -> String? {
-        return _token ?? userDefaults.string(forKey: tokenKey)
+        return userDefaults.string(forKey: tokenKey)
     }
     
     func saveUser(fullName: String, email: String, role: String? = nil) {
+        let id = userDefaults.string(forKey: userIdKey) ?? generateNumericId()
+        userDefaults.set(id, forKey: userIdKey)
         userDefaults.set(fullName, forKey: userFullNameKey)
         userDefaults.set(email, forKey: userEmailKey)
         if let role = role {
             userDefaults.set(role, forKey: userRoleKey)
         }
-        userDefaults.synchronize()
-        
-        self.isUserGuest = self.determineGuestStatus()
-        self.isLoggedIn = true
-        self.loadCurrentUser()
-        self.objectWillChange.send()
+        loadCurrentUser()
+    }
+    
+    func getUserRole() -> String? {
+        return userDefaults.string(forKey: userRoleKey)
     }
     
     func loadCurrentUser() {
         guard let email = userDefaults.string(forKey: userEmailKey),
               let fullName = userDefaults.string(forKey: userFullNameKey) else {
+            currentUser = nil
             return
         }
         
+        let id = userDefaults.string(forKey: userIdKey) ?? generateNumericId()
+        let role = userDefaults.string(forKey: userRoleKey) ?? "user"
+        
         currentUser = UserProfile(
-            id: userDefaults.string(forKey: userIdKey) ?? "0",
+            id: id,
             email: email,
             fullName: fullName,
-            role: userDefaults.string(forKey: userRoleKey) ?? "user",
-            phone: nil, course: nil, speciality: nil, status: nil, university: nil,
-            payment: nil, penalties: nil, notes: nil, studentId: nil,
-            emailVerified: true, avatarUrl: nil
+            role: role,
+            phone: nil,
+            course: nil,
+            speciality: nil,
+            status: nil,
+            university: nil,
+            payment: nil,
+            penalties: nil,
+            notes: nil,
+            studentId: nil,
+            emailVerified: true,
+            avatarUrl: nil
         )
     }
     
     func logout() {
-        print("🚪 SessionManager: Cleaning session data")
-        _token = nil
         userDefaults.removeObject(forKey: tokenKey)
         userDefaults.removeObject(forKey: userEmailKey)
         userDefaults.removeObject(forKey: userFullNameKey)
-        userDefaults.removeObject(forKey: userRoleKey)
         userDefaults.removeObject(forKey: userIdKey)
-        userDefaults.synchronize()
-        
-        self.isLoggedIn = false
-        self.isUserGuest = true
-        self.currentUser = nil
-        self.objectWillChange.send()
+        userDefaults.removeObject(forKey: userRoleKey)
+        isLoggedIn = false
+        currentUser = nil
+    }
+    
+    func isGuest() -> Bool {
+        guard let email = userDefaults.string(forKey: userEmailKey) else { return true }
+        return email == "guest@local"
+    }
+    
+    private func generateNumericId(length: Int = 6) -> String {
+        let random = Int.random(in: 0..<Int(pow(10.0, Double(length))))
+        return String(format: "%0\(length)d", random)
     }
 }
+

@@ -5,6 +5,16 @@ struct SplashView: View {
     @State private var isSplashFinished = false
     @AppStorage("has_seen_onboarding") var hasSeenOnboarding: Bool = false
     
+    private var isPad: Bool {
+        #if os(iOS)
+        UIDevice.current.userInterfaceIdiom == .pad
+        #else
+        false
+        #endif
+    }
+    
+    private var maxPhoneWidth: CGFloat? { isPad ? 520 : nil }
+    
     var body: some View {
         ZStack {
             // Фон всегда один
@@ -15,7 +25,7 @@ struct SplashView: View {
                 VStack {
                     Spacer()
                     Text("Kleos")
-                        .font(.system(size: 64, weight: .bold))
+                        .font(.system(size: isPad ? 56 : 64, weight: .bold))
                         .foregroundColor(.white)
                         .tracking(2)
                     Spacer()
@@ -56,6 +66,16 @@ struct SplashView: View {
 struct OnboardingView: View {
     let onComplete: () -> Void
     
+    private var isPad: Bool {
+        #if os(iOS)
+        UIDevice.current.userInterfaceIdiom == .pad
+        #else
+        false
+        #endif
+    }
+    
+    private var maxPhoneWidth: CGFloat? { isPad ? 520 : nil }
+    
     var body: some View {
         ZStack {
             VStack {
@@ -75,9 +95,10 @@ struct OnboardingView: View {
                         .font(.system(size: 32, weight: .regular))
                         .foregroundColor(.white)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: maxPhoneWidth, alignment: .leading)
                 .padding(.leading, 24)
                 .padding(.bottom, 180)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 
                 // Кнопка со стрелкой внизу по центру
                 Button(action: {

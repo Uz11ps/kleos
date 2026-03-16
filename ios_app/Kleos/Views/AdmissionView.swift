@@ -5,6 +5,7 @@ struct AdmissionView: View {
     @StateObject private var localizationManager = LocalizationManager.shared
     @State private var countries: [Country] = []
     @State private var consentText = ""
+    @State private var errorMessage: String? = nil
     
     @State private var firstName = ""
     @State private var lastName = ""
@@ -27,7 +28,25 @@ struct AdmissionView: View {
     
     var body: some View {
         ZStack {
-            ScrollView {
+            if let error = errorMessage, countries.isEmpty {
+                VStack(spacing: 16) {
+                    Text(t("error_loading_data"))
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    Button(action: { loadData() }) {
+                        Text(t("retry"))
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(20)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            } else {
+                ScrollView {
                 VStack(spacing: 24) {
                     Color.clear.frame(height: 100) 
                     VStack(spacing: 16) {
@@ -78,6 +97,7 @@ struct AdmissionView: View {
     }
     
     private func loadData() {
+        errorMessage = nil
         loadCountries()
         loadConsentText()
     }
@@ -87,7 +107,9 @@ struct AdmissionView: View {
             do {
                 let fetched = try await apiClient.fetchCountries()
                 await MainActor.run { self.countries = fetched }
-            } catch {}
+            } catch {
+                await MainActor.run { self.errorMessage = error.localizedDescription }
+            }
         }
     }
     
@@ -96,7 +118,9 @@ struct AdmissionView: View {
             do {
                 let fetched = try await apiClient.fetchConsentText(language: localizationManager.currentLanguage)
                 await MainActor.run { self.consentText = fetched.text }
-            } catch {}
+            } catch {
+                await MainActor.run { self.errorMessage = error.localizedDescription }
+            }
         }
     }
     
@@ -124,7 +148,7 @@ struct ConsentTextView: View {
     let text: String
     @Environment(\.dismiss) var dismiss
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView { Text(text).padding().foregroundColor(.white) }
             .kleosBackground()
             .navigationTitle(LocalizationManager.shared.t("consent_text"))

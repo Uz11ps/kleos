@@ -6,6 +6,9 @@ struct ProfileView: View {
     @State private var profile: UserProfile?
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var showDeleteAlert = false
+    @State private var isDeletingAccount = false
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         ZStack {
@@ -72,6 +75,21 @@ struct ProfileView: View {
                                     .frame(maxWidth: .infinity)
                             }
                             .padding()
+                            
+                            Button(action: {
+                                showDeleteAlert = true
+                            }) {
+                                if isDeletingAccount {
+                                    ProgressView().tint(.red).frame(maxWidth: .infinity)
+                                } else {
+                                    Text("Delete account")
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.red)
+                                        .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .padding(.horizontal)
+                            .disabled(isDeletingAccount)
                         }
                     }
                     .padding(.top, 60)
@@ -87,6 +105,14 @@ struct ProfileView: View {
                 loadProfile()
             }
         }
+        .alert("Delete account permanently?", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                deleteAccount()
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
     }
     
     private func loadProfile() {
@@ -95,13 +121,6 @@ struct ProfileView: View {
         
         if let currentUser = sessionManager.currentUser {
             self.profile = currentUser
-        }
-        
-        // ЕСЛИ ГОСТЬ - НЕ ДЕЛАЕМ ЗАПРОС К /ME (избегаем 401)
-        if sessionManager.isGuest() {
-            print("👤 ProfileView: Guest mode, skipping API call")
-            self.isLoading = false
-            return
         }
         
         Task {
@@ -119,6 +138,29 @@ struct ProfileView: View {
                     if self.profile == nil {
                         self.errorMessage = "Failed to load profile. Using cached data."
                     }
+                }
+            }
+        }
+    }
+    
+    private func deleteAccount() {
+        guard !isDeletingAccount else { return }
+        isDeletingAccount = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                try await apiClient.deleteMyAccount()
+                await MainActor.run {
+                    sessionManager.deepLinkAction = .openRegister
+                    sessionManager.logout()
+                    isDeletingAccount = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isDeletingAccount = false
+                    errorMessage = "Failed to delete account. Please try again."
                 }
             }
         }

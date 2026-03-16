@@ -5,6 +5,7 @@ struct ProgramsView: View {
     @StateObject private var localizationManager = LocalizationManager.shared
     @State private var programs: [Program] = []
     @State private var isLoading = false
+    @State private var errorMessage: String? = nil
     @State private var showFilters = false
     @State private var filters = ProgramFilters(language: nil, level: nil, university: nil, universityId: nil, searchQuery: nil)
     
@@ -12,6 +13,23 @@ struct ProgramsView: View {
         ZStack {
             if isLoading {
                 LoadingView()
+            } else if let error = errorMessage, programs.isEmpty {
+                VStack(spacing: 16) {
+                    Text(t("error_loading_data"))
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    Button(action: { loadPrograms() }) {
+                        Text(t("retry"))
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(20)
+                    }
+                }
+                .frame(maxWidth: .infinity)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -22,6 +40,7 @@ struct ProgramsView: View {
                                 Text(t("no_programs_found")).foregroundColor(.gray).font(.headline)
                                 Button(t("reset_filters")) {
                                     filters = ProgramFilters(language: nil, level: nil, university: nil, universityId: nil, searchQuery: nil)
+                                    errorMessage = nil
                                     loadPrograms()
                                 }.buttonStyle(KleosButtonStyle())
                             }
@@ -52,7 +71,7 @@ struct ProgramsView: View {
             }
         }
         .sheet(isPresented: $showFilters) {
-            NavigationView {
+            NavigationStack {
                 ProgramsFiltersView(filters: $filters, onApply: {
                     showFilters = false
                     loadPrograms()
@@ -75,12 +94,16 @@ struct ProgramsView: View {
     private func loadPrograms() {
         guard !isLoading else { return }
         isLoading = true
+        errorMessage = nil
         Task {
             do {
                 let fetched = try await apiClient.fetchPrograms(filters: filters)
                 await MainActor.run { self.programs = fetched; self.isLoading = false }
             } catch {
-                await MainActor.run { self.isLoading = false }
+                await MainActor.run { 
+                    self.isLoading = false 
+                    self.errorMessage = error.localizedDescription
+                }
             }
         }
     }

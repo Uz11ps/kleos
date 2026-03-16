@@ -20,7 +20,7 @@ struct MainTabView: View {
         ZStack {
             TabView(selection: $selectedTab) {
                 if isGuest {
-                    NavigationView {
+                    NavigationStack {
                         HomeView()
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
@@ -33,7 +33,7 @@ struct MainTabView: View {
                     }
                     .tabItem { Label(t("home"), systemImage: "house.fill") }.tag(0)
                     
-                    NavigationView {
+                    NavigationStack {
                         GalleryView()
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
@@ -46,7 +46,7 @@ struct MainTabView: View {
                     }
                     .tabItem { Label(t("gallery"), systemImage: "photo.on.rectangle.angled") }.tag(1)
                 } else {
-                    NavigationView {
+                    NavigationStack {
                         HomeView()
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
@@ -59,7 +59,7 @@ struct MainTabView: View {
                     }
                     .tabItem { Label(t("home"), systemImage: "house.fill") }.tag(0)
 
-                    NavigationView {
+                    NavigationStack {
                         UniversitiesView()
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
@@ -72,7 +72,7 @@ struct MainTabView: View {
                     }
                     .tabItem { Label(t("universities"), systemImage: "graduationcap.fill") }.tag(1)
                     
-                    NavigationView {
+                    NavigationStack {
                         GalleryView()
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
@@ -110,7 +110,7 @@ struct MainTabView: View {
             }
         }
         .sheet(item: $activeSheet) { item in
-            NavigationView {
+            NavigationStack {
                 switch item {
                 case .profile: ProfileView()
                 case .admission: AdmissionView()

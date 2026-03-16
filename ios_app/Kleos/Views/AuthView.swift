@@ -1,13 +1,29 @@
 import SwiftUI
 import Foundation
+#if os(iOS)
+import UIKit
+#endif
 
 struct AuthView: View {
     @ObservedObject private var sessionManager = SessionManager.shared
     @StateObject private var localizationManager = LocalizationManager.shared
-    @State private var showLogin = false
-    @State private var showRegister = false
-    @State private var showVerifyEmail = false
+    @State private var showLoginSheet = false
+    @State private var showLoginFullScreen = false
+    @State private var showRegisterSheet = false
+    @State private var showRegisterFullScreen = false
+    @State private var showVerifyEmailSheet = false
+    @State private var showVerifyEmailFullScreen = false
     @State private var verifyEmail = ""
+    
+    private var isPad: Bool {
+        #if os(iOS)
+        UIDevice.current.userInterfaceIdiom == .pad
+        #else
+        false
+        #endif
+    }
+    
+    private var maxAuthWidth: CGFloat? { isPad ? 420 : nil }
     
     var body: some View {
         GeometryReader { geo in
@@ -45,6 +61,8 @@ struct AuthView: View {
                             .multilineTextAlignment(.center)
                     }
                     .padding(.horizontal, 24)
+                    .frame(maxWidth: maxAuthWidth)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     
                     Spacer()
                     
@@ -52,7 +70,7 @@ struct AuthView: View {
                     VStack(spacing: 12) {
                         Button(action: { 
                             sessionManager.logout()
-                            showLogin = true 
+                            if isPad { showLoginFullScreen = true } else { showLoginSheet = true }
                         }) {
                             Text(t("sign_in"))
                         }
@@ -60,7 +78,7 @@ struct AuthView: View {
                         
                         Button(action: { 
                             sessionManager.logout()
-                            showRegister = true 
+                            if isPad { showRegisterFullScreen = true } else { showRegisterSheet = true }
                         }) {
                             Text(t("sign_up"))
                         }
@@ -77,19 +95,52 @@ struct AuthView: View {
                         .padding(.top, 12)
                     }
                     .padding(.bottom, 32)
+                    .frame(maxWidth: maxAuthWidth)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
             }
         }
         .kleosBackground(showGradientShape: true, circlePositions: .center, isSplashOrAuth: true) 
-        .sheet(isPresented: $showLogin) { LoginView() }
-        .sheet(isPresented: $showRegister) { 
+        .sheet(isPresented: $showLoginSheet) { LoginView() }
+        .fullScreenCover(isPresented: $showLoginFullScreen) { LoginView() }
+        .sheet(isPresented: $showRegisterSheet) { 
             RegisterView(onSuccess: { email in
                 self.verifyEmail = email
-                self.showVerifyEmail = true
+                if isPad { self.showVerifyEmailFullScreen = true } else { self.showVerifyEmailSheet = true }
             }) 
         }
-        .sheet(isPresented: $showVerifyEmail) { VerifyEmailView(email: verifyEmail) }
+        .fullScreenCover(isPresented: $showRegisterFullScreen) {
+            RegisterView(onSuccess: { email in
+                self.verifyEmail = email
+                self.showRegisterFullScreen = false
+                self.showRegisterSheet = false
+                self.showLoginFullScreen = false
+                self.showLoginSheet = false
+                self.showVerifyEmailFullScreen = true
+            })
+        }
+        .sheet(isPresented: $showVerifyEmailSheet) { VerifyEmailView(email: verifyEmail) }
+        .fullScreenCover(isPresented: $showVerifyEmailFullScreen) { VerifyEmailView(email: verifyEmail) }
+        .onAppear {
+            if sessionManager.deepLinkAction == .openRegister {
+                openRegisterFlow()
+            }
+        }
+        .onReceive(sessionManager.$deepLinkAction) { action in
+            if action == .openRegister {
+                openRegisterFlow()
+            }
+        }
+    }
+    
+    private func openRegisterFlow() {
+        sessionManager.deepLinkAction = nil
+        if isPad {
+            showRegisterFullScreen = true
+        } else {
+            showRegisterSheet = true
+        }
     }
 }
 
@@ -142,10 +193,23 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     
+    private var isPad: Bool {
+        #if os(iOS)
+        UIDevice.current.userInterfaceIdiom == .pad
+        #else
+        false
+        #endif
+    }
+    
+    private var maxModalWidth: CGFloat? { isPad ? 520 : nil }
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.clear.kleosBackground(showGradientShape: true, circlePositions: .center, isSplashOrAuth: true)
-                .onTapGesture { dismiss() }
+                .onTapGesture {
+                    // On iPad we present full-screen; do not dismiss on background tap.
+                    if !isPad { dismiss() }
+                }
             
             VStack(spacing: 0) {
                 Capsule()
@@ -154,6 +218,19 @@ struct LoginView: View {
                     .padding(.top, 12)
                 
                 VStack(spacing: 24) {
+                    HStack {
+                        Spacer()
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.gray)
+                                .padding(10)
+                                .background(Color.gray.opacity(0.15))
+                                .clipShape(Circle())
+                        }
+                    }
+                    .padding(.top, 4)
+                    
                     Text(t("sign_in"))
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.black)
@@ -218,6 +295,8 @@ struct LoginView: View {
             .background(Color.white)
             .cornerRadius(24, corners: [.topLeft, .topRight])
             .padding(.bottom, 100)
+            .frame(maxWidth: maxModalWidth)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .ignoresSafeArea(.keyboard)
     }
@@ -227,16 +306,44 @@ struct LoginView: View {
         if password.isEmpty { errorMessage = t("enter_password"); return }
         isLoading = true; errorMessage = nil
         Task {
+            defer {
+                Task { @MainActor in
+                    isLoading = false
+                }
+            }
             do {
                 let response = try await apiClient.login(email: email, password: password)
                 if let token = response.token, let user = response.user {
                     await MainActor.run {
+                        dismiss()
                         sessionManager.saveToken(token)
                         sessionManager.saveUser(fullName: user.fullName, email: user.email, role: user.role)
-                        dismiss()
                     }
-                } else if let error = response.error { await MainActor.run { errorMessage = error; isLoading = false } }
-            } catch { await MainActor.run { errorMessage = t("login_error"); isLoading = false } }
+                } else if let token = response.token {
+                    // Start state updates immediately so SplashView starts transitioning
+                    await MainActor.run {
+                        dismiss()
+                        sessionManager.saveToken(token)
+                    }
+                    // Fetch profile in the background and update user data
+                    let profile = try await apiClient.getProfile()
+                    await MainActor.run {
+                        sessionManager.saveUser(fullName: profile.fullName, email: profile.email, role: profile.role)
+                    }
+                } else if let error = response.error {
+                    await MainActor.run {
+                        errorMessage = error
+                    }
+                } else {
+                    await MainActor.run {
+                        errorMessage = t("login_error")
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = t("login_error")
+                }
+            }
         }
     }
 }
@@ -254,10 +361,22 @@ struct RegisterView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     
+    private var isPad: Bool {
+        #if os(iOS)
+        UIDevice.current.userInterfaceIdiom == .pad
+        #else
+        false
+        #endif
+    }
+    
+    private var maxModalWidth: CGFloat? { isPad ? 520 : nil }
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.clear.kleosBackground(showGradientShape: true, circlePositions: .center, isSplashOrAuth: true)
-                .onTapGesture { dismiss() }
+                .onTapGesture {
+                    if !isPad { dismiss() }
+                }
             
             VStack(spacing: 0) {
                 Capsule()
@@ -266,6 +385,19 @@ struct RegisterView: View {
                     .padding(.top, 12)
                 
                 VStack(spacing: 24) {
+                    HStack {
+                        Spacer()
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.gray)
+                                .padding(10)
+                                .background(Color.gray.opacity(0.15))
+                                .clipShape(Circle())
+                        }
+                    }
+                    .padding(.top, 4)
+                    
                     Text(t("sign_up"))
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.black)
@@ -324,6 +456,8 @@ struct RegisterView: View {
             .background(Color.white)
             .cornerRadius(24, corners: [.topLeft, .topRight])
             .padding(.bottom, 60)
+            .frame(maxWidth: maxModalWidth)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .ignoresSafeArea(.keyboard)
     }
@@ -481,3 +615,8 @@ struct RoundedCorner: Shape {
         return Path(path.cgPath)
     }
 }
+
+
+
+
+
