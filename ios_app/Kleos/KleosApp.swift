@@ -9,6 +9,7 @@ struct KleosApp: App {
     
     init() {
         setupAppearance()
+        LocalNotificationManager.shared.requestPermissionIfNeeded()
     }
     
     var body: some Scene {

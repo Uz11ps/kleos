@@ -9,7 +9,7 @@ data class ProgramDto(
     val title: String,
     val description: String?,
     val language: String?,
-    val level: String?, // "Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"
+    val level: String?, // "Bachelor's degree", "Master's degree", "Research degree", "Speciality degree", "Residency degree"
     val university: String?, // Legacy field for backward compatibility
     val universityId: String?, // New field linking to University model
     val tuition: Double?,

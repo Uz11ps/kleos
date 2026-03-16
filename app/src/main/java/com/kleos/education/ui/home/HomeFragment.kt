@@ -14,6 +14,7 @@ import com.kleos.education.data.news.NewsRepository
 import com.kleos.education.databinding.FragmentHomeBinding
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -218,12 +219,15 @@ class HomeFragment : Fragment() {
     private fun loadContent() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                // Используем ensureActive() для проверки, что корутина не отменена
+                ensureActive()
                 val newsItems = withContext(Dispatchers.IO) {
                     runCatching { newsRepository.fetch() }.getOrElse { e ->
                         android.util.Log.e("HomeFragment", "Error loading news", e)
                         emptyList()
                     }
                 }
+                ensureActive() // Проверяем снова после получения данных
                 
                 android.util.Log.d("HomeFragment", "Loaded ${newsItems.size} news items, currentTab: $currentTab")
                 

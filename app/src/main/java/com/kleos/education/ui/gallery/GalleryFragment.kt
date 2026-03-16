@@ -12,6 +12,7 @@ import com.kleos.education.data.gallery.GalleryRepository
 import com.kleos.education.databinding.FragmentGalleryBinding
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -58,10 +59,22 @@ class GalleryFragment : Fragment() {
 
         val repo = GalleryRepository()
         viewLifecycleOwner.lifecycleScope.launch {
-            val items = withContext(Dispatchers.IO) {
-                runCatching { repo.fetch() }.getOrElse { emptyList() }
+            try {
+                ensureActive()
+                val items = withContext(Dispatchers.IO) {
+                    runCatching { repo.fetch() }.getOrElse { e ->
+                        android.util.Log.e("GalleryFragment", "Error loading gallery", e)
+                        emptyList()
+                    }
+                }
+                ensureActive()
+                adapter.submitList(items)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                android.util.Log.d("GalleryFragment", "Load cancelled", e)
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.e("GalleryFragment", "Unexpected error", e)
             }
-            adapter.submitList(items)
         }
     }
 

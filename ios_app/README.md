@@ -36,7 +36,7 @@ ios_app/
    - Name: `Kleos`
    - Interface: SwiftUI
    - Language: Swift
-   - Bundle Identifier: `com.kleos.education`
+   - Bundle Identifier: `com.kleosedu.app`
 
 2. **Add Files:**
    - Copy all files from `ios_app/Kleos/` to your Xcode project

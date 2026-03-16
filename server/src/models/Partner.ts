@@ -5,6 +5,10 @@ const partnerSchema = new Schema({
   description: String,
   logoUrl: String,
   url: String,
+  city: String,
+  country: String,
+  contactEmail: String,
+  contactPhone: String,
   active: { type: Boolean, default: true, index: true },
   order: { type: Number, default: 0, index: true }
 }, { timestamps: true });

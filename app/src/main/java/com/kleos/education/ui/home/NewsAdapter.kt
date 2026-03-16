@@ -8,10 +8,13 @@ import com.kleos.education.data.model.NewsItem
 import com.kleos.education.databinding.ItemNewsCardBinding
 import com.kleos.education.ui.utils.AnimationUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import okhttp3.Request
 
 class NewsAdapter(
@@ -34,9 +37,14 @@ class NewsAdapter(
         holder.binding.titleText.text = item.title
         holder.binding.dateText.text = item.dateText
         
+        // Отменяем предыдущую загрузку для этого ViewHolder
+        imageLoadJobs[holder.binding.backgroundImage]?.cancel()
+        imageLoadJobs.remove(holder.binding.backgroundImage)
+        
         // Сбрасываем изображение перед загрузкой нового
         holder.binding.backgroundImage.setImageBitmap(null)
         holder.binding.backgroundImage.visibility = android.view.View.GONE
+        holder.binding.backgroundImage.tag = null
         
         // По умолчанию показываем градиентный фон (overlay непрозрачный)
         holder.binding.overlayView.alpha = 1.0f
@@ -129,9 +137,18 @@ class NewsAdapter(
         notifyDataSetChanged()
     }
     
+    private var imageLoadJobs = mutableMapOf<android.widget.ImageView, Job>()
+    
     private fun loadImage(imageView: android.widget.ImageView, imageUrl: String, overlayView: android.view.View) {
-        CoroutineScope(Dispatchers.IO).launch {
+        // Отменяем предыдущую загрузку для этого ImageView
+        imageLoadJobs[imageView]?.cancel()
+        imageLoadJobs.remove(imageView)
+        
+        // Используем GlobalScope для загрузки изображений, так как адаптер не имеет lifecycle
+        val job = kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO + kotlinx.coroutines.SupervisorJob()) {
             try {
+                if (!isActive) return@launch
+                
                 // Формируем полный URL, если он относительный
                 val fullUrl = if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
                     imageUrl
@@ -144,7 +161,7 @@ class NewsAdapter(
                     }
                 }
                 
-                android.util.Log.d("NewsAdapter", "Loading image from: $fullUrl")
+                if (!isActive) return@launch
                 
                 // Используем OkHttp клиент из ApiClient для правильной авторизации
                 val okHttpClient = com.kleos.education.data.network.ApiClient.okHttpClient
@@ -155,40 +172,51 @@ class NewsAdapter(
                 
                 val response = okHttpClient.newCall(request).execute()
                 
+                if (!isActive) return@launch
+                
                 if (response.isSuccessful && response.body != null) {
                     response.body?.use { body ->
                         val inputStream = body.byteStream()
                         val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                        
+                        if (!isActive) return@launch
+                        
                         withContext(Dispatchers.Main) {
-                            if (bitmap != null && !bitmap.isRecycled) {
-                                android.util.Log.d("NewsAdapter", "Image loaded successfully, size: ${bitmap.width}x${bitmap.height}")
+                            // Проверяем, что ImageView еще привязан к этому элементу
+                            if (imageView.tag == imageUrl && bitmap != null && !bitmap.isRecycled) {
                                 imageView.setImageBitmap(bitmap)
                                 imageView.visibility = android.view.View.VISIBLE
                                 overlayView.alpha = 0.3f
-                                android.util.Log.d("NewsAdapter", "Image displayed, overlay alpha set to 0.3")
                             } else {
-                                android.util.Log.e("NewsAdapter", "Failed to decode bitmap or bitmap is recycled")
                                 imageView.visibility = android.view.View.GONE
                                 overlayView.alpha = 1.0f
                             }
                         }
                     }
                 } else {
-                    android.util.Log.e("NewsAdapter", "Failed to load image: HTTP ${response.code}")
                     withContext(Dispatchers.Main) {
+                        if (imageView.tag == imageUrl) {
+                            imageView.visibility = android.view.View.GONE
+                            overlayView.alpha = 1.0f
+                        }
+                    }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    if (imageView.tag == imageUrl) {
                         imageView.visibility = android.view.View.GONE
                         overlayView.alpha = 1.0f
                     }
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("NewsAdapter", "Error loading image from $imageUrl: ${e.message}", e)
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    imageView.visibility = android.view.View.GONE
-                    overlayView.alpha = 1.0f
-                }
+            } finally {
+                imageLoadJobs.remove(imageView)
             }
         }
+        
+        imageLoadJobs[imageView] = job
+        imageView.tag = imageUrl
     }
 }
 

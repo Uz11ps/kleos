@@ -11,6 +11,7 @@ router.get('/', async (_req, res) => {
   res.json(items.map(n => ({
     id: n._id,
     title: n.title,
+    description: n.description || '',
     content: n.content,
     imageUrl: n.imageUrl,
     publishedAt: n.publishedAt,
@@ -24,6 +25,7 @@ router.get('/:id', async (req, res) => {
   res.json({
     id: n._id,
     title: n.title,
+    description: n.description || '',
     content: n.content,
     imageUrl: n.imageUrl,
     publishedAt: n.publishedAt,
@@ -34,6 +36,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', auth('admin'), async (req, res) => {
   const schema = z.object({
     title: z.string().min(1),
+    description: z.string().optional().default(''),
     content: z.string().optional().default(''),
     imageUrl: z.string().optional().default(''),
     publishedAt: z.coerce.date().optional(),
@@ -48,6 +51,7 @@ router.post('/', auth('admin'), async (req, res) => {
 router.put('/:id', auth('admin'), async (req, res) => {
   const schema = z.object({
     title: z.string().optional(),
+    description: z.string().optional(),
     content: z.string().optional(),
     imageUrl: z.string().optional(),
     publishedAt: z.coerce.date().optional(),

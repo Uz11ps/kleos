@@ -20,12 +20,15 @@ object TranslationManager {
     private val overrides = ConcurrentHashMap<String, String>()
 
     fun initAsync(context: Context, lang: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+        // Используем GlobalScope для fire-and-forget операций без lifecycle
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
             runCatching {
                 val api = ApiClient.retrofit.create(I18nApi::class.java)
                 val map = api.get(lang)
                 overrides.clear()
                 overrides.putAll(map)
+            }.onFailure { e ->
+                android.util.Log.e("TranslationManager", "Error loading translations", e)
             }
         }
     }

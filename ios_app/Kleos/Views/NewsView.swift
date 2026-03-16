@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct NewsView: View {
     @StateObject private var apiClient = ApiClient.shared
@@ -6,6 +7,8 @@ struct NewsView: View {
     @State private var news: [NewsItem] = []
     @State private var isLoading = false
     @State private var selectedTab = "all"
+    @State private var lastTopNewsId: String?
+    private let refreshTimer = Timer.publish(every: 25, on: .main, in: .common).autoconnect()
     
     var body: some View {
         ZStack {
@@ -57,6 +60,11 @@ struct NewsView: View {
             if news.isEmpty && !isLoading { loadContent() }
         }
         .onChange(of: localizationManager.currentLanguage) { _, _ in loadContent() }
+        .onReceive(refreshTimer) { _ in
+            if !isLoading {
+                loadContent(showNotificationOnNew: true)
+            }
+        }
     }
     
     private var filteredNews: [NewsItem] {
@@ -67,13 +75,26 @@ struct NewsView: View {
         }
     }
     
-    private func loadContent() {
+    private func loadContent(showNotificationOnNew: Bool = false) {
         guard !isLoading else { return }
         isLoading = true
         Task {
             do {
                 let fetchedNews = try await apiClient.fetchNews()
-                await MainActor.run { self.news = fetchedNews; self.isLoading = false }
+                await MainActor.run {
+                    if showNotificationOnNew,
+                       let top = fetchedNews.first,
+                       let previousTopId = self.lastTopNewsId,
+                       top.id != previousTopId {
+                        LocalNotificationManager.shared.show(
+                            title: "Kleos",
+                            body: "New article: \(top.title)"
+                        )
+                    }
+                    self.lastTopNewsId = fetchedNews.first?.id
+                    self.news = fetchedNews
+                    self.isLoading = false
+                }
             } catch {
                 await MainActor.run { self.isLoading = false }
             }

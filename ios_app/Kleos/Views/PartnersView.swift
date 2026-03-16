@@ -97,6 +97,22 @@ struct PartnerDetailView: View {
                         if let description = partner.description {
                             Text(description).font(.system(size: 16)).foregroundColor(.white).lineSpacing(4)
                         }
+                        let locationText = [partner.city, partner.country].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
+                        if !locationText.isEmpty {
+                            Text(locationText).font(.system(size: 14)).foregroundColor(.gray)
+                        }
+                        if let email = partner.contactEmail, !email.isEmpty {
+                            Link(destination: URL(string: "mailto:\(email)")!) {
+                                HStack { Text(email); Image(systemName: "envelope") }
+                                    .font(.system(size: 16, weight: .semibold)).foregroundColor(.blue)
+                            }
+                        }
+                        if let phone = partner.contactPhone, !phone.isEmpty {
+                            Link(destination: URL(string: "tel:\(phone.filter { "0123456789+".contains($0) })")!) {
+                                HStack { Text(phone); Image(systemName: "phone") }
+                                    .font(.system(size: 16, weight: .semibold)).foregroundColor(.blue)
+                            }
+                        }
                         if let website = partner.website, let url = URL(string: website) {
                             Link(destination: url) {
                                 HStack { Text(t("open_website")); Image(systemName: "arrow.up.right") }

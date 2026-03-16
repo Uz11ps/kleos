@@ -12,7 +12,11 @@ router.get('/', async (_req, res) => {
     name: p.name,
     description: p.description,
     logoUrl: p.logoUrl,
-    url: p.url
+    url: p.url,
+    city: p.city,
+    country: p.country,
+    contactEmail: p.contactEmail,
+    contactPhone: p.contactPhone
   })));
 });
 
@@ -21,6 +25,10 @@ const upsertSchema = z.object({
   description: z.string().optional(),
   logoUrl: z.string().url().optional(),
   url: z.string().url().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  contactEmail: z.string().optional(),
+  contactPhone: z.string().optional(),
   active: z.boolean().optional(),
   order: z.number().optional()
 });

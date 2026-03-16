@@ -10,15 +10,20 @@ class GalleryRepository {
     private val api = ApiClient.retrofit.create(GalleryApi::class.java)
 
     suspend fun fetch(): List<GalleryItem> = withContext(Dispatchers.IO) {
-        val dtos = api.list()
-        return@withContext dtos.map { dto ->
-            GalleryItem(
-                id = dto.id,
-                title = dto.title,
-                description = dto.description,
-                mediaUrl = dto.mediaUrl,
-                mediaType = dto.mediaType
-            )
+        runCatching {
+            val dtos = api.list()
+            dtos.map { dto ->
+                GalleryItem(
+                    id = dto.id,
+                    title = dto.title,
+                    description = dto.description,
+                    mediaUrl = dto.mediaUrl,
+                    mediaType = dto.mediaType
+                )
+            }
+        }.getOrElse { e ->
+            android.util.Log.e("GalleryRepository", "Error fetching gallery", e)
+            emptyList()
         }
     }
 }

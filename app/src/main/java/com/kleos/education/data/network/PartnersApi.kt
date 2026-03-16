@@ -7,7 +7,11 @@ data class PartnerDto(
     val name: String,
     val description: String?,
     val logoUrl: String?,
-    val url: String?
+    val url: String?,
+    val city: String?,
+    val country: String?,
+    val contactEmail: String?,
+    val contactPhone: String?
 )
 
 interface PartnersApi {

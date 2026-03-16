@@ -75,51 +75,48 @@ struct UniversitiesView: View {
 struct UniversityCard: View {
     let university: University
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            // Background Image
+        HStack(spacing: 14) {
             AsyncImage(url: ApiClient.shared.getFullUrl(university.logoUrl)) { phase in
                 if case .success(let image) = phase {
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } else {
-                    Color(hex: "7E5074").opacity(0.3)
-                }
-            }
-            .frame(height: 200).clipped()
-            
-            // Overlay darkening
-            Color.black.opacity(0.4)
-            
-            // Arrow button
-            VStack {
-                HStack {
-                    Spacer()
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.black)
-                        .padding(8)
+                    image
+                        .resizable()
+                        .scaledToFit()
+                        .padding(10)
                         .background(Color.white)
-                        .clipShape(Circle())
-                        .padding(16)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.12))
+                        Image(systemName: "graduationcap").foregroundColor(.white.opacity(0.6))
+                    }
                 }
-                Spacer()
             }
-            
-            // Text content
-            VStack(alignment: .leading, spacing: 4) {
-                CategoryBadge(text: LocalizationManager.shared.t("universities"), isInteresting: false)
-                    .padding(.bottom, 4)
+            .frame(width: 74, height: 74)
+
+            VStack(alignment: .leading, spacing: 6) {
                 Text(university.name)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
-                HStack {
+                    .lineLimit(2)
+                HStack(spacing: 6) {
                     Image(systemName: "mappin.and.ellipse")
-                    Text(university.city ?? "")
+                    Text(university.location)
                 }
-                .font(.system(size: 14)).foregroundColor(.white.opacity(0.8))
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.8))
             }
-            .padding(20)
+            Spacer()
+            Image(systemName: "arrow.up.right")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.black)
+                .padding(8)
+                .background(Color.white)
+                .clipShape(Circle())
         }
-        .frame(height: 200)
+        .padding(16)
+        .background(Color.white.opacity(0.08))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .frame(height: 120)
         .cornerRadius(20)
     }
 }
@@ -130,6 +127,7 @@ struct UniversityDetailView: View {
     @StateObject private var localizationManager = LocalizationManager.shared
     @State private var university: University?
     @State private var isLoading = true
+    @State private var showContacts = false
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -164,21 +162,16 @@ struct UniversityDetailView: View {
                             Text(description).font(.system(size: 16)).foregroundColor(.white.opacity(0.9)).lineSpacing(6).multilineTextAlignment(.center).padding(.horizontal, 24)
                         }
                         
-                        if let socialLinks = university.socialLinks {
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text(t("contacts")).font(.system(size: 20, weight: .bold)).foregroundColor(.white).padding(.bottom, 4)
-                                if let website = university.website, let url = URL(string: website.contains("://") ? website : "https://\(website)") {
-                                    Link(destination: url) { contactRow(icon: "globe", text: t("website")) }
-                                }
-                                if let email = socialLinks.email {
-                                    Link(destination: URL(string: "mailto:\(email)")!) { contactRow(icon: "envelope", text: email) }
-                                }
-                                if let phone = socialLinks.phone {
-                                    Link(destination: URL(string: "tel:\(phone.filter { "0123456789+".contains($0) })")!) { contactRow(icon: "phone", text: phone) }
-                                }
-                            }
-                            .padding(20).background(Color.white.opacity(0.08)).cornerRadius(20).padding(.horizontal, 24)
+                        Button(action: { showContacts = true }) {
+                            Text(t("contacts"))
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(16)
                         }
+                        .padding(.horizontal, 24)
                         Color.clear.frame(height: 50)
                     }
                 }
@@ -188,6 +181,10 @@ struct UniversityDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { loadUniversity() }
         .onChange(of: localizationManager.currentLanguage) { _, _ in loadUniversity() }
+        .sheet(isPresented: $showContacts) {
+            contactsSheet
+                .presentationDetents([.medium, .large])
+        }
     }
     
     @ViewBuilder
@@ -210,5 +207,43 @@ struct UniversityDetailView: View {
                 await MainActor.run { self.isLoading = false }
             }
         }
+    }
+
+    @ViewBuilder
+    private var contactsSheet: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(t("contacts"))
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.white)
+
+            if let university = university {
+                if let website = university.website, let url = URL(string: website.contains("://") ? website : "https://\(website)") {
+                    Link(destination: url) { contactRow(icon: "globe", text: t("website")) }
+                }
+                if let email = university.socialLinks?.email, !email.isEmpty {
+                    Link(destination: URL(string: "mailto:\(email)")!) { contactRow(icon: "envelope", text: email) }
+                }
+                if let phone = university.socialLinks?.phone, !phone.isEmpty {
+                    Link(destination: URL(string: "tel:\(phone.filter { "0123456789+".contains($0) })")!) { contactRow(icon: "phone", text: phone) }
+                }
+                if let whatsapp = university.socialLinks?.whatsapp, !whatsapp.isEmpty {
+                    Link(destination: URL(string: "https://wa.me/\(whatsapp.filter { "0123456789".contains($0) })")!) {
+                        contactRow(icon: "message", text: "WhatsApp")
+                    }
+                }
+                if (university.website == nil || university.website?.isEmpty == true)
+                    && (university.socialLinks?.email == nil || university.socialLinks?.email?.isEmpty == true)
+                    && (university.socialLinks?.phone == nil || university.socialLinks?.phone?.isEmpty == true)
+                    && (university.socialLinks?.whatsapp == nil || university.socialLinks?.whatsapp?.isEmpty == true) {
+                    Text("Contacts are not configured yet.")
+                        .foregroundColor(.gray)
+                }
+            }
+
+            Spacer()
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.kleosBackground)
     }
 }

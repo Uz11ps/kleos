@@ -88,7 +88,7 @@
    - Name: `Kleos`
    - Interface: **SwiftUI**
    - Language: **Swift**
-   - Bundle Identifier: `com.kleos.education`
+   - Bundle Identifier: `com.kleosedu.app`
 
 3. **Добавьте файлы:**
    - Скопируйте все файлы из `ios_app/Kleos/` в ваш проект Xcode

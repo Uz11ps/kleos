@@ -113,45 +113,54 @@ class ProfileFragment : Fragment() {
     }
     
     private fun loadProfile() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val profile = withContext(Dispatchers.IO) {
                     profileRepository.getProfile()
                 }
+                
+                // Проверяем, что фрагмент еще прикреплен и view существует
+                if (!isAdded || _binding == null) return@launch
+                
                 // Обновляем роль пользователя в сессии
                 val sessionManager = SessionManager(requireContext())
                 sessionManager.saveRole(profile.role)
                 
-                // Отображаем имя и роль в верхней части профиля
-                binding.profileNameText.text = profile.fullName
-                val roleText = when (profile.role) {
-                    "student" -> getString(com.kleos.education.R.string.role_student)
-                    "admin" -> getString(com.kleos.education.R.string.role_admin)
-                    else -> getString(com.kleos.education.R.string.role_user)
-                }
-                binding.profileRoleText.text = roleText
-                
-                // Загружаем аватарку, если она есть
-                if (!profile.avatarUrl.isNullOrEmpty()) {
-                    loadAvatar(binding.profileAvatar, profile.avatarUrl)
-                } else {
-                    // Сбрасываем на дефолтную иконку
-                    binding.profileAvatar.setImageResource(com.kleos.education.R.drawable.ic_profile)
-                    binding.profileAvatar.background = resources.getDrawable(com.kleos.education.R.drawable.bg_user_card, null)
-                }
-                
-                // Заполняем все поля
-                binding.nameEditText.setText(profile.fullName)
-                binding.emailEditText.setText(profile.email)
-                binding.phoneEditText.setText(profile.phone ?: "")
-                binding.courseEditText.setText(profile.course ?: "")
-                binding.specialityEditText.setText(profile.speciality ?: "")
-                binding.universityEditText.setText(profile.university ?: "")
-                binding.studentIdEditText.setText(profile.studentId ?: "")
-                binding.statusEditText.setText(profile.status ?: "")
-                binding.paymentEditText.setText(profile.payment ?: "")
-                binding.penaltiesEditText.setText(profile.penalties ?: "")
-                binding.notesEditText.setText(profile.notes ?: "")
+                // Обновляем UI на главном потоке
+                withContext(Dispatchers.Main) {
+                    // Повторная проверка после переключения на главный поток
+                    if (!isAdded || _binding == null) return@withContext
+                    
+                    // Отображаем имя и роль в верхней части профиля
+                    binding.profileNameText.text = profile.fullName
+                    val roleText = when (profile.role) {
+                        "student" -> getString(com.kleos.education.R.string.role_student)
+                        "admin" -> getString(com.kleos.education.R.string.role_admin)
+                        else -> getString(com.kleos.education.R.string.role_user)
+                    }
+                    binding.profileRoleText.text = roleText
+                    
+                    // Загружаем аватарку, если она есть
+                    if (!profile.avatarUrl.isNullOrEmpty()) {
+                        loadAvatar(binding.profileAvatar, profile.avatarUrl)
+                    } else {
+                        // Сбрасываем на дефолтную иконку
+                        binding.profileAvatar.setImageResource(com.kleos.education.R.drawable.ic_profile)
+                        binding.profileAvatar.background = resources.getDrawable(com.kleos.education.R.drawable.bg_user_card, null)
+                    }
+                    
+                    // Заполняем все поля
+                    binding.nameEditText.setText(profile.fullName)
+                    binding.emailEditText.setText(profile.email)
+                    binding.phoneEditText.setText(profile.phone ?: "")
+                    binding.courseEditText.setText(profile.course ?: "")
+                    binding.specialityEditText.setText(profile.speciality ?: "")
+                    binding.universityEditText.setText(profile.university ?: "")
+                    binding.studentIdEditText.setText(profile.studentId ?: "")
+                    binding.statusEditText.setText(profile.status ?: "")
+                    binding.paymentEditText.setText(profile.payment ?: "")
+                    binding.penaltiesEditText.setText(profile.penalties ?: "")
+                    binding.notesEditText.setText(profile.notes ?: "")
                 
                 // Блокируем редактирование для студентов и обычных пользователей (только админы могут редактировать)
                 val isStudent = profile.role == "student"
@@ -182,12 +191,16 @@ class ProfileFragment : Fragment() {
                 binding.emailEditText.isFocusable = false
                 binding.emailEditText.isFocusableInTouchMode = false
                 
-                // Обновляем видимость меню в MainActivity после обновления роли
-                (activity as? MainActivity)?.updateMenuVisibility()
+                    // Обновляем видимость меню в MainActivity после обновления роли
+                    (activity as? MainActivity)?.updateMenuVisibility()
+                }
             } catch (e: Exception) {
+                android.util.Log.e("ProfileFragment", "Error loading profile", e)
                 // Если не удалось загрузить с сервера, используем локальные данные
-                val user = SessionManager(requireContext()).getCurrentUser()
-                binding.nameEditText.setText(user?.fullName ?: "")
+                if (isAdded && _binding != null) {
+                    val user = SessionManager(requireContext()).getCurrentUser()
+                    binding.nameEditText.setText(user?.fullName ?: "")
+                }
             }
         }
     }
@@ -300,7 +313,7 @@ class ProfileFragment : Fragment() {
     }
 
     private fun startPeriodicRefresh() {
-        refreshJob = lifecycleScope.launch {
+        refreshJob = viewLifecycleOwner.lifecycleScope.launch {
             while (isActive) {
                 delay(5000) // Обновляем каждые 5 секунд
                 if (!isActive) break
@@ -309,39 +322,50 @@ class ProfileFragment : Fragment() {
                     val profile = withContext(Dispatchers.IO) {
                         profileRepository.getProfile()
                     }
-                    // Обновляем только если поля не в фокусе (чтобы не мешать вводу)
-                    if (!binding.nameEditText.hasFocus()) {
-                        binding.nameEditText.setText(profile.fullName)
-                    }
-                    if (!binding.phoneEditText.hasFocus()) {
-                        binding.phoneEditText.setText(profile.phone ?: "")
-                    }
-                    if (!binding.courseEditText.hasFocus()) {
-                        binding.courseEditText.setText(profile.course ?: "")
-                    }
-                    if (!binding.specialityEditText.hasFocus()) {
-                        binding.specialityEditText.setText(profile.speciality ?: "")
-                    }
-                    if (!binding.universityEditText.hasFocus()) {
-                        binding.universityEditText.setText(profile.university ?: "")
-                    }
-                    if (!binding.studentIdEditText.hasFocus()) {
-                        binding.studentIdEditText.setText(profile.studentId ?: "")
-                    }
-                    if (!binding.statusEditText.hasFocus()) {
-                        binding.statusEditText.setText(profile.status ?: "")
-                    }
-                    if (!binding.paymentEditText.hasFocus()) {
-                        binding.paymentEditText.setText(profile.payment ?: "")
-                    }
-                    if (!binding.penaltiesEditText.hasFocus()) {
-                        binding.penaltiesEditText.setText(profile.penalties ?: "")
-                    }
-                    if (!binding.notesEditText.hasFocus()) {
-                        binding.notesEditText.setText(profile.notes ?: "")
+                    
+                    // Проверяем, что фрагмент еще прикреплен и view существует
+                    if (!isAdded || _binding == null) break
+                    
+                    // Обновляем UI на главном потоке
+                    withContext(Dispatchers.Main) {
+                        // Повторная проверка после переключения на главный поток
+                        if (!isAdded || _binding == null) return@withContext
+                        
+                        // Обновляем только если поля не в фокусе (чтобы не мешать вводу)
+                        if (!binding.nameEditText.hasFocus()) {
+                            binding.nameEditText.setText(profile.fullName)
+                        }
+                        if (!binding.phoneEditText.hasFocus()) {
+                            binding.phoneEditText.setText(profile.phone ?: "")
+                        }
+                        if (!binding.courseEditText.hasFocus()) {
+                            binding.courseEditText.setText(profile.course ?: "")
+                        }
+                        if (!binding.specialityEditText.hasFocus()) {
+                            binding.specialityEditText.setText(profile.speciality ?: "")
+                        }
+                        if (!binding.universityEditText.hasFocus()) {
+                            binding.universityEditText.setText(profile.university ?: "")
+                        }
+                        if (!binding.studentIdEditText.hasFocus()) {
+                            binding.studentIdEditText.setText(profile.studentId ?: "")
+                        }
+                        if (!binding.statusEditText.hasFocus()) {
+                            binding.statusEditText.setText(profile.status ?: "")
+                        }
+                        if (!binding.paymentEditText.hasFocus()) {
+                            binding.paymentEditText.setText(profile.payment ?: "")
+                        }
+                        if (!binding.penaltiesEditText.hasFocus()) {
+                            binding.penaltiesEditText.setText(profile.penalties ?: "")
+                        }
+                        if (!binding.notesEditText.hasFocus()) {
+                            binding.notesEditText.setText(profile.notes ?: "")
+                        }
                     }
                 } catch (e: Exception) {
                     // Игнорируем ошибки обновления
+                    android.util.Log.e("ProfileFragment", "Error in periodic refresh", e)
                 }
             }
         }

@@ -1,5 +1,27 @@
 # Инструкция по деплою изменений
 
+## Production flow (Docker, новый сервер)
+
+Если вы переносите backend на новый VPS, используйте Docker-runbook:
+
+- Пошаговая миграция: `docs/SERVER_MIGRATION.md`
+- Compose-стек: `docker-compose.yml`
+- API image build: `server/Dockerfile`
+- Nginx reverse proxy: `deploy/nginx/kleos.conf`
+- Переменные окружения: `deploy/.env.example` -> `deploy/.env`
+
+Быстрый запуск на новом сервере:
+
+```bash
+cd /opt/kleos/kleos
+cp deploy/.env.example deploy/.env
+nano deploy/.env
+docker compose build --no-cache
+docker compose up -d
+docker compose ps
+curl -i http://localhost/health
+```
+
 ## 1. Закоммитить и запушить изменения в Git
 
 ```bash

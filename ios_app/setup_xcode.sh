@@ -21,7 +21,7 @@ if ! command -v xcodebuild &> /dev/null; then
 fi
 
 PROJECT_NAME="Kleos"
-BUNDLE_ID="com.kleos.education"
+BUNDLE_ID="com.kleosedu.app"
 
 echo "📦 Создание Xcode проекта..."
 echo "   Название: $PROJECT_NAME"

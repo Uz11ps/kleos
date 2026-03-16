@@ -44,7 +44,7 @@ class UniversitiesAdapter(
         holder.binding.backgroundImage.setImageBitmap(null)
         holder.binding.backgroundImage.visibility = android.view.View.GONE
         
-        // По умолчанию показываем градиентный фон (overlay непрозрачный)
+        // По умолчанию показываем плотный оверлей для читаемости текста
         holder.binding.overlayView.alpha = 1.0f
         
         // Загружаем изображение из logoUrl, если оно есть
@@ -100,7 +100,7 @@ class UniversitiesAdapter(
                             if (bitmap != null && !bitmap.isRecycled) {
                                 imageView.setImageBitmap(bitmap)
                                 imageView.visibility = android.view.View.VISIBLE
-                                overlayView.alpha = 0.3f
+                                overlayView.alpha = 0.72f
                             } else {
                                 imageView.visibility = android.view.View.GONE
                                 overlayView.alpha = 1.0f

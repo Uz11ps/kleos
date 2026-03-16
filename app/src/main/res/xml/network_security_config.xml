@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Network Security Configuration for Kleos Education app.
+   Ensures secure connections and prevents cleartext traffic in production.
+   See https://developer.android.com/training/articles/security-config
+-->
+<network-security-config>
+    <!-- Allow cleartext traffic only for localhost (for development) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.kleos-study.ru</domain>
+        <domain includeSubdomains="true">kleos-study.ru</domain>
+    </domain-config>
+    
+    <!-- Base configuration: no cleartext traffic by default -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Trust system certificates -->
+            <certificates src="system" />
+            <!-- Trust user certificates (for development/testing only) -->
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

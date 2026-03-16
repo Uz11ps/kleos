@@ -41,6 +41,10 @@ class CustomBottomNavView @JvmOverloads constructor(
         elevation = 16f * resources.displayMetrics.density
         translationZ = 16f * resources.displayMetrics.density
         setupIcons()
+        // Убеждаемся, что иконка университетов видна по умолчанию (для зарегистрированных пользователей)
+        if (iconViews.isNotEmpty()) {
+            iconViews[0].visibility = android.view.View.VISIBLE
+        }
         updateIcons() // Обновляем иконки после инициализации, чтобы активная иконка была белой
     }
 
@@ -69,28 +73,48 @@ class CustomBottomNavView @JvmOverloads constructor(
         iconViews.addAll(listOf(universityIcon, homeIcon, galleryIcon))
 
         // Устанавливаем обработчики кликов
-        universityIcon.setOnClickListener { selectItem(0) }
-        homeIcon.setOnClickListener { selectItem(1) }
-        galleryIcon.setOnClickListener { selectItem(2) }
+        universityIcon.setOnClickListener { 
+            if (!isGuestMode) {
+                selectItem(0) // Для зарегистрированных: позиция 0 = университеты
+            }
+        }
+        homeIcon.setOnClickListener { 
+            if (isGuestMode) {
+                selectItem(0) // Для гостя: позиция 0 = дом
+            } else {
+                selectItem(1) // Для зарегистрированных: позиция 1 = дом
+            }
+        }
+        galleryIcon.setOnClickListener { 
+            if (isGuestMode) {
+                selectItem(1) // Для гостя: позиция 1 = галерея
+            } else {
+                selectItem(2) // Для зарегистрированных: позиция 2 = галерея
+            }
+        }
     }
 
-    fun selectItem(position: Int) {
-        // Для гостя позиции смещены: 0 = дом, 1 = галерея
-        val actualPosition = if (isGuestMode) {
-            when (position) {
-                0 -> 1 // Дом
-                1 -> 2 // Галерея
-                else -> position
+    fun selectItem(logicalPosition: Int) {
+        // logicalPosition - это логическая позиция (0, 1 для гостя или 0, 1, 2 для зарегистрированных)
+        // Для гостя: 0 = дом, 1 = галерея
+        // Для зарегистрированных: 0 = университеты, 1 = дом, 2 = галерея
+        
+        // Преобразуем логическую позицию в физическую позицию иконки
+        val physicalPosition = if (isGuestMode) {
+            when (logicalPosition) {
+                0 -> 1 // Дом (физическая позиция 1)
+                1 -> 2 // Галерея (физическая позиция 2)
+                else -> logicalPosition
             }
         } else {
-            position
+            logicalPosition // Для зарегистрированных позиции совпадают
         }
         
-        if (actualPosition == selectedPosition) return
-        selectedPosition = actualPosition
+        if (physicalPosition == selectedPosition) return
+        selectedPosition = physicalPosition
         updateIcons()
-        // Передаем оригинальную позицию в listener для правильной навигации
-        onItemSelectedListener?.invoke(position)
+        // Передаем логическую позицию в listener для правильной навигации
+        onItemSelectedListener?.invoke(logicalPosition)
         invalidate()
     }
 
@@ -155,18 +179,41 @@ class CustomBottomNavView @JvmOverloads constructor(
     
     fun setGuestMode(isGuest: Boolean) {
         if (isGuestMode != isGuest) {
+            val oldMode = isGuestMode
             isGuestMode = isGuest
-            // Обновляем видимость первой иконки
+            // Обновляем видимость первой иконки (университеты)
             if (iconViews.isNotEmpty()) {
-                iconViews[0].visibility = if (isGuest) android.view.View.GONE else android.view.View.VISIBLE
+                val visibility = if (isGuest) android.view.View.GONE else android.view.View.VISIBLE
+                iconViews[0].visibility = visibility
+                android.util.Log.d("CustomBottomNavView", "University icon visibility: $visibility (isGuest: $isGuest)")
             }
-            // Если гость и выбрана позиция 0 (Допуск), переключаемся на дом
-            if (isGuest && selectedPosition == 0) {
-                selectedPosition = 0 // Для гостя позиция 0 теперь дом
+            // Если переключились в режим гостя и была выбрана позиция 0 (университеты), переключаемся на дом
+            if (isGuest && !oldMode && selectedPosition == 0) {
+                selectedPosition = 1 // Физическая позиция дома
+                updateIcons()
+            }
+            // Если переключились из режима гостя, выбираем дом по умолчанию
+            if (!isGuest && oldMode) {
+                selectedPosition = 1 // Физическая позиция дома
                 updateIcons()
             }
             invalidate()
             requestLayout()
+            // Принудительно обновляем layout после изменения видимости
+            post {
+                requestLayout()
+                invalidate()
+            }
+        } else {
+            // Даже если режим не изменился, убеждаемся, что видимость правильная
+            if (iconViews.isNotEmpty()) {
+                val visibility = if (isGuest) android.view.View.GONE else android.view.View.VISIBLE
+                if (iconViews[0].visibility != visibility) {
+                    iconViews[0].visibility = visibility
+                    invalidate()
+                    requestLayout()
+                }
+            }
         }
     }
 

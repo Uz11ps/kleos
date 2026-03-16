@@ -50,12 +50,13 @@ class MainActivity : AppCompatActivity() {
         val navView: NavigationView = binding.navView
         
         // Устанавливаем ширину NavigationView равной ширине экрана, чтобы убрать щель справа
+        // Оптимизация: делаем это один раз при создании, а не каждый раз
         navView.post {
-            val displayMetrics = resources.displayMetrics
-            val screenWidth = displayMetrics.widthPixels
-            val layoutParams = navView.layoutParams
-            layoutParams.width = screenWidth
-            navView.layoutParams = layoutParams
+            if (navView.layoutParams.width != resources.displayMetrics.widthPixels) {
+                val layoutParams = navView.layoutParams
+                layoutParams.width = resources.displayMetrics.widthPixels
+                navView.layoutParams = layoutParams
+            }
         }
         
         val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -78,10 +79,9 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
         
         // Убеждаемся, что галерея и университеты видны в боковом меню сразу после настройки
-        navView.post {
-            navView.menu.findItem(R.id.nav_gallery)?.isVisible = true
-            navView.menu.findItem(R.id.nav_universities)?.isVisible = true
-        }
+        // Оптимизация: делаем это синхронно, без post
+        navView.menu.findItem(R.id.nav_gallery)?.isVisible = true
+        navView.menu.findItem(R.id.nav_universities)?.isVisible = true
         // Обработка кнопки закрытия в header
         runCatching {
             val header = navView.getHeaderView(0)
@@ -186,6 +186,11 @@ class MainActivity : AppCompatActivity() {
         
         // Устанавливаем режим гостя для навбара
         bottomNav.setGuestMode(isGuest)
+        // Принудительно обновляем layout после установки режима
+        bottomNav.post {
+            bottomNav.setGuestMode(isGuest)
+            bottomNav.requestLayout()
+        }
         
         // Настраиваем обработчик выбора элементов навигации
         bottomNav.setOnItemSelectedListener { position ->
@@ -377,6 +382,11 @@ class MainActivity : AppCompatActivity() {
         
         // Устанавливаем режим гостя для навбара
         bottomNav.setGuestMode(isGuest)
+        // Принудительно обновляем layout
+        bottomNav.post {
+            bottomNav.setGuestMode(isGuest)
+            bottomNav.requestLayout()
+        }
         
         if (currentDestination == R.id.nav_profile) {
             bottomNav.visibility = View.GONE
@@ -399,6 +409,11 @@ class MainActivity : AppCompatActivity() {
     }
     
     fun openDrawer() {
-        binding.drawerLayout.openDrawer(GravityCompat.START)
+        // Оптимизация: обновляем меню только если нужно, и делаем это асинхронно
+        binding.drawerLayout.post {
+            if (!binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                binding.drawerLayout.openDrawer(GravityCompat.START)
+            }
+        }
     }
 }

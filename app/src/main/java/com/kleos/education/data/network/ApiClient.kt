@@ -46,10 +46,12 @@ object ApiClient {
     val okHttpClient: OkHttpClient by lazy {
         val builder = OkHttpClient.Builder()
             .addInterceptor(logging)
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-        appContext?.let { builder.addInterceptor(AuthInterceptor(it)) }
+            .connectTimeout(30, TimeUnit.SECONDS) // Увеличено с 15 до 30
+            .readTimeout(60, TimeUnit.SECONDS) // Увеличено с 30 до 60
+            .writeTimeout(60, TimeUnit.SECONDS) // Увеличено с 30 до 60
+        // Всегда добавляем AuthInterceptor, используя appContext или fallback
+        val context = appContext ?: throw IllegalStateException("ApiClient not initialized. Call ApiClient.init(context) first.")
+        builder.addInterceptor(AuthInterceptor(context))
         builder.build()
     }
 

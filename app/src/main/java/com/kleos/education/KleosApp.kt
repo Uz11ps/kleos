@@ -22,11 +22,16 @@ class KleosApp : Application() {
         ApiClient.init(this)
         
         // Получаем и отправляем FCM токен на сервер (если пользователь залогинен)
-        com.kleos.education.utils.FcmTokenManager.registerToken(this)
-        
-        // Слушаем обновления токена
-        FirebaseMessaging.getInstance().token.addOnCompleteListener {
-            com.kleos.education.utils.FcmTokenManager.refreshToken(this)
+        // Обернуто в try-catch для работы без Firebase (для разработки)
+        try {
+            com.kleos.education.utils.FcmTokenManager.registerToken(this)
+            
+            // Слушаем обновления токена
+            FirebaseMessaging.getInstance().token.addOnCompleteListener {
+                com.kleos.education.utils.FcmTokenManager.refreshToken(this)
+            }
+        } catch (e: Exception) {
+            Log.w("KleosApp", "Firebase not available (this is OK for development)", e)
         }
     }
 }

@@ -47,6 +47,7 @@ class ProgramDetailActivity : AppCompatActivity() {
             level.contains("Master", ignoreCase = true) -> "Магистратура"
             level.contains("Research", ignoreCase = true) -> "Докторантура"
             level.contains("Speciality", ignoreCase = true) -> "Специалитет"
+            level.contains("Residency", ignoreCase = true) -> "Ординатура"
             else -> level
         }
         

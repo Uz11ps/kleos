@@ -603,6 +603,34 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
       </div>
       
       <div class="card">
+        <h2>📣 Send Push Notification</h2>
+        <form method="post" action="/admin/notifications/send" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px;">
+          <div class="input-group">
+            <label>Target</label>
+            <select name="target">
+              <option value="all">All users</option>
+              <option value="user">Single user by ID</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>User ID (for single user)</label>
+            <input name="userId" placeholder="66f8..."/>
+          </div>
+          <div class="input-group" style="grid-column:1/-1;">
+            <label>Title</label>
+            <input name="title" required placeholder="Notification title"/>
+          </div>
+          <div class="input-group" style="grid-column:1/-1;">
+            <label>Message</label>
+            <textarea name="body" rows="3" required placeholder="Notification text"></textarea>
+          </div>
+          <div style="grid-column:1/-1;">
+            <button class="btn primary" type="submit">Send</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
         <h2>Quick Actions</h2>
         <div class="grid cols-3" style="margin-top:16px;">
           <a href="/admin/users" class="btn-secondary" style="text-align:center;padding:16px;">👥 Manage Users</a>
@@ -613,6 +641,32 @@ router.get('/admin/dashboard', adminAuthMiddleware, async (req, res) => {
     `
   });
   sendAdminResponse(res, html);
+});
+
+router.post('/admin/notifications/send', adminAuthMiddleware, async (req: any, res: any) => {
+  const schema = z.object({
+    target: z.enum(['all', 'user']).default('all'),
+    userId: z.string().optional(),
+    title: z.string().min(1),
+    body: z.string().min(1)
+  });
+  const data = schema.parse(req.body);
+  try {
+    if (data.target === 'user') {
+      const userId = (data.userId || '').trim();
+      if (!userId) {
+        return res.status(400).send('User ID is required for single-user notification. <a href="/admin/dashboard">Back</a>');
+      }
+      const { sendPushToUser } = await import('../utils/pushNotifications.js');
+      await sendPushToUser(userId, data.title, data.body, { type: 'manual_admin_push' });
+    } else {
+      const { sendPushToAll } = await import('../utils/pushNotifications.js');
+      await sendPushToAll(data.title, data.body, { type: 'manual_admin_push' });
+    }
+    res.redirect('/admin/dashboard');
+  } catch (e: any) {
+    res.status(500).send(`Failed to send notification: ${e?.message || 'unknown'}. <a href="/admin/dashboard">Back</a>`);
+  }
 });
 
 // Users list
@@ -962,6 +1016,22 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
             <input name="url" placeholder="https://example.com" value="${(p.url || '').toString().replace(/"/g, '&quot;')}" />
           </div>
           <div class="input-group">
+            <label>Город</label>
+            <input name="city" placeholder="Moscow" value="${(p.city || '').toString().replace(/"/g, '&quot;')}" />
+          </div>
+          <div class="input-group">
+            <label>Страна</label>
+            <input name="country" placeholder="Russia" value="${(p.country || '').toString().replace(/"/g, '&quot;')}" />
+          </div>
+          <div class="input-group">
+            <label>Контактный email</label>
+            <input name="contactEmail" type="email" placeholder="info@partner.com" value="${(p.contactEmail || '').toString().replace(/"/g, '&quot;')}" />
+          </div>
+          <div class="input-group">
+            <label>Контактный телефон</label>
+            <input name="contactPhone" placeholder="+7 999 999-99-99" value="${(p.contactPhone || '').toString().replace(/"/g, '&quot;')}" />
+          </div>
+          <div class="input-group">
             <label>Порядок сортировки</label>
             <input name="order" type="number" value="${p.order || 0}" />
           </div>
@@ -1004,6 +1074,22 @@ router.get('/admin/partners', adminAuthMiddleware, async (_req, res) => {
             <input name="url" placeholder="https://example.com" />
           </div>
           <div class="input-group">
+            <label>Город</label>
+            <input name="city" placeholder="Moscow" />
+          </div>
+          <div class="input-group">
+            <label>Страна</label>
+            <input name="country" placeholder="Russia" />
+          </div>
+          <div class="input-group">
+            <label>Контактный email</label>
+            <input name="contactEmail" type="email" placeholder="info@partner.com" />
+          </div>
+          <div class="input-group">
+            <label>Контактный телефон</label>
+            <input name="contactPhone" placeholder="+7 999 999-99-99" />
+          </div>
+          <div class="input-group">
             <label>Порядок сортировки</label>
             <input name="order" type="number" value="0" />
           </div>
@@ -1036,6 +1122,10 @@ router.post('/admin/partners', adminAuthMiddleware, uploadLogos.single('logoFile
     description: z.string().optional(),
     logoUrl: z.string().optional(),
     url: z.string().optional(),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    contactEmail: z.string().optional(),
+    contactPhone: z.string().optional(),
     order: z.coerce.number().optional(),
     active: z.string().optional()
   });
@@ -1055,6 +1145,10 @@ router.post('/admin/partners/:id', adminAuthMiddleware, uploadLogos.single('logo
     description: z.string().optional(),
     logoUrl: z.string().optional(),
     url: z.string().optional(),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    contactEmail: z.string().optional(),
+    contactPhone: z.string().optional(),
     order: z.coerce.number().optional(),
     active: z.string().optional()
   });
@@ -1353,6 +1447,27 @@ router.get('/admin/chats', adminAuthMiddleware, async (req: any, res) => {
   sendAdminResponse(res, await adminLayout({ title: 'Kleos Admin - Chats', active: 'chats', body }));
 });
 
+function renderAdminChatMessageHtml(messages: any[], userName: string) {
+  return messages.map((m: any) => {
+    const senderName = m.senderRole === 'admin' ? 'Администратор' : m.senderRole === 'student' ? userName : 'Система';
+    const senderColor = m.senderRole === 'admin' ? 'var(--accent)' : m.senderRole === 'student' ? 'var(--text)' : 'var(--muted)';
+    return `<div style="padding:12px;margin-bottom:8px;border-left:3px solid ${senderColor};background:var(--card);border-radius:6px;">
+      <div style="font-weight:600;color:${senderColor};margin-bottom:4px;">${senderName}</div>
+      <div style="color:var(--text);white-space:pre-wrap;">${String(m.text || '').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;">${new Date((m as any).createdAt).toLocaleString('ru-RU')}</div>
+    </div>`;
+  }).join('');
+}
+
+router.get('/admin/chats/:id/messages', adminAuthMiddleware, async (req, res) => {
+  const chatId = req.params.id;
+  const chat = await Chat.findById(chatId).populate('userId', 'fullName').lean();
+  if (!chat) return res.status(404).json({ ok: false, error: 'chat_not_found' });
+  const userName = ((chat as any).userId?.fullName || 'Гость').toString();
+  const messages = await Message.find({ chatId }).sort({ createdAt: 1 }).lean();
+  res.json({ ok: true, html: renderAdminChatMessageHtml(messages, userName), count: messages.length });
+});
+
 router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
   const chatId = req.params.id;
   const chat = await Chat.findById(chatId).populate('userId', 'studentId fullName email').lean();
@@ -1366,15 +1481,7 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
   // Помечаем все сообщения от студентов в этом чате как прочитанные
   await Message.updateMany({ chatId, senderRole: 'student' }, { isReadByAdmin: true });
   const msgs = await Message.find({ chatId }).sort({ createdAt: 1 }).lean();
-  const list = msgs.map(m => {
-    const senderName = m.senderRole === 'admin' ? 'Администратор' : m.senderRole === 'student' ? userName : 'Система';
-    const senderColor = m.senderRole === 'admin' ? 'var(--accent)' : m.senderRole === 'student' ? 'var(--text)' : 'var(--muted)';
-    return `<div style="padding:12px;margin-bottom:8px;border-left:3px solid ${senderColor};background:var(--card);border-radius:6px;">
-      <div style="font-weight:600;color:${senderColor};margin-bottom:4px;">${senderName}</div>
-      <div style="color:var(--text);white-space:pre-wrap;">${String(m.text || '').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px;">${new Date((m as any).createdAt).toLocaleString('ru-RU')}</div>
-    </div>`;
-  }).join('');
+  const list = renderAdminChatMessageHtml(msgs, userName);
   const body = `
     <div class="card">
       <div style="margin-bottom:16px;"><a href="/admin/chats" class="btn">&larr; Назад к списку</a></div>
@@ -1384,7 +1491,7 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
         ${userEmail ? `<div style="color:var(--muted);">Email: ${userEmail}</div>` : ''}
       </div>
       <h3 style="margin-bottom:16px;">Сообщения</h3>
-      <div class="card" style="height:500px;overflow-y:auto;padding:16px;background:var(--bg);">${list || '<div class="muted" style="text-align:center;padding:40px;">Пока нет сообщений</div>'}</div>
+      <div id="messagesWrap" class="card" style="height:500px;overflow-y:auto;padding:16px;background:var(--bg);">${list || '<div class="muted" style="text-align:center;padding:40px;">Пока нет сообщений</div>'}</div>
       <form method="post" action="/admin/chats/${chatId}/send" style="margin-top:16px;">
         <div style="display:flex;gap:10px;">
           <input name="text" placeholder="Введите сообщение..." style="flex:1;min-width:200px;" required/>
@@ -1393,11 +1500,39 @@ router.get('/admin/chats/:id', adminAuthMiddleware, async (req, res) => {
       </form>
     </div>
     <script>
+      let lastCount = ${msgs.length};
+      let isPinnedToBottom = true;
+      const messagesDiv = document.getElementById('messagesWrap');
+
       // Автопрокрутка вниз при загрузке
       window.addEventListener('load', function() {
-        const messagesDiv = document.querySelector('.card[style*="height:500px"]');
         if (messagesDiv) messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
+
+      if (messagesDiv) {
+        messagesDiv.addEventListener('scroll', function() {
+          const threshold = 24;
+          isPinnedToBottom = (messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight) < threshold;
+        });
+      }
+
+      async function refreshMessages() {
+        try {
+          const response = await fetch('/admin/chats/${chatId}/messages', { cache: 'no-store' });
+          const result = await response.json();
+          if (!result.ok || !messagesDiv) return;
+          if (typeof result.count === 'number' && result.count === lastCount) return;
+          lastCount = result.count || 0;
+          messagesDiv.innerHTML = result.html || '<div class="muted" style="text-align:center;padding:40px;">Пока нет сообщений</div>';
+          if (isPinnedToBottom) {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          }
+        } catch (e) {
+          // ignore transient network issues in auto refresh
+        }
+      }
+
+      setInterval(refreshMessages, 2500);
     </script>
   `;
   sendAdminResponse(res, await adminLayout({ title: `Kleos Admin - Chat (ID: ${displayId})`, active: 'chats', body }));
@@ -1615,6 +1750,7 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
           <input name="publishedAt" type="datetime-local" value="${n.publishedAt ? new Date(n.publishedAt).toISOString().slice(0,16) : ''}" />
           <input name="order" type="number" value="${n.order || 0}" />
           <label><input type="checkbox" name="active" ${n.active ? 'checked' : ''}/> active</label>
+          <input name="description" value="${(n.description || '').toString().replace(/"/g,'&quot;')}" placeholder="Short description" />
           <textarea name="content" rows="3" placeholder="Content" style="width:100%">${(n.content || '').toString().replace(/</g,'&lt;')}</textarea>
           <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn primary" type="submit">Save</button>
@@ -1634,6 +1770,8 @@ router.get('/admin/news', adminAuthMiddleware, async (_req, res) => {
         <input name="publishedAt" type="datetime-local"/>
         <input name="order" type="number" placeholder="Order" value="0"/>
         <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" name="active" checked/> active</label>
+        <input name="description" placeholder="Short description" style="min-width:260px"/>
+        <textarea name="content" rows="2" placeholder="Full content" style="width:100%"></textarea>
         <button class="btn primary" type="submit">Create</button>
       </form>
       <div class="table-wrap" style="margin-top:12px">
@@ -1712,7 +1850,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
           <div class="input-group">
             <label class="required">Уровень</label>
             <select name="level">
-              ${["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l}</option>`).join('')}
+              ${["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree", "Residency degree"].map(l=>`<option value="${l}" ${p.level===l?'selected':''}>${l}</option>`).join('')}
             </select>
           </div>
           <div class="input-group">
@@ -1794,7 +1932,7 @@ router.get('/admin/programs', adminAuthMiddleware, async (req, res) => {
             <div class="input-group">
               <label class="required">Уровень</label>
               <select name="level">
-                ${["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"].map(l=>`<option value="${l}">${l}</option>`).join('')}
+                ${["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree", "Residency degree"].map(l=>`<option value="${l}">${l}</option>`).join('')}
               </select>
             </div>
             <div class="input-group">
@@ -1906,7 +2044,7 @@ router.post('/admin/programs/create', adminAuthMiddleware, uploadImages.single('
     const schema = z.object({
       title: z.string().min(1),
       language: z.enum(['ru','en','zh']).optional().default('en'),
-      level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"]).optional().default("Bachelor's degree"),
+      level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree", "Residency degree"]).optional().default("Bachelor's degree"),
       universityId: z.string().min(1, 'Университет обязателен для выбора'),
       tuition: z.coerce.number().optional().default(0),
       durationYears: z.coerce.number().optional().default(4),
@@ -1958,7 +2096,7 @@ router.post('/admin/programs/:id', adminAuthMiddleware, uploadImages.single('ima
       title: z.string().optional(),
       description: z.string().optional(),
       language: z.enum(['ru','en','zh']).optional(),
-      level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"]).optional(),
+      level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree", "Residency degree"]).optional(),
       universityId: z.string().min(1, 'Университет обязателен').optional(),
       tuition: z.coerce.number().optional(),
       durationYears: z.coerce.number().optional(),
@@ -2022,6 +2160,7 @@ router.post('/admin/news/create', adminAuthMiddleware, uploadImages.single('imag
       publishedAt: z.string().optional().default(''),
       order: z.coerce.number().optional().default(0),
       active: z.string().optional(),
+      description: z.string().optional().default(''),
       content: z.string().optional().default('')
     });
     const data = schema.parse(req.body);
@@ -2043,6 +2182,7 @@ router.post('/admin/news/create', adminAuthMiddleware, uploadImages.single('imag
       publishedAt: publishedAt,
       order: data.order,
       active: data.active === 'on',
+      description: data.description || '',
       content: data.content || ''
     });
     
@@ -2076,6 +2216,7 @@ router.post('/admin/news/:id', adminAuthMiddleware, uploadImages.single('imageFi
   const { News } = await import('../models/News.js');
   const schema = z.object({
     title: z.string().optional(),
+    description: z.string().optional(),
     content: z.string().optional(),
     publishedAt: z.string().optional(),
     order: z.coerce.number().optional(),
@@ -2366,6 +2507,7 @@ router.get('/admin/universities/:id/edit', adminAuthMiddleware, async (req: any,
         <option value="Master's degree" ${dp.type === "Master's degree" ? 'selected' : ''}>Master's degree</option>
         <option value="Research degree" ${dp.type === "Research degree" ? 'selected' : ''}>Research degree</option>
         <option value="Speciality degree" ${dp.type === "Speciality degree" ? 'selected' : ''}>Speciality degree</option>
+        <option value="Residency degree" ${dp.type === "Residency degree" ? 'selected' : ''}>Residency degree</option>
       </select>
       <textarea name="degreePrograms[${idx}][description]" placeholder="Описание направления" style="width:100%;min-height:60px;">${(dp.description || '').toString().replace(/</g,'&lt;')}</textarea>
       <button type="button" class="btn danger" onclick="this.closest('div').remove()" style="margin-top:8px;">Удалить</button>
@@ -2536,6 +2678,7 @@ router.get('/admin/universities/:id/edit', adminAuthMiddleware, async (req: any,
             <option value="Master's degree">Master's degree</option>
             <option value="Research degree">Research degree</option>
             <option value="Speciality degree">Speciality degree</option>
+            <option value="Residency degree">Residency degree</option>
           </select>
           <textarea name="degreePrograms[\${degreeProgramIndex}][description]" placeholder="Описание направления" style="width:100%;min-height:60px;"></textarea>
           <button type="button" class="btn danger" onclick="this.closest('div').remove()" style="margin-top:8px;">Удалить</button>

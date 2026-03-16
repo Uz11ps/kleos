@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct ChatView: View {
     @StateObject private var apiClient = ApiClient.shared
@@ -8,6 +9,8 @@ struct ChatView: View {
     @State private var newMessage = ""
     @State private var isLoading = true
     @State private var showFAQ = true
+    @State private var lastMessageId: String?
+    private let refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
     
     var body: some View {
         ZStack {
@@ -49,11 +52,16 @@ struct ChatView: View {
         }
         .onAppear { loadData() }
         .onChange(of: localizationManager.currentLanguage) { _, _ in loadData() }
+        .onReceive(refreshTimer) { _ in
+            if !showFAQ {
+                loadMessages(shouldNotify: true)
+            }
+        }
     }
     
     private func loadData() {
         loadFAQ()
-        loadMessages()
+        loadMessages(shouldNotify: false)
     }
     
     private func loadFAQ() {
@@ -76,12 +84,26 @@ struct ChatView: View {
         }
     }
     
-    private func loadMessages() {
+    private func loadMessages(shouldNotify: Bool = false) {
         isLoading = true
         Task {
             do {
                 let fetched = try await apiClient.fetchMessages()
-                await MainActor.run { self.messages = fetched; self.isLoading = false }
+                await MainActor.run {
+                    if shouldNotify,
+                       let latest = fetched.last,
+                       let prev = self.lastMessageId,
+                       latest.id != prev,
+                       latest.senderRole == "admin" {
+                        LocalNotificationManager.shared.show(
+                            title: "Kleos Support",
+                            body: latest.text
+                        )
+                    }
+                    self.lastMessageId = fetched.last?.id
+                    self.messages = fetched
+                    self.isLoading = false
+                }
             } catch {
                 await MainActor.run { self.isLoading = false }
             }
@@ -98,7 +120,7 @@ struct ChatView: View {
         Task {
             do {
                 try await apiClient.sendMessage(text: messageText)
-                loadMessages()
+                loadMessages(shouldNotify: false)
             } catch {
                 if let index = messages.firstIndex(where: { $0.id == tempMessage.id }) { messages.remove(at: index) }
                 newMessage = messageText

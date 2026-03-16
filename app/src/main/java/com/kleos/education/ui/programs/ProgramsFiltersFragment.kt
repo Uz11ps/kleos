@@ -17,9 +17,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import android.content.Intent
 import com.kleos.education.ui.programs.ProgramDetailActivity
 import com.kleos.education.R
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.core.view.ViewCompat
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
@@ -93,11 +94,13 @@ class ProgramsFiltersFragment : Fragment() {
     }
     
     private fun loadFilterOptions() {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 android.util.Log.d("ProgramsFiltersFragment", "Loading filter options...")
                 // Загружаем все программы для получения уникальных языков, уровней и названий
-                val allPrograms = programsRepository.list(null, null, null, null)
+                val allPrograms = withContext(Dispatchers.IO) {
+                    programsRepository.list(null, null, null, null)
+                }
                 android.util.Log.d("ProgramsFiltersFragment", "Loaded ${allPrograms.size} programs")
                 
                 val languages = allPrograms.mapNotNull { it.language }.distinct().sorted()
@@ -109,11 +112,13 @@ class ProgramsFiltersFragment : Fragment() {
                 android.util.Log.d("ProgramsFiltersFragment", "Program titles count: ${programTitles.size}")
                 
                 // Загружаем список университетов
-                val universities = universitiesRepository.list().map { it.name }.sorted()
+                val universities = withContext(Dispatchers.IO) {
+                    universitiesRepository.list().map { it.name }.sorted()
+                }
                 android.util.Log.d("ProgramsFiltersFragment", "Universities count: ${universities.size}")
                 
                 // Обновляем UI на главном потоке
-                requireActivity().runOnUiThread {
+                if (isAdded && _binding != null) {
                     setupDropdowns(languages, levels, universities, programTitles)
                     android.util.Log.d("ProgramsFiltersFragment", "Dropdowns setup completed")
                 }
@@ -121,7 +126,7 @@ class ProgramsFiltersFragment : Fragment() {
                 android.util.Log.e("ProgramsFiltersFragment", "Error loading filter options", e)
                 e.printStackTrace()
                 // В случае ошибки используем пустые списки
-                requireActivity().runOnUiThread {
+                if (isAdded && _binding != null) {
                     setupDropdowns(emptyList(), emptyList(), emptyList(), emptyList())
                 }
             }
@@ -145,14 +150,16 @@ class ProgramsFiltersFragment : Fragment() {
         "Bachelor's degree" to "Бакалавриат",
         "Master's degree" to "Магистратура",
         "Research degree" to "Докторантура",
-        "Speciality degree" to "Специалитет"
+        "Speciality degree" to "Специалитет",
+        "Residency degree" to "Ординатура"
     )
     
     private val reverseLevelMap = mapOf(
         "Бакалавриат" to "Bachelor's degree",
         "Магистратура" to "Master's degree",
         "Докторантура" to "Research degree",
-        "Специалитет" to "Speciality degree"
+        "Специалитет" to "Speciality degree",
+        "Ординатура" to "Residency degree"
     )
     
     private fun setupDropdowns(languages: List<String>, levels: List<String>, universities: List<String>, programTitles: List<String>) {
@@ -326,7 +333,7 @@ class ProgramsFiltersFragment : Fragment() {
         recyclerView.adapter = adapter
         
         // Загружаем программы
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val q = searchQuery.takeIf { it.isNotEmpty() }
                 val lang = language.takeIf { it.isNotEmpty() }
@@ -335,11 +342,14 @@ class ProgramsFiltersFragment : Fragment() {
                 
                 android.util.Log.d("ProgramsFiltersFragment", "Searching programs with filters: q=$q, lang=$lang, level=$lvl, university=$univ")
                 
-                val programs = programsRepository.list(q, lang, lvl, univ)
+                val programs = withContext(Dispatchers.IO) {
+                    programsRepository.list(q, lang, lvl, univ)
+                }
                 
                 android.util.Log.d("ProgramsFiltersFragment", "Found ${programs.size} programs")
                 
-                requireActivity().runOnUiThread {
+                // Проверяем, что фрагмент еще прикреплен
+                if (isAdded && _binding != null) {
                     adapter.submitList(programs)
                     val count = programs.size
                     summaryText.text = resources.getString(R.string.admission_found_programs, count)
@@ -348,7 +358,8 @@ class ProgramsFiltersFragment : Fragment() {
             } catch (e: Exception) {
                 android.util.Log.e("ProgramsFiltersFragment", "Error loading programs in bottom sheet", e)
                 e.printStackTrace()
-                requireActivity().runOnUiThread {
+                // Проверяем, что фрагмент еще прикреплен
+                if (isAdded && _binding != null) {
                     adapter.submitList(emptyList())
                     summaryText.text = resources.getString(R.string.admission_found_programs, 0)
                     BottomSheetManager.showDialog(bottomSheetDialog)

@@ -66,7 +66,6 @@ interface AdmissionsRepository {
     }
 
     class Http(private val context: Context) : AdmissionsRepository {
-        private val scope = CoroutineScope(Dispatchers.IO)
         override fun submit(application: AdmissionApplication) {
             val api = com.kleos.education.data.network.ApiClient.retrofit
                 .create(com.kleos.education.data.network.AdmissionsApi::class.java)
@@ -86,9 +85,12 @@ interface AdmissionsRepository {
                 program = application.program,
                 comment = application.comment
             )
-            // fire-and-forget
-            scope.launch {
+            // Используем GlobalScope для fire-and-forget запросов без lifecycle
+            kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
                 kotlin.runCatching { api.create(body) }
+                    .onFailure { e ->
+                        android.util.Log.e("AdmissionsRepository", "Error submitting admission", e)
+                    }
             }
         }
 

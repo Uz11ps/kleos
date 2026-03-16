@@ -28,7 +28,7 @@ const universitySchema = new Schema({
   },
   // Degree programs offered
   degreePrograms: [{
-    type: { type: String, enum: ["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"], required: true },
+    type: { type: String, enum: ["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree", "Residency degree"], required: true },
     description: String
   }],
   // Content blocks for custom page content

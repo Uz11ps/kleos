@@ -5,6 +5,7 @@ import retrofit2.http.GET
 data class NewsDto(
     val id: String,
     val title: String,
+    val description: String?,
     val content: String?,
     val imageUrl: String?,
     val publishedAt: String

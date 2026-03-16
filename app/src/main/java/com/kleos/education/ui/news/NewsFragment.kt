@@ -12,6 +12,7 @@ import com.kleos.education.databinding.FragmentNewsBinding
 import com.kleos.education.ui.home.NewsAdapter
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.kleos.education.R
@@ -140,10 +141,22 @@ class NewsFragment : Fragment() {
 
     private fun loadNews() {
         viewLifecycleOwner.lifecycleScope.launch {
-            allItems = withContext(Dispatchers.IO) {
-                runCatching { newsRepository.fetch() }.getOrElse { emptyList() }
+            try {
+                ensureActive()
+                allItems = withContext(Dispatchers.IO) {
+                    runCatching { newsRepository.fetch() }.getOrElse { e ->
+                        android.util.Log.e("NewsFragment", "Error loading news", e)
+                        emptyList()
+                    }
+                }
+                ensureActive()
+                filterItems()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                android.util.Log.d("NewsFragment", "Load cancelled", e)
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.e("NewsFragment", "Unexpected error", e)
             }
-            filterItems()
         }
     }
 

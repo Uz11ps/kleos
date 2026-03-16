@@ -6,11 +6,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.kleos.education.BuildConfig
 import com.kleos.education.data.model.GalleryItem
 import com.kleos.education.databinding.ItemGalleryBinding
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import okhttp3.Request
 
 class GalleryAdapter(
@@ -38,20 +40,21 @@ class GalleryAdapter(
             ?: java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault()).format(java.util.Date())
         holder.binding.dateText.text = dateText
         
+        // Отменяем предыдущую загрузку для этого ViewHolder
+        imageLoadJobs[holder.binding.backgroundImage]?.cancel()
+        imageLoadJobs.remove(holder.binding.backgroundImage)
+        
         // Сбрасываем изображение перед загрузкой нового
         holder.binding.backgroundImage.setImageBitmap(null)
         holder.binding.backgroundImage.visibility = android.view.View.GONE
+        holder.binding.backgroundImage.tag = null
         
         // По умолчанию показываем градиентный фон (overlay непрозрачный)
         holder.binding.overlayView.alpha = 1.0f
         
         // Загружаем изображение из mediaUrl, если это фото
         if (item.mediaType == "photo" && item.mediaUrl.isNotEmpty()) {
-            android.util.Log.d("GalleryAdapter", "Item: ${item.title}, Loading image from: ${item.mediaUrl}")
             loadImage(holder.binding.backgroundImage, item.mediaUrl, holder.binding.overlayView)
-        } else {
-            // Если это видео или нет URL, показываем только градиентный фон
-            android.util.Log.d("GalleryAdapter", "No image to load - mediaType: ${item.mediaType}, mediaUrl: ${item.mediaUrl}")
         }
         
         // Обработка клика на кнопку со стрелкой
@@ -76,9 +79,17 @@ class GalleryAdapter(
         }
     }
     
+    private var imageLoadJobs = mutableMapOf<android.widget.ImageView, Job>()
+    
     private fun loadImage(imageView: android.widget.ImageView, imageUrl: String, overlayView: android.view.View) {
-        CoroutineScope(Dispatchers.IO).launch {
+        // Отменяем предыдущую загрузку для этого ImageView
+        imageLoadJobs[imageView]?.cancel()
+        
+        // Используем GlobalScope для загрузки изображений, так как адаптер не имеет lifecycle
+        val job = kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO + kotlinx.coroutines.SupervisorJob()) {
             try {
+                if (!isActive) return@launch
+                
                 // Формируем полный URL, если он относительный
                 val fullUrl = if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
                     imageUrl
@@ -92,7 +103,7 @@ class GalleryAdapter(
                     }
                 }
                 
-                android.util.Log.d("GalleryAdapter", "Loading image from: $fullUrl")
+                if (!isActive) return@launch
                 
                 // Используем OkHttp клиент из ApiClient для правильной авторизации
                 val okHttpClient = com.kleos.education.data.network.ApiClient.okHttpClient
@@ -103,43 +114,53 @@ class GalleryAdapter(
                 
                 val response = okHttpClient.newCall(request).execute()
                 
+                if (!isActive) return@launch
+                
                 if (response.isSuccessful && response.body != null) {
                     response.body?.use { body ->
                         val inputStream = body.byteStream()
                         val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                        
+                        if (!isActive) return@launch
+                        
                         withContext(Dispatchers.Main) {
-                            if (bitmap != null && !bitmap.isRecycled) {
-                                android.util.Log.d("GalleryAdapter", "Image loaded successfully, size: ${bitmap.width}x${bitmap.height}")
-                                // Сначала показываем изображение
+                            // Проверяем, что ImageView еще привязан к этому элементу
+                            if (imageView.tag == imageUrl && bitmap != null && !bitmap.isRecycled) {
                                 imageView.setImageBitmap(bitmap)
                                 imageView.visibility = android.view.View.VISIBLE
-                                // Затем делаем overlay полупрозрачным, чтобы изображение было видно
                                 overlayView.alpha = 0.3f
-                                android.util.Log.d("GalleryAdapter", "Image displayed, overlay alpha set to 0.3")
                             } else {
-                                android.util.Log.e("GalleryAdapter", "Failed to decode bitmap or bitmap is recycled")
                                 imageView.visibility = android.view.View.GONE
                                 overlayView.alpha = 1.0f
                             }
                         }
                     }
                 } else {
-                    android.util.Log.e("GalleryAdapter", "Failed to load image: HTTP ${response.code}")
                     withContext(Dispatchers.Main) {
+                        if (imageView.tag == imageUrl) {
+                            imageView.visibility = android.view.View.GONE
+                            overlayView.alpha = 1.0f
+                        }
+                    }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Игнорируем отмену
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.e("GalleryAdapter", "Error loading image from $imageUrl: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    if (imageView.tag == imageUrl) {
                         imageView.visibility = android.view.View.GONE
                         overlayView.alpha = 1.0f
                     }
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("GalleryAdapter", "Error loading image from $imageUrl: ${e.message}", e)
-                e.printStackTrace()
-                // В случае ошибки скрываем изображение, остается градиентный фон
-                withContext(Dispatchers.Main) {
-                    imageView.visibility = android.view.View.GONE
-                    overlayView.alpha = 1.0f
-                }
+            } finally {
+                imageLoadJobs.remove(imageView)
             }
         }
+        
+        imageLoadJobs[imageView] = job
+        imageView.tag = imageUrl // Сохраняем URL как тег для проверки актуальности
     }
     
     override fun onViewAttachedToWindow(holder: GalleryViewHolder) {

@@ -160,6 +160,7 @@ struct ProgramsFiltersView: View {
                     Text("Master's degree").tag("Master's degree")
                     Text("Research degree").tag("Research degree")
                     Text("Speciality degree").tag("Speciality degree")
+                    Text("Residency degree").tag("Residency degree")
                 }
             }
             Section {
@@ -182,11 +183,82 @@ struct ProgramsFiltersView: View {
 
 struct ProgramDetailView: View {
     let programId: String
+    @StateObject private var apiClient = ApiClient.shared
+    @State private var program: Program?
+    @State private var isLoading = true
     @Environment(\.dismiss) var dismiss
+
+    private var localizedLevel: String {
+        guard let level = program?.level else { return "-" }
+        switch level {
+        case "Bachelor's degree": return "Бакалавриат"
+        case "Master's degree": return "Магистратура"
+        case "Research degree": return "Докторантура"
+        case "Speciality degree": return "Специалитет"
+        case "Residency degree": return "Ординатура"
+        default: return level
+        }
+    }
+
     var body: some View {
         ZStack {
-            Text("Program Detail Content").foregroundColor(.white)
+            if isLoading {
+                LoadingView()
+            } else if let program = program {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        Color.clear.frame(height: 110)
+                        Text(program.title)
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundColor(.white)
+                        Text(program.universityName ?? program.university ?? "")
+                            .font(.system(size: 16))
+                            .foregroundColor(.gray)
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            detailRow("Language", program.language?.uppercased() ?? "-")
+                            detailRow("Level", localizedLevel)
+                            detailRow("Duration", program.duration ?? "-")
+                            if let tuition = program.tuition, tuition > 0 {
+                                detailRow("Tuition", "$\(Int(tuition)) / year")
+                            }
+                        }
+                        .padding(16)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(16)
+
+                        if let description = program.description, !description.isEmpty {
+                            Text(description)
+                                .font(.system(size: 16))
+                                .foregroundColor(.white.opacity(0.92))
+                                .lineSpacing(5)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 40)
+                }
+            }
         }
         .kleosBackground().navigationBarTitleDisplayMode(.inline)
+        .task {
+            do {
+                let fetched = try await apiClient.fetchProgramDetail(id: programId)
+                await MainActor.run {
+                    self.program = fetched
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run { self.isLoading = false }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func detailRow(_ title: String, _ value: String) -> some View {
+        HStack {
+            Text(title).foregroundColor(.gray)
+            Spacer()
+            Text(value).foregroundColor(.white).fontWeight(.semibold)
+        }
     }
 }

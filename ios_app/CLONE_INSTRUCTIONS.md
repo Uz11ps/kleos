@@ -28,7 +28,7 @@ cd ios_app
    - **Product Name:** `Kleos`
    - **Team:** Выберите вашу команду (или оставьте None)
    - **Organization Identifier:** `com.kleos`
-   - **Bundle Identifier:** `com.kleos.education` (будет автоматически)
+   - **Bundle Identifier:** `com.kleosedu.app` (будет автоматически)
    - **Interface:** **SwiftUI** ⚠️ (важно!)
    - **Language:** **Swift** ⚠️ (важно!)
    - **Storage:** None (или Core Data, если нужно)

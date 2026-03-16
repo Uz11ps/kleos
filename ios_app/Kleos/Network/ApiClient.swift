@@ -167,4 +167,85 @@ class ApiClient: ObservableObject {
         let (data, _) = try await performRequest(request)
         return try JSONDecoder().decode([Program].self, from: data)
     }
+
+    func getFullUrl(_ path: String?) -> URL? {
+        guard let raw = path, !raw.isEmpty else { return nil }
+        if raw.hasPrefix("http://") || raw.hasPrefix("https://") {
+            return URL(string: raw)
+        }
+        let normalized = raw.hasPrefix("/") ? raw : "/\(raw)"
+        return URL(string: "\(baseURL)\(normalized)")
+    }
+
+    // MARK: - Legacy wrappers used by current iOS views
+    func fetchNews() async throws -> [NewsItem] {
+        try await getNews()
+    }
+
+    func fetchNewsDetail(id: String) async throws -> NewsItem {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/news/\(id)") else { throw ApiError.badURL }
+        let request = createRequest(url: url)
+        let (data, _) = try await performRequest(request)
+        return try JSONDecoder().decode(NewsItem.self, from: data)
+    }
+
+    func fetchUniversities() async throws -> [University] {
+        try await getUniversities()
+    }
+
+    func fetchPrograms(filters: ProgramFilters) async throws -> [Program] {
+        var components = URLComponents(string: "\(baseURL)\(apiPrefix)/programs")!
+        var queryItems: [URLQueryItem] = []
+        if let q = filters.searchQuery, !q.isEmpty { queryItems.append(URLQueryItem(name: "q", value: q)) }
+        if let lang = filters.language, !lang.isEmpty { queryItems.append(URLQueryItem(name: "language", value: lang)) }
+        if let lvl = filters.level, !lvl.isEmpty { queryItems.append(URLQueryItem(name: "level", value: lvl)) }
+        if let uni = filters.university, !uni.isEmpty { queryItems.append(URLQueryItem(name: "university", value: uni)) }
+        if let uniId = filters.universityId, !uniId.isEmpty { queryItems.append(URLQueryItem(name: "universityId", value: uniId)) }
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+
+        guard let url = components.url else { throw ApiError.badURL }
+        let request = createRequest(url: url)
+        let (data, _) = try await performRequest(request)
+        return try JSONDecoder().decode([Program].self, from: data)
+    }
+
+    func fetchProgramDetail(id: String) async throws -> Program {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/programs/\(id)") else { throw ApiError.badURL }
+        let request = createRequest(url: url)
+        let (data, _) = try await performRequest(request)
+        return try JSONDecoder().decode(Program.self, from: data)
+    }
+
+    func fetchGallery() async throws -> [GalleryItem] {
+        try await getGallery()
+    }
+
+    func fetchPartners() async throws -> [Partner] {
+        try await getPartners()
+    }
+
+    // MARK: - Chats
+    func ensureChat() async throws -> String {
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/chats") else { throw ApiError.badURL }
+        let request = createRequest(url: url, method: "POST", body: try JSONSerialization.data(withJSONObject: [:]))
+        let (data, _) = try await performRequest(request)
+        let decoded = try JSONDecoder().decode(ChatCreateResponse.self, from: data)
+        return decoded.id
+    }
+
+    func fetchMessages() async throws -> [ChatMessage] {
+        let chatId = try await ensureChat()
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/chats/\(chatId)/messages") else { throw ApiError.badURL }
+        let request = createRequest(url: url)
+        let (data, _) = try await performRequest(request)
+        return try JSONDecoder().decode([ChatMessage].self, from: data)
+    }
+
+    func sendMessage(text: String) async throws {
+        let chatId = try await ensureChat()
+        guard let url = URL(string: "\(baseURL)\(apiPrefix)/chats/\(chatId)/messages") else { throw ApiError.badURL }
+        let body = try JSONSerialization.data(withJSONObject: ["text": text])
+        let request = createRequest(url: url, method: "POST", body: body)
+        _ = try await performRequest(request)
+    }
 }

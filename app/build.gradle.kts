@@ -2,7 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     // Add the Google services Gradle plugin
-    id("com.google.gms.google-services")
+    // Временно отключено для debug - раскомментируйте после обновления Firebase Console
+    // id("com.google.gms.google-services")
 }
 
 android {
@@ -13,15 +14,16 @@ android {
         applicationId = "com.kleos.education"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 8
+        versionName = "1.0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

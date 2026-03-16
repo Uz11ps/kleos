@@ -20,9 +20,10 @@ import com.kleos.education.data.network.ApiClient
 import com.kleos.education.data.network.SettingsApi
 import com.kleos.education.databinding.FragmentAdmissionFormBinding
 import com.kleos.education.ui.utils.AnimationUtils
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.util.UUID
 import com.kleos.education.ui.language.t
@@ -232,22 +233,28 @@ class AdmissionFormFragment : Fragment() {
     }
 
     private fun loadCountriesAndConsent() {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val settingsApi = ApiClient.retrofit.create(SettingsApi::class.java)
-                val countriesResponse = settingsApi.getCountries()
+                val countriesResponse = withContext(Dispatchers.IO) {
+                    settingsApi.getCountries()
+                }
                 countriesList = countriesResponse.countries
                 
                 // Загружаем текст согласия для обоих языков
                 try {
-                    val consentResponseRu = settingsApi.getConsentText("ru")
+                    val consentResponseRu = withContext(Dispatchers.IO) {
+                        settingsApi.getConsentText("ru")
+                    }
                     consentTextRu = consentResponseRu.text
                 } catch (e: Exception) {
                     android.util.Log.e("AdmissionFormFragment", "Error loading Russian consent text", e)
                 }
                 
                 try {
-                    val consentResponseEn = settingsApi.getConsentText("en")
+                    val consentResponseEn = withContext(Dispatchers.IO) {
+                        settingsApi.getConsentText("en")
+                    }
                     consentTextEn = consentResponseEn.text
                 } catch (e: Exception) {
                     android.util.Log.e("AdmissionFormFragment", "Error loading English consent text", e)
@@ -256,19 +263,15 @@ class AdmissionFormFragment : Fragment() {
                 android.util.Log.d("AdmissionFormFragment", "Loaded consent texts - RU: ${consentTextRu.isNotBlank()}, EN: ${consentTextEn.isNotBlank()}")
                 
                 // Setup nationality dropdown on main thread
-                if (isAdded) {
-                    requireActivity().runOnUiThread {
-                        setupNationalityDropdown()
-                    }
+                if (isAdded && _binding != null) {
+                    setupNationalityDropdown()
                 }
             } catch (e: Exception) {
                 android.util.Log.e("AdmissionFormFragment", "Error loading countries and consent", e)
                 // Fallback: use default countries if API fails
                 countriesList = listOf("Russia", "USA", "China", "Germany", "France", "UK", "Italy", "Spain", "Japan", "South Korea")
-                if (isAdded) {
-                    requireActivity().runOnUiThread {
-                        setupNationalityDropdown()
-                    }
+                if (isAdded && _binding != null) {
+                    setupNationalityDropdown()
                 }
             }
         }

@@ -70,7 +70,7 @@ router.post('/', auth('admin'), async (req, res) => {
     title: z.string().min(1),
     description: z.string().optional().default(''),
     language: z.enum(['ru','en','zh']).optional().default('en'),
-    level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"]).optional().default("Bachelor's degree"),
+    level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree", "Residency degree"]).optional().default("Bachelor's degree"),
     university: z.string().optional().default(''), // Legacy field
     universityId: z.string().min(1), // Required field
     tuition: z.coerce.number().optional().default(0),
@@ -88,7 +88,7 @@ router.put('/:id', auth('admin'), async (req, res) => {
     title: z.string().optional(),
     description: z.string().optional(),
     language: z.enum(['ru','en','zh']).optional(),
-    level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree"]).optional(),
+    level: z.enum(["Bachelor's degree", "Master's degree", "Research degree", "Speciality degree", "Residency degree"]).optional(),
     university: z.string().optional(), // Legacy field
     universityId: z.string().optional(),
     tuition: z.coerce.number().optional(),

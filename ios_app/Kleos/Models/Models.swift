@@ -4,6 +4,7 @@ import Foundation
 struct NewsItem: Codable, Identifiable {
     let id: String
     let title: String
+    let description: String?
     let content: String?
     let imageUrl: String?
     let publishedAt: String
@@ -11,13 +12,14 @@ struct NewsItem: Codable, Identifiable {
     
     enum CodingKeys: String, CodingKey {
         case id // Сервер возвращает "id", а не "_id"
-        case title, content, imageUrl, publishedAt, isInteresting
+        case title, description, content, imageUrl, publishedAt, isInteresting
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
         title = try container.decode(String.self, forKey: .title)
+        description = try? container.decode(String.self, forKey: .description)
         content = try? container.decode(String.self, forKey: .content)
         imageUrl = try? container.decode(String.self, forKey: .imageUrl)
         
@@ -196,10 +198,14 @@ struct Partner: Codable, Identifiable {
     let description: String?
     let logoUrl: String?
     let website: String?
+    let city: String?
+    let country: String?
+    let contactEmail: String?
+    let contactPhone: String?
     
     enum CodingKeys: String, CodingKey {
         case id
-        case name, description, logoUrl
+        case name, description, logoUrl, city, country, contactEmail, contactPhone
         case website = "url"
     }
 }
